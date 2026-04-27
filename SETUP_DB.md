@@ -6,7 +6,7 @@ Use `.env` at the repo root and replace `DATABASE_URL` with your real Neon conne
 
 ```env
 DATABASE_URL=postgresql://USER:PASSWORD@YOUR-NEON-HOST/DBNAME?sslmode=require
-PORT=3001
+PORT=3001 (change if port 3001 is bussy)
 LLM_PROVIDER=ollama
 LLM_BASE_URL=http://127.0.0.1:11434/v1
 LLM_API_KEY=ollama
