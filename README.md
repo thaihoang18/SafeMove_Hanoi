@@ -1,6 +1,6 @@
-# AirPath
+# SafeMove HaNoi
 
-AirPath là dự án startup công nghệ môi trường, tập trung vào việc giúp người dùng di chuyển thông minh hơn trong đô thị thông qua dữ liệu chất lượng không khí theo thời gian thực.
+SafeMove HaNoi là dự án công nghệ môi trường, tập trung vào việc giúp người dùng di chuyển thông minh hơn trong đô thị thông qua dữ liệu chất lượng không khí theo thời gian thực.
 
 Mục tiêu chính:
 - Đề xuất lộ trình ít ô nhiễm nhưng vẫn hợp lý về quãng đường.
@@ -68,7 +68,7 @@ Dùng 2 terminal riêng:
 - npm run dev
 
 Kỳ vọng log:
-- AirPath BE listening on http://localhost:5001
+- SafeMove HaNoi BE listening on http://localhost:5001
 
 ### Terminal 2: chạy Frontend
 - cd FE
