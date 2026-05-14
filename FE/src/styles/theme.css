@@ -1,7 +1,7 @@
 @theme inline {
-  --color-background: #ffffff;
+  --color-background: #f8fbf8;
   --color-foreground: #0f172a;
-  --color-border: rgba(15, 23, 42, 0.1);
+  --color-border: rgba(15, 23, 42, 0.08);
 }
 
 @layer base {
@@ -10,7 +10,7 @@
   }
 
   body {
-    @apply text-slate-900;
+    @apply text-slate-900 antialiased;
   }
 
   h1 {

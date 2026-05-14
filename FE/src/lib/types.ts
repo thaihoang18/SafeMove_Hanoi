@@ -164,6 +164,9 @@ export type GpsAqiMeasurement = {
   lng: number;
   main_pollutant?: string | null;
   aqicn?: number | null;
+  temperature?: number | null;
+  humidity?: number | null;
+  wind_speed?: number | null;
 };
 
 export type ChatSession = {

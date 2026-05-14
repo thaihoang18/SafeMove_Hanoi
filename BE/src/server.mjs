@@ -31,7 +31,7 @@ function startServer(portToTry) {
   });
 
   server.listen(portToTry, () => {
-    console.log(`AirPath BE listening on http://localhost:${portToTry}`);
+    console.log(`SafeMove HaNoi BE listening on http://localhost:${portToTry}`);
   });
 }
 

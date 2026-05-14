@@ -1,4 +1,4 @@
-# AirPath database setup
+# SafeMove HaNoi database setup
 
 ## 1. Create `.env`
 
@@ -44,4 +44,4 @@ ollama pull qwen2.5:7b
 ollama serve
 ```
 
-The AirPath chatbot uses the OpenAI-compatible Ollama endpoint at `http://127.0.0.1:11434/v1` by default.
+The SafeMove HaNoi chatbot uses the OpenAI-compatible Ollama endpoint at `http://127.0.0.1:11434/v1` by default.

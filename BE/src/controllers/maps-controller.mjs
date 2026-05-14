@@ -284,7 +284,7 @@ export async function searchPlacesController(searchParams) {
   const response = await fetch(nominatimUrl, {
     headers: {
       Accept: "application/json",
-      "User-Agent": "AirPath/1.0",
+      "User-Agent": "SafeMove HaNoi/1.0",
     },
   });
 
@@ -319,7 +319,7 @@ export async function planRoutesController(body) {
   const routeResponse = await fetch(osrmUrl, {
     headers: {
       Accept: "application/json",
-      "User-Agent": "AirPath/1.0",
+      "User-Agent": "SafeMove HaNoi/1.0",
     },
   });
 

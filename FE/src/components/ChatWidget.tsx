@@ -153,7 +153,7 @@ export function ChatWidget({ user }: Props) {
                     <Bot className="h-5 w-5" />
                   </div>
                   <div>
-                    <div className="text-sm text-slate-900">AirPath AI</div>
+                    <div className="text-sm text-slate-900">SafeMove HaNoi AI</div>
                     <div className="text-xs text-slate-500">AQI chatbot + cảnh báo + gợi ý</div>
                   </div>
                 </div>

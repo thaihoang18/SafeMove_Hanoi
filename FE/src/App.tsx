@@ -23,27 +23,17 @@ import type {
   User,
   GpsAqiMeasurement,
 } from "./lib/types";
-import { HomeView } from "./components/HomeView";
-import { ChatWidget } from "./components/ChatWidget";
+import type { PlaceCatalogItem } from "./lib/guest-exercise-places";
+import { mergeExercisePlaces } from "./lib/guest-exercise-places";
 import { LoginScreen } from "./components/LoginScreen";
-import { NotificationsView } from "./components/NotificationsView";
-import { ProfileView } from "./components/ProfileView";
-import { RoutePlannerView } from "./components/RoutePlannerView";
-import { Shell, type View } from "./components/Shell";
+import { Shell, type Role, type View } from "./components/Shell";
+import { WorkspaceScreens } from "./components/WorkspaceScreens";
 
-type LocationItem = {
-  id: string;
-  name: string;
-  location_type: string;
-  address: string | null;
-  city: string | null;
-  district: string | null;
-  lat: number;
-  lng: number;
-};
+type LocationItem = PlaceCatalogItem;
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
+  const [role, setRole] = useState<Role>("user");
   const [view, setView] = useState<View>("home");
   const [loadingAuth, setLoadingAuth] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
@@ -69,6 +59,18 @@ export default function App() {
   const [gpsLoading, setGpsLoading] = useState(false);
   const [gpsError, setGpsError] = useState<string | null>(null);
 
+  const guestUser = useMemo<User>(
+    () => ({
+      id: "guest-preview",
+      email: "guest@safemove.local",
+      full_name: "Khách xem trước",
+      birth_year: null,
+      home_lat: null,
+      home_lng: null,
+    }),
+    [],
+  );
+
   useEffect(() => {
     fetchBootstrapData()
       .then((data) =>
@@ -85,7 +87,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || role === "guest") return;
 
     Promise.all([
       fetchDashboard(user.id),
@@ -103,7 +105,7 @@ export default function App() {
         setMaxRatio(Number(profileData.profile?.default_max_route_ratio ?? 1.5));
       })
       .catch((error) => setGlobalError(error.message));
-  }, [user]);
+  }, [role, user]);
 
   async function handleLogin(email: string, password: string) {
     setLoadingAuth(true);
@@ -111,6 +113,8 @@ export default function App() {
     try {
       const response = await login(email, password);
       setUser(response.user);
+      setRole("user");
+      setView("home");
     } catch (error) {
       setAuthError(error instanceof Error ? error.message : "Login failed.");
     } finally {
@@ -124,11 +128,21 @@ export default function App() {
     try {
       const response = await register(fullName, email, password);
       setUser(response.user);
+      setRole("user");
+      setView("home");
     } catch (error) {
       setAuthError(error instanceof Error ? error.message : "Register failed.");
     } finally {
       setLoadingAuth(false);
     }
+  }
+
+  function handleGuestContinue() {
+    setUser(guestUser);
+    setRole("guest");
+    setView("home");
+    setAuthError(null);
+    setGlobalError(null);
   }
 
   async function handleMarkRead(notificationId: string) {
@@ -193,24 +207,54 @@ export default function App() {
       return;
     }
 
+    try {
+      const permission = await navigator.permissions?.query?.({ name: "geolocation" as PermissionName });
+      if (permission?.state === "denied") {
+        setGpsError("Trình duyệt đã chặn vị trí GPS. Mở cài đặt trình duyệt để cho phép.");
+        return;
+      }
+    } catch {
+      // ignore unsupported permissions API
+    }
+
     setGpsLoading(true);
     setGpsError(null);
 
-    try {
-      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true,
-          timeout: 12000,
-          maximumAge: 60_000,
-        });
+    const getPosition = (options: PositionOptions) =>
+      new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, options);
       });
 
+    const resolvePosition = async () => {
+      try {
+        return await getPosition({ enableHighAccuracy: true, timeout: 12000, maximumAge: 0 });
+      } catch (geolocationError) {
+        const errorValue = geolocationError as GeolocationPositionError;
+        if (errorValue.code === 3) {
+          return await getPosition({ enableHighAccuracy: false, timeout: 18000, maximumAge: 0 });
+        }
+        throw geolocationError;
+      }
+    };
+
+    try {
+      const position = await resolvePosition();
       const { latitude, longitude } = position.coords;
       setGpsCoords({ lat: latitude, lng: longitude });
-      const data = await fetchIqAirAqiByCoordinates(latitude, longitude);
-      setGpsAqi(data.measurement);
+      setGpsAqi(null);
+
+      try {
+        const data = await fetchIqAirAqiByCoordinates(latitude, longitude);
+        setGpsAqi(data.measurement);
+      } catch (innerError) {
+        if (innerError instanceof Error) {
+          setGpsError(`Không lấy được AQI từ vị trí GPS: ${innerError.message}`);
+        } else {
+          setGpsError("Không lấy được AQI từ vị trí GPS.");
+        }
+      }
     } catch (error) {
-      let message = "Không thể lấy AQI theo GPS hiện tại.";
+      let message = "Không thể lấy vị trí GPS hiện tại.";
 
       if (
         typeof error === "object" &&
@@ -220,7 +264,7 @@ export default function App() {
       ) {
         const geoError = error as GeolocationPositionError;
         if (geoError.code === 1) {
-          message = "Bạn đã từ chối quyền vị trí. Hãy bật Location permission cho trang này.";
+          message = "Bạn đã từ chối quyền vị trí. Vui lòng bật Location permission cho trang này.";
         } else if (geoError.code === 2) {
           message = "Không xác định được vị trí hiện tại. Hãy thử lại khi GPS ổn định hơn.";
         } else if (geoError.code === 3) {
@@ -229,14 +273,7 @@ export default function App() {
           message = geoError.message || message;
         }
       } else if (error instanceof Error) {
-        if (error.message.includes("Missing IQAIR_API_KEY")) {
-          message =
-            "Server chưa cấu hình IQAIR_API_KEY. Vui lòng thêm key vào file .env và restart BE.";
-        } else if (error.message.toLowerCase().includes("failed to fetch")) {
-          message = "Không kết nối được backend. Kiểm tra BE đang chạy ở cổng 5000.";
-        } else {
-          message = error.message;
-        }
+        message = error.message;
       }
 
       setGpsError(message);
@@ -258,11 +295,14 @@ export default function App() {
     [notifications],
   );
 
+  const mergedLocations = useMemo(() => mergeExercisePlaces(locations), [locations]);
+
   if (!user) {
     return (
       <LoginScreen
         onLogin={handleLogin}
         onRegister={handleRegister}
+        onGuestContinue={handleGuestContinue}
         error={authError}
         loading={loadingAuth}
       />
@@ -271,20 +311,14 @@ export default function App() {
 
   return (
     <Shell
+      role={role}
       view={view}
       setView={setView}
       userName={user.full_name || user.email}
       unreadCount={unreadCount}
-      onLogout={() => {
-        setUser(null);
-        setDashboard(null);
-        setProfile(null);
-        setNotifications([]);
-        setAdvice(null);
-        setRouteHistory([]);
-        setGpsAqi(null);
-        setGpsCoords(null);
-        setGpsError(null);
+      onRequireLogin={() => {
+        setGlobalError("Chức năng này cần đăng nhập.");
+        setView("home");
       }}
     >
       {globalError ? (
@@ -293,46 +327,43 @@ export default function App() {
         </div>
       ) : null}
 
-      {view === "home" ? (
-        <HomeView
-          dashboard={dashboard}
-          advice={advice}
-          onOpenRoute={() => setView("route")}
-          onOpenProfile={() => setView("profile")}
-          gpsAqi={gpsAqi}
-          gpsCoords={gpsCoords}
-          gpsLoading={gpsLoading}
-          gpsError={gpsError}
-          onRefreshGpsAqi={handleRefreshGpsAqi}
-        />
-      ) : null}
-
-      {view === "route" ? (
-        <RoutePlannerView
-          locations={locations}
-          maxRatio={maxRatio}
-          setMaxRatio={setMaxRatio}
-          routeHistory={routeHistory}
-          onSubmit={handleCreateRoute}
-          loading={routeSubmitting}
-        />
-      ) : null}
-
-      {view === "profile" ? (
-        <ProfileView
-          profile={profile}
-          availableActivities={bootstrap.activities}
-          availableConditions={bootstrap.healthConditions}
-          onSave={handleSaveProfile}
-          saving={profileSaving}
-        />
-      ) : null}
-
-      {view === "notifications" ? (
-        <NotificationsView notifications={notifications} onMarkRead={handleMarkRead} />
-      ) : null}
-
-      <ChatWidget user={user} />
+      <WorkspaceScreens
+        role={role}
+        view={view}
+        setView={setView}
+        user={user}
+        dashboard={dashboard}
+        profile={profile}
+        notifications={notifications}
+        advice={advice}
+        locations={mergedLocations}
+        routeHistory={routeHistory}
+        maxRatio={maxRatio}
+        setMaxRatio={setMaxRatio}
+        routeSubmitting={routeSubmitting}
+        profileSaving={profileSaving}
+        gpsAqi={gpsAqi}
+        gpsCoords={gpsCoords}
+        gpsLoading={gpsLoading}
+        gpsError={gpsError}
+        onRefreshGpsAqi={handleRefreshGpsAqi}
+        onCreateRoute={handleCreateRoute}
+        onSaveProfile={handleSaveProfile}
+        onMarkRead={handleMarkRead}
+        onLogout={() => {
+          setUser(null);
+          setDashboard(null);
+          setProfile(null);
+          setNotifications([]);
+          setAdvice(null);
+          setRouteHistory([]);
+          setGpsAqi(null);
+          setGpsCoords(null);
+          setGpsError(null);
+          setRole("user");
+          setView("home");
+        }}
+      />
     </Shell>
   );
 }

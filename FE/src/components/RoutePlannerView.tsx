@@ -52,7 +52,7 @@ type Props = {
   loading: boolean;
 };
 
-type Stage = "search" | "directions";
+type Stage = "search" | "choose" | "directions";
 
 type DecoratedRoute = RouteRecommendation & {
   color: string;
@@ -75,27 +75,20 @@ export function RoutePlannerView({
   const [destinationSelected, setDestinationSelected] = useState<PlaceSuggestion | null>(null);
   const [originSuggestions, setOriginSuggestions] = useState<PlaceSuggestion[]>([]);
   const [destinationSuggestions, setDestinationSuggestions] = useState<PlaceSuggestion[]>([]);
+  const [activeField, setActiveField] = useState<"origin" | "destination" | null>(null);
   const [searchingRoutes, setSearchingRoutes] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [planResult, setPlanResult] = useState<PlannedRoutesResponse | null>(null);
   const [selectedKind, setSelectedKind] = useState<RouteRecommendation["kind"]>("green");
 
   const decoratedRoutes = useMemo(() => decorateRoutes(planResult), [planResult]);
-  const selectedRoute = useMemo(
-    () => decoratedRoutes.find((item) => item.kind === selectedKind) ?? decoratedRoutes[0] ?? null,
-    [decoratedRoutes, selectedKind],
+  const visibleRoutes = useMemo(
+    () => decoratedRoutes.filter((item) => item.kind === "green" || item.kind === "shortest"),
+    [decoratedRoutes],
   );
-
-  const quickPlaces = useMemo(
-    () =>
-      locations.slice(0, 8).map((item) => ({
-        id: `saved-${item.id}`,
-        label: formatLocationLabel(item),
-        lat: item.lat,
-        lng: item.lng,
-        source: "local" as const,
-      })),
-    [locations],
+  const selectedRoute = useMemo(
+    () => visibleRoutes.find((item) => item.kind === selectedKind) ?? visibleRoutes[0] ?? null,
+    [visibleRoutes, selectedKind],
   );
 
   useEffect(() => {
@@ -230,6 +223,7 @@ export function RoutePlannerView({
 
       setPlanResult(result);
       setSelectedKind("green");
+      setStage("choose");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Không thể tạo lộ trình.";
       setSearchError(message);
@@ -245,11 +239,12 @@ export function RoutePlannerView({
     }
 
     setSelectedKind(kind);
+    const routesToUse = visibleRoutes.length ? visibleRoutes : decoratedRoutes;
     const shortest =
-      planResult.recommendations.find((item) => item.kind === "shortest") ??
-      planResult.recommendations[0];
+      routesToUse.find((item) => item.kind === "shortest") ??
+      routesToUse[0];
 
-    const options: RouteOption[] = planResult.recommendations.map((item) => ({
+    const options: RouteOption[] = routesToUse.map((item) => ({
       routeName: item.title,
       distanceM: item.route.distanceM,
       durationS: item.route.durationS,
@@ -278,50 +273,69 @@ export function RoutePlannerView({
       options,
     });
 
+    setActiveField(null);
     setStage("directions");
   }
 
   return (
-    <div className="space-y-5">
-      <div className="inline-flex rounded-full bg-white p-1 ring-1 ring-slate-200 shadow-sm">
-        <button
-          onClick={() => setStage("search")}
-          className={`rounded-full px-4 py-2 text-sm transition ${
-            stage === "search"
-              ? "bg-linear-to-r from-blue-600 to-emerald-500 text-white"
-              : "text-slate-600"
-          }`}
-        >
-          1. Tìm lộ trình
-        </button>
-        <button
-          onClick={() => planResult && setStage("directions")}
-          className={`rounded-full px-4 py-2 text-sm transition ${
-            stage === "directions"
-              ? "bg-linear-to-r from-blue-600 to-emerald-500 text-white"
-              : "text-slate-600"
-          } ${!planResult ? "opacity-40" : ""}`}
-          disabled={!planResult}
-        >
-          2. Chỉ đường
-        </button>
+    <div className="mx-auto max-w-4xl space-y-3">
+      <div className="rounded-[2rem] bg-white p-4 shadow-sm ring-1 ring-slate-200/70 sm:p-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h2 className="text-xl text-slate-900">Lộ trình xanh</h2>
+          </div>
+          <div className="inline-flex w-full rounded-full bg-slate-100 p-1 ring-1 ring-slate-200 shadow-sm sm:w-auto">
+            <button
+              onClick={() => setStage("search")}
+              className={`flex-1 rounded-full px-3 py-1.5 text-xs transition sm:flex-none ${
+                stage === "search"
+                  ? "bg-linear-to-r from-emerald-600 to-lime-500 text-white"
+                  : "text-slate-600"
+              }`}
+            >
+              1. Tìm lộ trình
+            </button>
+            <button
+              onClick={() => planResult && setStage("choose")}
+              className={`flex-1 rounded-full px-3 py-1.5 text-xs transition sm:flex-none ${
+                stage === "choose"
+                  ? "bg-linear-to-r from-emerald-600 to-lime-500 text-white"
+                  : "text-slate-600"
+              } ${!planResult ? "opacity-40" : ""}`}
+              disabled={!planResult}
+            >
+              2. Chọn tuyến
+            </button>
+            <button
+              onClick={() => planResult && setStage("directions")}
+              className={`flex-1 rounded-full px-3 py-1.5 text-xs transition sm:flex-none ${
+                stage === "directions"
+                  ? "bg-linear-to-r from-emerald-600 to-lime-500 text-white"
+                  : "text-slate-600"
+              } ${!planResult ? "opacity-40" : ""}`}
+              disabled={!planResult}
+            >
+              3. Chỉ đường
+            </button>
+          </div>
+        </div>
       </div>
 
       {stage === "search" ? (
-        <div className="grid gap-5 lg:grid-cols-5">
-          <section className="space-y-5 lg:col-span-2">
-            <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200/70">
-              <div className="mb-5 flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-linear-to-br from-blue-500 to-emerald-500 text-white">
-                  <Search className="h-5 w-5" />
+        <div className="space-y-3">
+          <section className="mx-auto max-w-2xl space-y-3">
+            <div className="rounded-[1.6rem] bg-white p-4 shadow-sm ring-1 ring-slate-200/70">
+              <div className="mb-4 flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-emerald-600 to-lime-500 text-white">
+                  <Search className="h-4 w-4" />
                 </div>
                 <div>
-                  <h3>Lộ trình kiểu Google Maps</h3>
-                  <div className="text-sm text-slate-500">Nhập điểm đi/đến, hệ thống tự tìm đúng địa điểm.</div>
+                  <h3 className="text-base text-slate-900">Tìm tuyến đường</h3>
+                  <div className="text-xs leading-5 text-slate-500">Nhập điểm đi và điểm đến để hệ thống tính lộ trình an toàn hơn.</div>
                 </div>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-3 rounded-[1.25rem] bg-slate-50/80 p-3 ring-1 ring-slate-200">
                 <LocationInput
                   label="Điểm đi"
                   placeholder="Ví dụ: 12 Tràng Thi, Hoàn Kiếm, Hà Nội"
@@ -330,21 +344,25 @@ export function RoutePlannerView({
                     setOriginInput(value);
                     setOriginSelected(null);
                   }}
+                  onFocus={() => setActiveField("origin")}
+                  onBlur={() => setTimeout(() => setActiveField((current) => (current === "origin" ? null : current)), 120)}
                   suggestions={originSuggestions}
+                  showSuggestions={activeField === "origin"}
                   onSelect={(place) => {
                     setOriginSelected(place);
                     setOriginInput(place.label);
                     setOriginSuggestions([]);
+                    setActiveField(null);
                   }}
                 />
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <button
                     onClick={useCurrentLocationAsOrigin}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs text-slate-600 ring-1 ring-slate-200"
+                    className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[11px] text-slate-600 ring-1 ring-slate-200"
                   >
                     <LocateFixed className="h-3.5 w-3.5" />
-                    Dùng GPS hiện tại làm điểm đi
+                    Dùng GPS
                   </button>
                   <button
                     onClick={() => {
@@ -355,7 +373,7 @@ export function RoutePlannerView({
                       setOriginInput(nextOrigin);
                       setOriginSelected(nextOriginSelected);
                     }}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs text-slate-600 ring-1 ring-slate-200"
+                    className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[11px] text-slate-600 ring-1 ring-slate-200"
                   >
                     <Shuffle className="h-3.5 w-3.5" />
                     Đảo chiều
@@ -370,22 +388,26 @@ export function RoutePlannerView({
                     setDestinationInput(value);
                     setDestinationSelected(null);
                   }}
+                  onFocus={() => setActiveField("destination")}
+                  onBlur={() => setTimeout(() => setActiveField((current) => (current === "destination" ? null : current)), 120)}
                   suggestions={destinationSuggestions}
+                  showSuggestions={activeField === "destination"}
                   onSelect={(place) => {
                     setDestinationSelected(place);
                     setDestinationInput(place.label);
                     setDestinationSuggestions([]);
+                    setActiveField(null);
                   }}
                 />
               </div>
 
-              <div className="mt-5 rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
-                <div className="flex items-center justify-between text-sm">
+              <div className="mt-4 rounded-[1.2rem] bg-emerald-50 p-3 ring-1 ring-emerald-100">
+                <div className="flex items-center justify-between text-xs">
                   <span className="text-slate-700">Max route ratio</span>
-                  <span className="text-blue-600">x {maxRatio.toFixed(1)}</span>
+                  <span className="text-emerald-700">x {maxRatio.toFixed(1)}</span>
                 </div>
                 <input
-                  className="mt-3 w-full accent-blue-600"
+                  className="mt-3 w-full accent-emerald-600"
                   type="range"
                   min={1}
                   max={2}
@@ -393,21 +415,21 @@ export function RoutePlannerView({
                   value={maxRatio}
                   onChange={(event) => setMaxRatio(Number(event.target.value))}
                 />
-                <div className="mt-2 text-xs text-slate-500">
+                <div className="mt-2 text-[11px] leading-5 text-slate-500">
                   Lộ trình xanh phải {"<="} {Math.round((maxRatio - 1) * 100)}% so với tuyến ngắn nhất.
                 </div>
               </div>
 
-              <div className="mt-4 rounded-2xl bg-sky-50 px-4 py-3 text-xs leading-5 text-sky-800 ring-1 ring-sky-200">
+              <div className="mt-3 rounded-[1.2rem] bg-[#f3f8f3] px-3 py-2.5 text-[11px] leading-5 text-slate-600 ring-1 ring-emerald-100">
                 Hãy nhập chi tiết như Google Maps: <strong>số nhà, tên đường, phường/xã, quận/huyện</strong>.
               </div>
 
               <button
                 onClick={submitSearch}
                 disabled={searchingRoutes || loading}
-                className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-linear-to-r from-blue-600 to-emerald-500 py-3 text-white shadow-lg shadow-blue-600/20 disabled:cursor-not-allowed disabled:opacity-70"
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-[1.2rem] bg-linear-to-r from-emerald-600 to-lime-500 py-3 text-sm text-white shadow-lg shadow-emerald-600/20 disabled:cursor-not-allowed disabled:opacity-70"
               >
-                {searchingRoutes ? "Đang phân tích tuyến..." : "Tìm 3 lựa chọn lộ trình"}
+                {searchingRoutes ? "Đang phân tích tuyến..." : "Tìm lộ trình"}
                 <ArrowRight className="h-4 w-4" />
               </button>
 
@@ -416,105 +438,73 @@ export function RoutePlannerView({
                   {searchError}
                 </div>
               ) : null}
-            </div>
-
-            <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200/70">
-              <div className="mb-3 text-sm text-slate-700">Địa điểm gợi ý nhanh</div>
-              <div className="flex flex-wrap gap-2">
-                {quickPlaces.map((place) => (
-                  <button
-                    key={place.id}
-                    onClick={() => {
-                      setDestinationSelected(place);
-                      setDestinationInput(place.label);
-                    }}
-                    className="rounded-full bg-slate-50 px-3 py-1.5 text-xs text-slate-600 ring-1 ring-slate-200"
-                  >
-                    {place.label}
-                  </button>
-                ))}
+              <div className="mt-4 rounded-[1.2rem] bg-[#f6fbf6] p-3 ring-1 ring-emerald-100">
+                <div className="text-[11px] uppercase tracking-[0.18em] text-emerald-700">Bước tiếp theo</div>
+                <div className="mt-1 text-xs leading-5 text-slate-600">
+                  Sau khi tìm xong, bạn sẽ chọn giữa <strong>lộ trình xanh</strong> và <strong>lộ trình ngắn nhất</strong> ở tab kế tiếp.
+                </div>
               </div>
             </div>
           </section>
-
-          <section className="space-y-4 lg:col-span-3">
-            <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200/70">
-              <div className="mb-4 flex items-center gap-2">
-                <Route className="h-5 w-5 text-emerald-600" />
-                <h3>3 lựa chọn đề xuất</h3>
+        </div>
+      ) : stage === "choose" ? (
+        <div className="space-y-3">
+          <section className="space-y-3">
+            <div className="rounded-[1.6rem] bg-white p-4 shadow-sm ring-1 ring-slate-200/70">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Route className="h-5 w-5 text-emerald-600" />
+                  <h3 className="text-base text-slate-900">Chọn tuyến đường</h3>
+                </div>
+                <div className="text-[11px] text-slate-500">Chọn 1 trong 2 tuyến để bắt đầu chỉ đường</div>
               </div>
 
-              <div className="mb-4 overflow-hidden rounded-3xl bg-[#eef4ea] ring-1 ring-slate-200">
+              <div className="mb-3 overflow-hidden rounded-[1.4rem] bg-[#eef4ea] ring-1 ring-slate-200">
                 <RouteMapCanvas
                   planResult={planResult}
-                  routes={decoratedRoutes}
+                  routes={visibleRoutes}
                   selectedKind={selectedKind}
-                  heightClassName="h-[360px]"
+                  heightClassName="h-[220px] sm:h-[260px]"
                 />
               </div>
 
               {planResult ? (
-                <div className="grid gap-3 xl:grid-cols-3">
-                  {decoratedRoutes.map((recommendation) => (
+                <div className="space-y-2.5">
+                  {visibleRoutes.map((recommendation) => (
                     <div
                       key={recommendation.kind}
-                      className={`rounded-2xl p-4 ring-1 ${recommendation.panelClass}`}
+                      className={`rounded-[1.3rem] p-3 ring-1 ${recommendation.panelClass}`}
                     >
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="text-sm text-slate-900">{recommendation.title}</div>
-                        <span className={`rounded-full px-2 py-1 text-[11px] ${recommendation.badgeClass}`}>
-                          {recommendation.kind === "green"
-                            ? "AQI thấp nhất"
-                            : recommendation.kind === "shortest"
-                              ? "Ngắn nhất"
-                              : "Cân bằng"}
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="min-w-0">
+                          <div className="text-sm text-slate-900">{recommendation.title}</div>
+                          <div className="mt-1 text-xs leading-5 text-slate-500">{recommendation.reason}</div>
+                        </div>
+                        <span className={`w-fit rounded-full px-2.5 py-1 text-[11px] ${recommendation.badgeClass}`}>
+                          {recommendation.kind === "green" ? "AQI thấp nhất" : "Ngắn nhất"}
                         </span>
                       </div>
-                      <div className="mt-1 text-xs text-slate-500">{recommendation.reason}</div>
-                      <div className="mt-3 space-y-1.5 text-sm text-slate-700">
-                        <div>Quãng đường: {(recommendation.route.distanceM / 1000).toFixed(1)} km</div>
-                        <div>Thời gian: {formatDuration(recommendation.route.durationS)}</div>
-                        <div>AQI ước tính: {recommendation.route.avgAqi}</div>
-                        <div>Nguồn AQI: {recommendation.route.aqiSource}</div>
+                      <div className="mt-3 grid grid-cols-2 gap-2">
+                        <RouteMetric label="Quãng đường" value={`${(recommendation.route.distanceM / 1000).toFixed(1)} km`} />
+                        <RouteMetric label="Thời gian" value={formatDuration(recommendation.route.durationS)} />
+                        <RouteMetric label="AQI ước tính" value={String(recommendation.route.avgAqi)} />
+                        <RouteMetric label="Nguồn AQI" value={recommendation.route.aqiSource} />
                       </div>
                       <button
                         onClick={() => startDirections(recommendation.kind)}
                         disabled={loading}
-                        className="mt-4 w-full rounded-xl bg-white px-3 py-2 text-sm text-slate-700 ring-1 ring-slate-200 disabled:opacity-60"
+                        className="mt-3 w-full rounded-xl bg-white px-3 py-2.5 text-sm text-slate-700 ring-1 ring-slate-200 disabled:opacity-60"
                       >
-                        Chỉ đường theo tuyến này
+                        Chọn tuyến này
                       </button>
                     </div>
                   ))}
                 </div>
               ) : (
                 <div className="rounded-2xl bg-slate-50 p-5 text-sm text-slate-500 ring-1 ring-slate-200">
-                  Nhập điểm đi/đến để nhận 3 lựa chọn: xanh, ngắn nhất, cân bằng.
+                  Chưa có dữ liệu lộ trình để lựa chọn.
                 </div>
               )}
-            </div>
-
-            <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200/70">
-              <div className="mb-4 flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-slate-500" />
-                <div className="text-sm text-slate-700">Lịch sử route request</div>
-              </div>
-              <div className="space-y-3">
-                {routeHistory.length ? (
-                  routeHistory.slice(0, 5).map((item, index) => (
-                    <div key={String(item.id ?? index)} className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
-                      <div className="text-sm text-slate-900">
-                        {String(item.origin_label ?? "")} {"->"} {String(item.destination_label ?? "")}
-                      </div>
-                      <div className="mt-1 text-xs text-slate-500">{String(item.status ?? "")}</div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-500 ring-1 ring-slate-200">
-                    Chưa có dữ liệu route request.
-                  </div>
-                )}
-              </div>
             </div>
           </section>
         </div>
@@ -535,33 +525,42 @@ function LocationInput({
   label,
   value,
   onChange,
+  onFocus,
+  onBlur,
   suggestions,
+  showSuggestions,
   onSelect,
   placeholder,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
+  onFocus: () => void;
+  onBlur: () => void;
   suggestions: PlaceSuggestion[];
+  showSuggestions: boolean;
   onSelect: (place: PlaceSuggestion) => void;
   placeholder: string;
 }) {
   return (
-    <div className="mt-3">
-      <label className="mb-1.5 block text-sm text-slate-600">{label}</label>
-      <div className="rounded-2xl bg-slate-50 px-4 py-3 ring-1 ring-slate-200">
+    <div className="mt-2">
+      <label className="mb-1.5 block text-xs uppercase tracking-[0.18em] text-slate-500">{label}</label>
+      <div className="rounded-[1.1rem] bg-slate-50 px-3 py-3 ring-1 ring-slate-200">
         <input
           value={value}
           onChange={(event) => onChange(event.target.value)}
+          onFocus={onFocus}
+          onBlur={onBlur}
           placeholder={placeholder}
           className="w-full bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400"
         />
       </div>
-      {suggestions.length ? (
-        <div className="mt-2 max-h-52 overflow-auto rounded-2xl bg-white p-1 ring-1 ring-slate-200 shadow-sm">
+      {showSuggestions && suggestions.length ? (
+        <div className="mt-2 max-h-44 overflow-auto rounded-[1rem] bg-white p-1 ring-1 ring-slate-200 shadow-sm">
           {suggestions.map((item) => (
             <button
               key={item.id}
+              type="button"
               onClick={() => onSelect(item)}
               className="flex w-full items-start gap-2 rounded-xl px-3 py-2 text-left hover:bg-slate-50"
             >
@@ -569,7 +568,7 @@ function LocationInput({
               <div className="min-w-0">
                 <div className="truncate text-xs text-slate-700">{item.label}</div>
                 <div className="mt-0.5 text-[11px] text-slate-400">
-                  {item.source === "local" ? "AirPath location" : "Map search"}
+                  {item.source === "local" ? "SafeMove HaNoi location" : "Map search"}
                 </div>
               </div>
             </button>
@@ -601,7 +600,15 @@ function DirectionsPanel({
     );
   }
 
-  const selected = decoratedRoutes.find((item) => item.kind === selectedKind) ?? decoratedRoutes[0];
+  const routeChoices = decoratedRoutes.filter((item) => item.kind === "green" || item.kind === "shortest");
+  const selected = routeChoices.find((item) => item.kind === selectedKind) ?? routeChoices[0] ?? decoratedRoutes[0] ?? null;
+  if (!selected) {
+    return (
+      <div className="rounded-3xl bg-white p-6 text-sm text-slate-500 ring-1 ring-slate-200">
+        Chưa có dữ liệu tuyến đường khả dụng.
+      </div>
+    );
+  }
   const currentStep = selected.route.steps[0] ?? null;
 
   const googleMapsLink =
@@ -609,55 +616,29 @@ function DirectionsPanel({
     `&destination=${planResult.destination.lat},${planResult.destination.lng}&travelmode=driving`;
 
   return (
-    <div className="grid gap-5 lg:grid-cols-5">
-      <section className="space-y-4 lg:col-span-2">
+    <div className="space-y-3">
+      <section className="space-y-3">
         <button
           onClick={onBack}
-          className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm text-slate-600 ring-1 ring-slate-200"
+          className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-xs text-slate-600 ring-1 ring-slate-200"
         >
           <ArrowLeft className="h-4 w-4" />
           Quay lại tìm lộ trình
         </button>
 
-        <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200/70">
-          <div className="mb-3 text-sm text-slate-500">Điểm đi</div>
-          <div className="text-sm text-slate-800">{planResult.origin.label}</div>
-          <div className="mt-4 text-sm text-slate-500">Điểm đến</div>
-          <div className="text-sm text-slate-800">{planResult.destination.label}</div>
-        </div>
-
-        <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200/70">
-          <div className="mb-3 text-sm text-slate-700">Chọn tuyến để chỉ đường</div>
-          <div className="space-y-2">
-            {decoratedRoutes.map((item) => (
-              <button
-                key={item.kind}
-                onClick={() => setSelectedKind(item.kind)}
-                className={`w-full rounded-2xl px-3 py-2 text-left text-sm ring-1 ${
-                  selected.kind === item.kind
-                    ? "bg-linear-to-r from-blue-600 to-emerald-500 text-white ring-transparent"
-                    : "bg-slate-50 text-slate-700 ring-slate-200"
-                }`}
-              >
-                {item.title}
-              </button>
-            ))}
-          </div>
-
-          <a
-            href={googleMapsLink}
-            target="_blank"
-            rel="noreferrer"
-            className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs text-slate-600 ring-1 ring-slate-200"
-          >
-            <Navigation className="h-3.5 w-3.5" />
-            Mở trên Google Maps
-          </a>
-        </div>
+        <a
+          href={googleMapsLink}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-2 text-[11px] text-slate-600 ring-1 ring-slate-200"
+        >
+          <Navigation className="h-3.5 w-3.5" />
+          Mở trên Google Maps
+        </a>
       </section>
 
-      <section className="space-y-4 lg:col-span-3">
-        <div className="overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-200/70">
+      <section className="space-y-3">
+        <div className="overflow-hidden rounded-[1.6rem] bg-white shadow-sm ring-1 ring-slate-200/70">
           <div className="bg-linear-to-r from-blue-700 to-blue-600 p-5 text-white">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
@@ -680,19 +661,19 @@ function DirectionsPanel({
           <div className="border-b border-slate-200 bg-[#eef4ea]">
             <RouteMapCanvas
               planResult={planResult}
-              routes={decoratedRoutes}
+              routes={routeChoices}
               selectedKind={selected.kind}
-              heightClassName="h-[420px]"
+              heightClassName="h-[360px] sm:h-[460px]"
             />
           </div>
 
-          <div className="p-5">
+          <div className="p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <div className="text-lg text-slate-900">{selected.title}</div>
-                <div className="text-sm text-slate-500">{selected.reason}</div>
+                <div className="text-base text-slate-900">{selected.title}</div>
+                <div className="text-xs leading-5 text-slate-500">{selected.reason}</div>
               </div>
-              <div className="flex items-center gap-4 text-sm text-slate-600">
+              <div className="flex items-center gap-3 text-xs text-slate-600">
                 <div>{(selected.route.distanceM / 1000).toFixed(1)} km</div>
                 <div>{formatDuration(selected.route.durationS)}</div>
                 <div>AQI {selected.route.avgAqi}</div>
@@ -701,29 +682,38 @@ function DirectionsPanel({
           </div>
         </div>
 
-        <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200/70">
-          <div className="mb-4 text-sm text-slate-700">Chỉ đường từng bước</div>
-          <div className="space-y-3">
+        <div className="rounded-[1.6rem] bg-white p-4 shadow-sm ring-1 ring-slate-200/70">
+          <div className="mb-3 text-xs uppercase tracking-[0.18em] text-slate-700">Chỉ đường từng bước</div>
+          <div className="space-y-2">
             {selected.route.steps.length ? (
               selected.route.steps.map((step) => (
-                <div key={step.stepIndex} className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
+                <div key={step.stepIndex} className="rounded-[1rem] bg-slate-50 p-3 ring-1 ring-slate-200">
                   <div className="text-sm text-slate-900">
                     {step.stepIndex}. {step.instruction}
                   </div>
-                  <div className="mt-1 text-xs text-slate-500">
+                  <div className="mt-1 text-[11px] text-slate-500">
                     {Math.round(step.distanceM)} m · {formatDuration(step.durationS)}
                     {step.roadName ? ` · ${step.roadName}` : ""}
                   </div>
                 </div>
               ))
             ) : (
-              <div className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-500 ring-1 ring-slate-200">
+              <div className="rounded-[1rem] bg-slate-50 p-3 text-sm text-slate-500 ring-1 ring-slate-200">
                 Không có chi tiết bước đi cho tuyến này.
               </div>
             )}
           </div>
         </div>
       </section>
+    </div>
+  );
+}
+
+function RouteMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-[1rem] bg-white/75 px-3 py-2.5 ring-1 ring-white/80">
+      <div className="text-[11px] uppercase tracking-[0.18em] text-slate-400">{label}</div>
+      <div className="mt-1 text-xs text-slate-700">{value}</div>
     </div>
   );
 }

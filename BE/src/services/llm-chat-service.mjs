@@ -5,11 +5,11 @@ const apiKey = process.env.LLM_API_KEY?.trim() || "ollama";
 const model = process.env.LLM_MODEL?.trim() || "qwen2.5:7b";
 const provider = process.env.LLM_PROVIDER?.trim() || "ollama";
 
-const systemPrompt = `You are AirPath AI, an AQI assistant inside an air-pollution route and health app.
+const systemPrompt = `You are SafeMove HaNoi AI, an AQI assistant inside an air-pollution route and health app.
 
 Rules:
 - Answer in Vietnamese unless the user clearly writes in another language.
-- Use tool data whenever the question depends on AQI, profile, alerts, locations, or AirPath app state.
+- Use tool data whenever the question depends on AQI, profile, alerts, locations, or SafeMove HaNoi app state.
 - Do not invent AQI values, routes, medical facts, or notifications.
 - If tool data is missing, say what is missing.
 - Give practical, concise guidance.

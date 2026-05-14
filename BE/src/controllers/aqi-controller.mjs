@@ -100,6 +100,7 @@ export async function getIqAirAqiController(searchParams) {
 
   const cityData = payload?.data ?? {};
   const pollution = cityData?.current?.pollution ?? {};
+  const weather = cityData?.current?.weather ?? {};
   const coordinates = cityData?.location?.coordinates;
 
   return {
@@ -114,6 +115,9 @@ export async function getIqAirAqiController(searchParams) {
       lng: Array.isArray(coordinates) && typeof coordinates[0] === "number" ? coordinates[0] : lng,
       main_pollutant: toNullableString(pollution?.mainus),
       aqicn: toNullableNumber(pollution?.aqicn),
+      temperature: toNullableNumber(weather?.tp),
+      humidity: toNullableNumber(weather?.hu),
+      wind_speed: toNullableNumber(weather?.ws),
     },
   };
 }

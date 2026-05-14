@@ -3,3 +3,5 @@
 BE/.env
 node_modules/
 dist/
+FE/dist/
+assets/

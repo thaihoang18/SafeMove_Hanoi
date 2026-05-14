@@ -49,6 +49,6 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(port, () => {
-  console.log(`AirPath API listening on http://localhost:${port}`);
+  console.log(`SafeMove HaNoi API listening on http://localhost:${port}`);
 });
 
