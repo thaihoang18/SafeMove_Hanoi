@@ -119,10 +119,6 @@ export async function buildAdvicePreview({ userId, locationId, activityId }) {
   }
 
   const latestAqi = aqiRows[0]?.aqi ?? null;
-  if (latestAqi === null) {
-    throw new Error("No AQI measurement available for advice preview.");
-  }
-
   const conditionIds = new Set(conditionRows.map((row) => row.id));
   const selectedActivityId = activityRows[0]?.id ?? null;
 
@@ -133,19 +129,25 @@ export async function buildAdvicePreview({ userId, locationId, activityId }) {
     return matchesAqi && matchesCondition && matchesActivity;
   });
 
-  const advice = matchedRule
-    ? {
-        severity: matchedRule.severity,
-        title: matchedRule.title,
-        body: matchedRule.body,
-      }
-    : fallbackAdvice({
-        aqi: latestAqi,
-        userName: user.full_name,
-        conditionNames: conditionRows.map((row) => row.name),
-        activityName: activityRows[0]?.name ?? null,
-        locationName: aqiRows[0]?.name ?? null,
-      });
+  const advice = latestAqi !== null
+    ? matchedRule
+      ? {
+          severity: matchedRule.severity,
+          title: matchedRule.title,
+          body: matchedRule.body,
+        }
+      : fallbackAdvice({
+          aqi: latestAqi,
+          userName: user.full_name,
+          conditionNames: conditionRows.map((row) => row.name),
+          activityName: activityRows[0]?.name ?? null,
+          locationName: aqiRows[0]?.name ?? null,
+        })
+    : {
+        severity: "info",
+        title: "Không có dữ liệu AQI hiện tại",
+        body: `Không tìm thấy chỉ số không khí cho vị trí hiện tại. Hãy cập nhật vị trí hoặc chọn địa điểm có dữ liệu để nhận lời khuyên chính xác hơn.`,
+      };
 
   return {
     user,

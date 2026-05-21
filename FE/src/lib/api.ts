@@ -14,6 +14,18 @@ import type {
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
+const iqAirAqiCache = new Map<
+  string,
+  {
+    expiresAt: number;
+    promise: Promise<{ ok: true; measurement: GpsAqiMeasurement }>;
+  }
+>();
+
+function getIqAirCacheKey(lat: number, lng: number) {
+  return `${lat.toFixed(6)}|${lng.toFixed(6)}`;
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     headers: {
@@ -136,13 +148,45 @@ export async function fetchRouteHistory(userId: string) {
   );
 }
 
-export async function fetchIqAirAqiByCoordinates(lat: number, lng: number) {
+export async function fetchIqAirAqiByCoordinates(
+  lat: number,
+  lng: number,
+  options?: RequestInit,
+) {
+  const cacheKey = getIqAirCacheKey(lat, lng);
+
+  if (!options?.signal) {
+    const cached = iqAirAqiCache.get(cacheKey);
+    if (cached && cached.expiresAt > Date.now()) {
+      return cached.promise;
+    }
+  }
+
   const params = new URLSearchParams({
     lat: String(lat),
     lng: String(lng),
   });
 
-  return request<{ ok: true; measurement: GpsAqiMeasurement }>(`/api/aqi/iqair?${params.toString()}`);
+  const promise = request<{ ok: true; measurement: GpsAqiMeasurement }>(
+    `/api/aqi/iqair?${params.toString()}`,
+    options,
+  );
+
+  if (!options?.signal) {
+    iqAirAqiCache.set(cacheKey, {
+      expiresAt: Date.now() + 120000,
+      promise,
+    });
+
+    promise.catch(() => {
+      const current = iqAirAqiCache.get(cacheKey);
+      if (current?.promise === promise) {
+        iqAirAqiCache.delete(cacheKey);
+      }
+    });
+  }
+
+  return promise;
 }
 
 export async function searchPlaces(query: string, limit = 6) {

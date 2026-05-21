@@ -16,12 +16,21 @@ type DecoratedRoute = RouteRecommendation & {
   color: string;
 };
 
+type PositionCoords = {
+  label: string;
+  lat: number;
+  lng: number;
+  heading?: number | null;
+};
+
 type Props = {
   planResult: PlannedRoutesResponse | null;
   routes: DecoratedRoute[];
   selectedKind: RouteRecommendation["kind"];
   heightClassName?: string;
   interactive?: boolean;
+  currentPosition?: PositionCoords | null;
+  tracking?: boolean;
 };
 
 const tileUrl = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
@@ -32,6 +41,8 @@ export function RouteMapCanvas({
   selectedKind,
   heightClassName = "h-[320px]",
   interactive = true,
+  currentPosition,
+  tracking,
 }: Props) {
   const selectedRoute = routes.find((route) => route.kind === selectedKind) ?? routes[0] ?? null;
 
@@ -75,23 +86,35 @@ export function RouteMapCanvas({
   }
 
   return (
-    <div className={`overflow-hidden ${heightClassName}`}>
-      <MapContainer
-        center={center}
-        zoom={14}
-        scrollWheelZoom={interactive}
-        dragging={interactive}
-        doubleClickZoom={interactive}
-        touchZoom={interactive}
-        zoomControl={interactive}
-        attributionControl={false}
-        className="h-full w-full"
+    <div className={`route-map absolute inset-0 overflow-hidden ${heightClassName}`}>
+      <div
+        className="map-3d-wrapper absolute inset-0"
+        style={{
+          top: "0",
+          left: "0",
+          width: "100%",
+          height: "100%",
+          overflow: "hidden",
+        }}
       >
+        <MapContainer
+          center={center}
+          zoom={14}
+          scrollWheelZoom={interactive}
+          dragging={interactive}
+          doubleClickZoom={interactive}
+          touchZoom={interactive}
+          zoomControl={interactive}
+          attributionControl={false}
+          className="route-map-inner h-full w-full"
+        >
         <TileLayer
           url={tileUrl}
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         />
         <FitBounds points={allPoints} />
+        <InvalidateMapSize />
+        {tracking && currentPosition ? <FollowCurrentPosition position={currentPosition} /> : null}
 
         {routes.map((route) => {
           const positions = toLatLngs(route.route.geometry?.coordinates ?? []);
@@ -140,9 +163,90 @@ export function RouteMapCanvas({
             />
           </>
         ) : null}
+
+        {tracking && currentPosition ? (
+          <>
+            <CircleMarker
+              center={[currentPosition.lat, currentPosition.lng]}
+              radius={10}
+              pathOptions={{ color: "#2563eb", fillColor: "#2563eb", fillOpacity: 0.2 }}
+            />
+            <Marker
+              position={[currentPosition.lat, currentPosition.lng]}
+              icon={createUserIcon(currentPosition.heading ?? 0)}
+            >
+              <Popup>{currentPosition.label}</Popup>
+            </Marker>
+          </>
+        ) : null}
       </MapContainer>
     </div>
+  </div>
   );
+}
+
+function FollowCurrentPosition({ position, tracking }: { position: PositionCoords; tracking?: boolean }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!tracking) return;
+    map.flyTo([position.lat, position.lng], map.getZoom(), {
+      animate: true,
+      duration: 0.8,
+    });
+  }, [map, position, tracking]);
+
+  return null;
+}
+
+function InvalidateMapSize() {
+  const map = useMap();
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      map.invalidateSize();
+    }, 100);
+    return () => window.clearTimeout(timeout);
+  }, [map]);
+
+  return null;
+}
+
+function createUserIcon(heading: number) {
+  const rotation = `rotate(${heading}deg)`;
+  return L.divIcon({
+    className: "",
+    html: `
+      <div style="position: relative; width: 40px; height: 40px;">
+        <div style="
+          position: absolute;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transform: ${rotation};
+        ">
+          <div style="
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-bottom: 18px solid #2563eb;
+            filter: drop-shadow(0 2px 8px rgba(15, 23, 42, 0.22));
+          "></div>
+        </div>
+        <div style="
+          position: absolute;
+          inset: 0;
+          border-radius: 9999px;
+          border: 2px solid rgba(37, 99, 235, 0.18);
+          background: rgba(37, 99, 235, 0.08);
+        "></div>
+      </div>
+    `,
+    iconSize: [40, 40],
+    iconAnchor: [20, 20],
+  });
 }
 
 function FitBounds({ points }: { points: LatLngTuple[] }) {

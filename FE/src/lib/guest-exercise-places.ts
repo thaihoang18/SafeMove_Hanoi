@@ -18,6 +18,12 @@ type AssetPlaceRecord = {
 };
 
 export type PlaceCatalogItem = {
+  type: string;
+  image_url: import("react/jsx-runtime").JSX.Element;
+  distance_km: any;
+  is_japan_friendly: import("react/jsx-runtime").JSX.Element;
+  aqi_level: any;
+  amenities: boolean;
   id: string;
   name: string;
   location_type: string;

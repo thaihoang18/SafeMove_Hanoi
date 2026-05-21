@@ -25,9 +25,19 @@ import type {
 } from "./lib/types";
 import type { PlaceCatalogItem } from "./lib/guest-exercise-places";
 import { mergeExercisePlaces } from "./lib/guest-exercise-places";
-import { LoginScreen } from "./components/LoginScreen";
-import { Shell, type Role, type View } from "./components/Shell";
-import { WorkspaceScreens } from "./components/WorkspaceScreens";
+import { LoginScreenDemo } from "./components/LoginScreenDemo";
+import { RegisterScreenDemo } from "./components/RegisterScreenDemo";
+import { ShellDemo } from "./components/ShellDemo";
+import { HomeViewDemo } from "./components/HomeViewDemo";
+import { SearchLocationsView } from "./components/SearchLocationsView";
+import { LocationDetailView } from "./components/LocationDetailView";
+import { ReviewsListView } from "./components/ReviewsListView";
+import { RoutePlannerView } from "./components/RoutePlannerView";
+import { AqiAlertScreen } from "./components/AqiAlertScreen";
+import { ProfileViewDemo } from "./components/ProfileViewDemo";
+import type { View } from "./lib/types";
+
+type Role = "guest" | "user" | "admin";
 
 type LocationItem = PlaceCatalogItem;
 
@@ -51,6 +61,8 @@ export default function App() {
   );
   const [locations, setLocations] = useState<LocationItem[]>([]);
   const [routeHistory, setRouteHistory] = useState<Array<Record<string, unknown>>>([]);
+  const [selectedLocation, setSelectedLocation] = useState<LocationItem | null>(null);
+  const [showRegister, setShowRegister] = useState(false);
   const [maxRatio, setMaxRatio] = useState(1.5);
   const [routeSubmitting, setRouteSubmitting] = useState(false);
   const [profileSaving, setProfileSaving] = useState(false);
@@ -167,6 +179,21 @@ export default function App() {
     } finally {
       setProfileSaving(false);
     }
+  }
+
+  async function handleSaveProfileField(field: string, value: string) {
+    if (!user) return;
+    const payload: Record<string, unknown> = {};
+
+    if (field === "name") {
+      payload.full_name = value;
+    } else if (field === "phone") {
+      payload.phone = value;
+    } else {
+      payload[field] = value;
+    }
+
+    await handleSaveProfile(payload);
   }
 
   async function handleCreateRoute(payload: {
@@ -298,72 +325,190 @@ export default function App() {
   const mergedLocations = useMemo(() => mergeExercisePlaces(locations), [locations]);
 
   if (!user) {
-    return (
-      <LoginScreen
-        onLogin={handleLogin}
+    return showRegister ? (
+      <RegisterScreenDemo
         onRegister={handleRegister}
+        onLoginClick={() => setShowRegister(false)}
+        isLoading={loadingAuth}
+        error={authError ?? undefined}
+      />
+    ) : (
+      <LoginScreenDemo
+        onLogin={handleLogin}
+        onRegisterClick={() => setShowRegister(true)}
         onGuestContinue={handleGuestContinue}
-        error={authError}
-        loading={loadingAuth}
+        isLoading={loadingAuth}
+        error={authError ?? undefined}
       />
     );
   }
 
   return (
-    <Shell
+    <ShellDemo
       role={role}
       view={view}
       setView={setView}
       userName={user.full_name || user.email}
-      unreadCount={unreadCount}
       onRequireLogin={() => {
-        setGlobalError("Chức năng này cần đăng nhập.");
+        setGlobalError("Vui lòng đăng nhập để mở chức năng này.");
+        setView("home");
+      }}
+      onLogout={() => {
+        setUser(null);
+        setDashboard(null);
+        setProfile(null);
+        setNotifications([]);
+        setAdvice(null);
+        setRouteHistory([]);
+        setSelectedLocation(null);
+        setGpsAqi(null);
+        setGpsCoords(null);
+        setGpsError(null);
+        setRole("user");
         setView("home");
       }}
     >
-      {globalError ? (
-        <div className="mb-5 rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-700 ring-1 ring-amber-200">
+      {globalError && (
+        <div className="mb-5 rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700 ring-1 ring-emerald-200">
           {globalError}
         </div>
-      ) : null}
+      )}
 
-      <WorkspaceScreens
-        role={role}
-        view={view}
-        setView={setView}
-        user={user}
-        dashboard={dashboard}
-        profile={profile}
-        notifications={notifications}
-        advice={advice}
-        locations={mergedLocations}
-        routeHistory={routeHistory}
-        maxRatio={maxRatio}
-        setMaxRatio={setMaxRatio}
-        routeSubmitting={routeSubmitting}
-        profileSaving={profileSaving}
-        gpsAqi={gpsAqi}
-        gpsCoords={gpsCoords}
-        gpsLoading={gpsLoading}
-        gpsError={gpsError}
-        onRefreshGpsAqi={handleRefreshGpsAqi}
-        onCreateRoute={handleCreateRoute}
-        onSaveProfile={handleSaveProfile}
-        onMarkRead={handleMarkRead}
-        onLogout={() => {
-          setUser(null);
-          setDashboard(null);
-          setProfile(null);
-          setNotifications([]);
-          setAdvice(null);
-          setRouteHistory([]);
-          setGpsAqi(null);
-          setGpsCoords(null);
-          setGpsError(null);
-          setRole("user");
-          setView("home");
-        }}
-      />
-    </Shell>
+      {view === "home" && (
+        <HomeViewDemo
+          dashboard={dashboard}
+          advice={advice}
+          gpsAqi={gpsAqi}
+          gpsCoords={gpsCoords}
+          gpsLoading={gpsLoading}
+          onOpenAqiAlert={() => setView("alert")}
+          onRefreshGpsAqi={handleRefreshGpsAqi}
+          
+        />
+      )}
+
+      {view === "alert" && (
+        <AqiAlertScreen
+          gpsAqi={gpsAqi}
+          gpsCoords={gpsCoords}
+          locations={mergedLocations}
+          onBack={() => setView("home")}
+          onOpenRoute={() => {
+            if (role === "guest") {
+              setGlobalError("Vui lòng đăng nhập để tìm lộ trình.");
+              return;
+            }
+            setView("route");
+          }}
+        />
+      )}
+
+      {view === "search" && (
+        <SearchLocationsView
+          locations={mergedLocations}
+          onSelectLocation={(location) => {
+            setSelectedLocation(location);
+            setView("spot-detail");
+          }}
+          onRequireLogin={() => {
+            setGlobalError("Vui lòng đăng nhập để xem chi tiết địa điểm.");
+          }}
+        />
+      )}
+
+      {view === "spot-detail" && (
+        <LocationDetailView
+          location={selectedLocation}
+          isGuest={role === "guest"}
+          onRequireLogin={() => {
+            setGlobalError("Vui lòng đăng nhập để viết đánh giá hoặc xem chi tiết.");
+          }}
+          onOpenReviews={() => setView("reviews")}
+          onOpenRoute={() => {
+            if (role === "guest") {
+              setGlobalError("Vui lòng đăng nhập để tìm lộ trình.");
+              return;
+            }
+            setView("route");
+          }}
+        />
+      )}
+
+      {view === "reviews" && (
+        <ReviewsListView
+          locationName={selectedLocation?.name ?? "Địa điểm"}
+          reviews={
+            selectedLocation
+              ? [
+                  {
+                    id: 1,
+                    author: "Nguyễn An",
+                    rating: 5,
+                    date: "1 ngày trước",
+                    text: `Không khí rất tốt tại ${selectedLocation.name}. Mình đi chạy buổi sáng và thấy rất thoải mái.`,
+                  },
+                  {
+                    id: 2,
+                    author: "Lan Hương",
+                    rating: 4,
+                    date: "3 ngày trước",
+                    text: `Khu vực sạch sẽ, có nhiều cây xanh. Có thể thêm vài chỗ nghỉ chân nữa thì hoàn hảo.`,
+                  },
+                ]
+              : []
+          }
+          onBack={() => setView("spot-detail")}
+        />
+      )}
+
+      {view === "route" && (
+        <RoutePlannerView
+          origin={gpsCoords ? { label: "Vị trí hiện tại", lat: gpsCoords.lat, lng: gpsCoords.lng } : null}
+          destination={selectedLocation}
+          locations={mergedLocations.map((location) => ({
+            id: location.id,
+            name: location.name,
+            lat: location.lat,
+            lng: location.lng,
+            address: location.address ?? undefined,
+            city: location.city ?? undefined,
+            district: location.district,
+          }))}
+          maxRatio={maxRatio}
+          setMaxRatio={setMaxRatio}
+          onSubmit={handleCreateRoute}
+          routeHistory={routeHistory}
+          loading={routeSubmitting}
+        />
+      )}
+
+      {view === "profile" && (
+        <ProfileViewDemo
+          user={{
+            id: user.id,
+            name: profile?.user.full_name ?? user.full_name ?? user.email,
+            email: user.email,
+            phone: profile?.profile?.phone ?? "",
+            joinDate: profile?.user.created_at ?? new Date().toISOString(),
+          }}
+          onUpdateProfile={handleSaveProfileField}
+          onLogout={() => {
+            setUser(null);
+            setDashboard(null);
+            setProfile(null);
+            setNotifications([]);
+            setAdvice(null);
+            setRouteHistory([]);
+            setSelectedLocation(null);
+            setGpsAqi(null);
+            setGpsCoords(null);
+            setGpsError(null);
+            setRole("user");
+            setView("home");
+          }}
+          isLoading={profileSaving}
+        />
+      )}
+    </ShellDemo>
   );
 }

@@ -186,3 +186,14 @@ export type ChatMessage = {
   tool_name?: string | null;
   created_at: string;
 };
+
+export type View = 
+  | "home" 
+  | "search" 
+  | "spot-detail" 
+  | "reviews" 
+  | "route" 
+  | "profile" 
+  | "alert" 
+  | "notifications" 
+  | "chat";
