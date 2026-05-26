@@ -11,6 +11,7 @@ import {
   fetchProfile,
   fetchRouteHistory,
   login,
+  loginAdmin,
   markNotificationRead,
   previewAdvice,
   register,
@@ -30,7 +31,7 @@ import type { PlaceCatalogItem } from "./lib/guest-exercise-places";
 import { mergeExercisePlaces } from "./lib/guest-exercise-places";
 import { LoginScreenDemo } from "./components/LoginScreenDemo";
 import { RegisterScreenDemo } from "./components/RegisterScreenDemo";
-import { ShellDemo } from "./components/ShellDemo";
+import { ShellDemo, type View as ShellView } from "./components/ShellDemo";
 import { HomeViewDemo } from "./components/HomeViewDemo";
 import { SearchLocationsView } from "./components/SearchLocationsView";
 import { LocationDetailView } from "./components/LocationDetailView";
@@ -38,9 +39,10 @@ import { ReviewsListView } from "./components/ReviewsListView";
 import { RoutePlannerView } from "./components/RoutePlannerView";
 import { AqiAlertScreen } from "./components/AqiAlertScreen";
 import { ProfileViewDemo } from "./components/ProfileViewDemo";
-import type { View } from "./lib/types";
+import { AdminWorkspace } from "./components/AdminWorkspace";
 
 type Role = "guest" | "user" | "admin";
+type View = ShellView;
 
 type LocationItem = PlaceCatalogItem;
 
@@ -119,7 +121,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (!user || role === "guest") return;
+    if (!user || role === "guest" || role === "admin") return;
 
     Promise.all([
       fetchDashboard(user.id),
@@ -139,14 +141,29 @@ export default function App() {
       .catch((error) => setGlobalError(error.message));
   }, [role, user]);
 
-  async function handleLogin(email: string, password: string) {
+  async function handleUserLogin(email: string, password: string) {
     setLoadingAuth(true);
     setAuthError(null);
     try {
       const response = await login(email, password);
       setUser(response.user);
-      setRole("user");
-      setView("home");
+      setRole(response.user.role === "admin" ? "admin" : "user");
+      setView(response.user.role === "admin" ? "dashboard" : "home");
+    } catch (error) {
+      setAuthError(error instanceof Error ? error.message : "Login failed.");
+    } finally {
+      setLoadingAuth(false);
+    }
+  }
+
+  async function handleAdminLogin(email: string, password: string, securityCode: string) {
+    setLoadingAuth(true);
+    setAuthError(null);
+    try {
+      const response = await loginAdmin(email, password, securityCode);
+      setUser(response.user);
+      setRole(response.user.role === "admin" ? "admin" : "user");
+      setView(response.user.role === "admin" ? "dashboard" : "home");
     } catch (error) {
       setAuthError(error instanceof Error ? error.message : "Login failed.");
     } finally {
@@ -424,13 +441,31 @@ export default function App() {
       />
     ) : (
       <LoginScreenDemo
-        onLogin={handleLogin}
+        onUserLogin={handleUserLogin}
+        onAdminLogin={handleAdminLogin}
         onRegisterClick={() => setShowRegister(true)}
         onGuestContinue={handleGuestContinue}
         isLoading={loadingAuth}
         error={authError ?? undefined}
       />
     );
+  }
+
+  if (role === "admin") {
+    return <AdminWorkspace userName={user.full_name || user.email} onLogout={() => {
+      setUser(null);
+      setRole("user");
+      setView("home");
+      setDashboard(null);
+      setProfile(null);
+      setNotifications([]);
+      setAdvice(null);
+      setRouteHistory([]);
+      setSelectedLocation(null);
+      setGpsAqi(null);
+      setGpsCoords(null);
+      setGpsError(null);
+    }} />;
   }
 
   return (

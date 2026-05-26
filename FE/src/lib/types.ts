@@ -12,6 +12,19 @@ export type User = {
   birth_year?: number | null;
   home_lat?: number | null;
   home_lng?: number | null;
+  role?: "user" | "admin";
+};
+
+export type LocationRecord = {
+  id: string;
+  name: string;
+  location_type: string;
+  city: string | null;
+  district: string | null;
+  address: string | null;
+  lat: number;
+  lng: number;
+  created_at?: string;
 };
 
 export type ProfileResponse = {

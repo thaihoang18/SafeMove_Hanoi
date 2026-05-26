@@ -1,4 +1,9 @@
-import { createLocationController, listLocationsController } from "../controllers/location-controller.mjs";
+import {
+  createLocationController,
+  deleteLocationController,
+  listLocationsController,
+  updateLocationController,
+} from "../controllers/location-controller.mjs";
 import {
   createLocationReviewController,
   listLocationReviewsController,
@@ -24,6 +29,31 @@ export async function handleLocationRoutes(req, res, pathname, searchParams) {
       sendJson(res, 201, {
         ok: true,
         ...(await createLocationReviewController(locationId, body)),
+      });
+      return true;
+    }
+
+    methodNotAllowed(res);
+    return true;
+  }
+
+  const locationMatch = pathname.match(/^\/api\/locations\/([^/]+)$/);
+  if (locationMatch) {
+    const locationId = parseUuidParam(locationMatch[1], "locationId");
+
+    if (req.method === "PUT") {
+      const body = await readJsonBody(req);
+      sendJson(res, 200, {
+        ok: true,
+        ...(await updateLocationController(locationId, body)),
+      });
+      return true;
+    }
+
+    if (req.method === "DELETE") {
+      sendJson(res, 200, {
+        ok: true,
+        ...(await deleteLocationController(locationId)),
       });
       return true;
     }

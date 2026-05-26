@@ -2,6 +2,28 @@ import { sql } from "../db.mjs";
 import { hashPassword } from "../utils/security.mjs";
 import { assert, isNonEmptyString, toNullableNumber, toNullableString } from "../utils/validation.mjs";
 
+function getAdminCredentials() {
+  return {
+    username: (process.env.ADMIN_USERNAME ?? "admin").trim().toLowerCase(),
+    password: process.env.ADMIN_PASSWORD ?? "adminsmhn",
+    securityCode: process.env.ADMIN_SECURITY_CODE ?? "smhn",
+  };
+}
+
+async function buildAdminUser() {
+  const username = getAdminCredentials().username;
+
+  return {
+    id: "admin",
+    email: username,
+    full_name: "Quản trị viên",
+    birth_year: null,
+    home_lat: null,
+    home_lng: null,
+    role: "admin",
+  };
+}
+
 export async function registerUserController(body) {
   assert(isNonEmptyString(body.email), "email is required.");
   assert(isNonEmptyString(body.password), "password is required.");
@@ -44,20 +66,36 @@ export async function registerUserController(body) {
     on conflict (user_id) do nothing
   `;
 
-  return { user };
+  return { user: { ...user, role: "user" } };
 }
 
 export async function loginUserController(body) {
   assert(isNonEmptyString(body.email), "email is required.");
   assert(isNonEmptyString(body.password), "password is required.");
 
-  const email = body.email.trim().toLowerCase();
+  const identifier = body.email.trim().toLowerCase();
   const passwordHash = await hashPassword(body.password);
+  const adminCredentials = getAdminCredentials();
+
+  if (identifier === adminCredentials.username) {
+    const adminPasswordHash = await hashPassword(adminCredentials.password);
+    const securityCode = String(body.securityCode ?? "").trim();
+
+    if (passwordHash !== adminPasswordHash) {
+      throw new Error("Invalid admin credentials.");
+    }
+
+    if (securityCode !== adminCredentials.securityCode) {
+      throw new Error("Invalid security code.");
+    }
+
+    return { user: await buildAdminUser() };
+  }
 
   const rows = await sql`
     select id, email, full_name, birth_year, home_lat, home_lng, created_at
     from airpath.users
-    where email = ${email}
+    where email = ${identifier}
       and password_hash = ${passwordHash}
     limit 1
   `;
@@ -66,6 +104,6 @@ export async function loginUserController(body) {
     throw new Error("Invalid email or password.");
   }
 
-  return { user: rows[0] };
+  return { user: { ...rows[0], role: "user" } };
 }
 

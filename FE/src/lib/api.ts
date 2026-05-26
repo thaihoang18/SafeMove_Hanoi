@@ -52,9 +52,16 @@ export async function fetchBootstrapData() {
 }
 
 export async function login(email: string, password: string) {
-  return request<{ ok: true; user: User }>("/api/auth/login", {
+  return request<{ ok: true; user: User & { role?: "user" | "admin" } }>("/api/auth/login", {
     method: "POST",
     body: JSON.stringify({ email, password }),
+  });
+}
+
+export async function loginAdmin(email: string, password: string, securityCode: string) {
+  return request<{ ok: true; user: User & { role?: "user" | "admin" } }>("/api/auth/login", {
+    method: "POST",
+    body: JSON.stringify({ email, password, securityCode }),
   });
 }
 
@@ -118,6 +125,45 @@ export async function fetchLocations() {
       lng: number;
     }>;
   }>("/api/locations");
+}
+
+export async function createLocation(payload: {
+  name: string;
+  locationType: string;
+  city?: string | null;
+  district?: string | null;
+  address?: string | null;
+  lat: number;
+  lng: number;
+}) {
+  return request<{ ok: true; location: Record<string, unknown> }>("/api/locations", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateLocation(
+  locationId: string,
+  payload: {
+    name: string;
+    locationType: string;
+    city?: string | null;
+    district?: string | null;
+    address?: string | null;
+    lat: number;
+    lng: number;
+  },
+) {
+  return request<{ ok: true; location: Record<string, unknown> }>(`/api/locations/${locationId}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteLocation(locationId: string) {
+  return request<{ ok: true; location: Record<string, unknown> }>(`/api/locations/${locationId}`, {
+    method: "DELETE",
+  });
 }
 
 export async function fetchLocationReviews(locationId: string) {

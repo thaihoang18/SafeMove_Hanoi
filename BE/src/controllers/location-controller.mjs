@@ -47,3 +47,42 @@ export async function createLocationController(body) {
   return { location };
 }
 
+export async function updateLocationController(locationId, body) {
+  assert(isNonEmptyString(body.name), "name is required.");
+  assert(isNonEmptyString(body.locationType), "locationType is required.");
+
+  const [location] = await sql`
+    update airpath.locations
+    set
+      name = ${body.name.trim()},
+      location_type = ${body.locationType.trim()},
+      city = ${toNullableString(body.city)},
+      district = ${toNullableString(body.district)},
+      address = ${toNullableString(body.address)},
+      lat = ${Number(body.lat)},
+      lng = ${Number(body.lng)}
+    where id = ${locationId}
+    returning *
+  `;
+
+  if (!location) {
+    throw new Error("Location not found.");
+  }
+
+  return { location };
+}
+
+export async function deleteLocationController(locationId) {
+  const [location] = await sql`
+    delete from airpath.locations
+    where id = ${locationId}
+    returning *
+  `;
+
+  if (!location) {
+    throw new Error("Location not found.");
+  }
+
+  return { location };
+}
+

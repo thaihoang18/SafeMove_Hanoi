@@ -18,6 +18,9 @@ Required env vars:
 - `DATABASE_URL`
 - `PORT` (optional, default from code)
 - `IQAIR_API_KEY` (for GPS-based AQI lookup)
+- `ADMIN_USERNAME` (optional, default `admin`)
+- `ADMIN_PASSWORD` (optional, default `adminsmhn`)
+- `ADMIN_SECURITY_CODE` (optional, default `smhn`)
 - `LLM_PROVIDER` (optional, default `ollama`)
 - `LLM_BASE_URL` (optional, default `http://127.0.0.1:11434/v1`)
 - `LLM_API_KEY` (optional, default `ollama`)
