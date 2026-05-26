@@ -1,6 +1,7 @@
 import type {
   DashboardResponse,
   GpsAqiMeasurement,
+  LocationReview,
   LookupItem,
   ChatMessage,
   ChatSession,
@@ -117,6 +118,20 @@ export async function fetchLocations() {
       lng: number;
     }>;
   }>("/api/locations");
+}
+
+export async function fetchLocationReviews(locationId: string) {
+  return request<{ ok: true; reviews: LocationReview[] }>(`/api/locations/${locationId}/reviews`);
+}
+
+export async function createLocationReview(
+  locationId: string,
+  payload: { userId: string; rating: number; content: string; metadata?: Record<string, unknown> },
+) {
+  return request<{ ok: true; review: LocationReview }>(`/api/locations/${locationId}/reviews`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
 }
 
 export async function createRouteRequest(payload: {

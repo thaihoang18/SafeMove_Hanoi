@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   createRouteRequest,
+  createLocationReview,
   fetchBootstrapData,
   fetchDashboard,
   fetchIqAirAqiByCoordinates,
+  fetchLocationReviews,
   fetchLocations,
   fetchNotifications,
   fetchProfile,
@@ -18,6 +20,7 @@ import type {
   DashboardResponse,
   LookupItem,
   NotificationItem,
+  LocationReview,
   ProfileResponse,
   RouteOption,
   User,
@@ -41,6 +44,20 @@ type Role = "guest" | "user" | "admin";
 
 type LocationItem = PlaceCatalogItem;
 
+function normalizeLocationKey(location: Pick<LocationItem, "name" | "address">) {
+  return `${normalizeText(location.name)}|${normalizeText(location.address ?? "")}`;
+}
+
+function normalizeText(value: string) {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [role, setRole] = useState<Role>("user");
@@ -62,6 +79,9 @@ export default function App() {
   const [locations, setLocations] = useState<LocationItem[]>([]);
   const [routeHistory, setRouteHistory] = useState<Array<Record<string, unknown>>>([]);
   const [selectedLocation, setSelectedLocation] = useState<LocationItem | null>(null);
+  const [selectedLocationReviews, setSelectedLocationReviews] = useState<LocationReview[]>([]);
+  const [selectedLocationReviewsLoading, setSelectedLocationReviewsLoading] = useState(false);
+  const [selectedLocationReviewsError, setSelectedLocationReviewsError] = useState<string | null>(null);
   const [showRegister, setShowRegister] = useState(false);
   const [maxRatio, setMaxRatio] = useState(1.5);
   const [routeSubmitting, setRouteSubmitting] = useState(false);
@@ -324,6 +344,76 @@ export default function App() {
 
   const mergedLocations = useMemo(() => mergeExercisePlaces(locations), [locations]);
 
+  const resolveBackendLocation = useCallback(
+    (location: LocationItem | null) => {
+      if (!location) {
+        return null;
+      }
+
+      const key = normalizeLocationKey(location);
+      return locations.find((item) => normalizeLocationKey(item) === key) ?? null;
+    },
+    [locations],
+  );
+
+  const selectedBackendLocation = useMemo(
+    () => resolveBackendLocation(selectedLocation),
+    [resolveBackendLocation, selectedLocation],
+  );
+
+  const loadSelectedLocationReviews = useCallback(async (locationId: string) => {
+    setSelectedLocationReviewsLoading(true);
+    setSelectedLocationReviewsError(null);
+
+    try {
+      const response = await fetchLocationReviews(locationId);
+      setSelectedLocationReviews(response.reviews);
+    } catch (error) {
+      setSelectedLocationReviewsError(error instanceof Error ? error.message : "Unable to load reviews.");
+    } finally {
+      setSelectedLocationReviewsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!selectedBackendLocation || (view !== "spot-detail" && view !== "reviews")) {
+      setSelectedLocationReviews([]);
+      setSelectedLocationReviewsError(null);
+      setSelectedLocationReviewsLoading(false);
+      return;
+    }
+
+    void loadSelectedLocationReviews(selectedBackendLocation.id);
+
+    const timer = window.setInterval(() => {
+      void loadSelectedLocationReviews(selectedBackendLocation.id);
+    }, 15000);
+
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, [loadSelectedLocationReviews, selectedBackendLocation, view]);
+
+  const handleSubmitLocationReview = useCallback(
+    async ({ rating, content }: { rating: number; content: string }) => {
+      if (!selectedBackendLocation || !user) {
+        throw new Error("Missing selected location or user.");
+      }
+
+      const response = await createLocationReview(selectedBackendLocation.id, {
+        userId: user.id,
+        rating,
+        content,
+      });
+
+      setSelectedLocationReviews((current) => [response.review, ...current]);
+      if (view === "reviews") {
+        void loadSelectedLocationReviews(selectedBackendLocation.id);
+      }
+    },
+    [loadSelectedLocationReviews, selectedBackendLocation, user, view],
+  );
+
   if (!user) {
     return showRegister ? (
       <RegisterScreenDemo
@@ -407,7 +497,7 @@ export default function App() {
         <SearchLocationsView
           locations={mergedLocations}
           onSelectLocation={(location) => {
-            setSelectedLocation(location);
+            setSelectedLocation(resolveBackendLocation(location));
             setView("spot-detail");
           }}
           onRequireLogin={() => {
@@ -420,6 +510,9 @@ export default function App() {
         <LocationDetailView
           location={selectedLocation}
           isGuest={role === "guest"}
+          reviews={selectedLocationReviews}
+          reviewsLoading={selectedLocationReviewsLoading}
+          reviewsError={selectedLocationReviewsError}
           onRequireLogin={() => {
             setGlobalError("Vui lòng đăng nhập để viết đánh giá hoặc xem chi tiết.");
           }}
@@ -431,32 +524,16 @@ export default function App() {
             }
             setView("route");
           }}
+          onSubmitReview={handleSubmitLocationReview}
         />
       )}
 
       {view === "reviews" && (
         <ReviewsListView
-          locationName={selectedLocation?.name ?? "Địa điểm"}
-          reviews={
-            selectedLocation
-              ? [
-                  {
-                    id: 1,
-                    author: "Nguyễn An",
-                    rating: 5,
-                    date: "1 ngày trước",
-                    text: `Không khí rất tốt tại ${selectedLocation.name}. Mình đi chạy buổi sáng và thấy rất thoải mái.`,
-                  },
-                  {
-                    id: 2,
-                    author: "Lan Hương",
-                    rating: 4,
-                    date: "3 ngày trước",
-                    text: `Khu vực sạch sẽ, có nhiều cây xanh. Có thể thêm vài chỗ nghỉ chân nữa thì hoàn hảo.`,
-                  },
-                ]
-              : []
-          }
+          locationName={selectedBackendLocation?.name ?? selectedLocation?.name ?? "Địa điểm"}
+          reviews={selectedLocationReviews}
+          reviewsLoading={selectedLocationReviewsLoading}
+          reviewsError={selectedLocationReviewsError}
           onBack={() => setView("spot-detail")}
         />
       )}

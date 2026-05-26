@@ -2,17 +2,8 @@ import { MapPin, Star, Activity } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { PlaceCatalogItem } from "@/lib/guest-exercise-places";
 import { fetchIqAirAqiByCoordinates } from "@/lib/api";
-import type { GpsAqiMeasurement } from "@/lib/types";
+import type { GpsAqiMeasurement, LocationReview } from "@/lib/types";
 import "../styles/demo-detail.css";
-
-type Review = {
-  id: number;
-  author: string;
-  rating: number;
-  date: string;
-  text: string;
-  avatar?: string;
-};
 
 type Props = {
   location: PlaceCatalogItem | null;
@@ -20,6 +11,10 @@ type Props = {
   onOpenReviews?: () => void;
   isGuest: boolean;
   onRequireLogin?: () => void;
+  reviews: LocationReview[];
+  reviewsLoading?: boolean;
+  reviewsError?: string | null;
+  onSubmitReview: (payload: { rating: number; content: string }) => Promise<void>;
 };
 
 export function LocationDetailView({
@@ -28,43 +23,46 @@ export function LocationDetailView({
   onOpenReviews,
   isGuest,
   onRequireLogin,
+  reviews,
+  reviewsLoading = false,
+  reviewsError,
+  onSubmitReview,
 }: Props) {
   const [reviewText, setReviewText] = useState("");
   const [userRating, setUserRating] = useState(0);
+  const [submittingReview, setSubmittingReview] = useState(false);
   const [aqiMeasurement, setAqiMeasurement] = useState<GpsAqiMeasurement | null>(null);
   const [aqiLoading, setAqiLoading] = useState(false);
   const [aqiError, setAqiError] = useState<string | null>(null);
-  const [reviews] = useState<Review[]>([
-    {
-      id: 1,
-      author: "Trần An",
-      rating: 5,
-      date: "2 days ago",
-      text: "Air quality is very fresh. Perfect for morning jogging. Area near Gate 2 is especially recommended.",
-      avatar: "👤",
-    },
-    {
-      id: 2,
-      author: "Lê Minh",
-      rating: 4,
-      date: "1 week ago",
-      text: "Great place to exercise. Good facilities and plenty of shade.",
-      avatar: "👤",
-    },
-  ]);
 
-  const handleSubmitReview = () => {
+  const handleSubmitReview = async () => {
     if (!reviewText.trim()) {
       alert("Please enter a review");
       return;
     }
+
+    if (userRating < 1) {
+      alert("Please choose a star rating");
+      return;
+    }
+
     if (isGuest) {
       onRequireLogin?.();
       return;
     }
-    // Submit review logic here
-    setReviewText("");
-    setUserRating(0);
+
+    setSubmittingReview(true);
+
+    try {
+      await onSubmitReview({ rating: userRating, content: reviewText.trim() });
+      setReviewText("");
+      setUserRating(0);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not submit review.";
+      alert(message);
+    } finally {
+      setSubmittingReview(false);
+    }
   };
 
   useEffect(() => {
@@ -221,8 +219,8 @@ export function LocationDetailView({
                   </button>
                 ))}
               </div>
-              <button className="btn-submit-review" onClick={handleSubmitReview}>
-                Send
+              <button className="btn-submit-review" onClick={handleSubmitReview} disabled={submittingReview}>
+                {submittingReview ? "Sending..." : "Send"}
               </button>
             </div>
           </div>
@@ -239,11 +237,14 @@ export function LocationDetailView({
 
         {/* Reviews List */}
         <div className="reviews-list">
-          {reviews.length > 0 ? (
+          {reviewsError && <p className="no-reviews">{reviewsError}</p>}
+          {reviewsLoading ? (
+            <p className="no-reviews">Loading reviews...</p>
+          ) : reviews.length > 0 ? (
             reviews.map((review) => (
               <div key={review.id} className="review-card">
                 <div className="rev-user-info">
-                  <span className="rev-avatar">{review.avatar}</span>
+                  <span className="rev-avatar">{review.author.slice(0, 1).toUpperCase()}</span>
                   <div className="rev-user-details">
                     <h5>{review.author}</h5>
                     <span className="stars">
@@ -254,9 +255,9 @@ export function LocationDetailView({
                         ))}
                     </span>
                   </div>
-                  <span className="rev-date">{review.date}</span>
+                  <span className="rev-date">{formatRelativeTime(review.created_at)}</span>
                 </div>
-                <p className="rev-text">"{review.text}"</p>
+                <p className="rev-text">"{review.content}"</p>
               </div>
             ))
           ) : (
@@ -271,4 +272,23 @@ export function LocationDetailView({
       </button>
     </div>
   );
+}
+
+function formatRelativeTime(value: string) {
+  const timestamp = new Date(value).getTime();
+  if (Number.isNaN(timestamp)) {
+    return "Just now";
+  }
+
+  const diffSeconds = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
+  if (diffSeconds < 60) return "Just now";
+
+  const diffMinutes = Math.floor(diffSeconds / 60);
+  if (diffMinutes < 60) return `${diffMinutes}m ago`;
+
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) return `${diffHours}h ago`;
+
+  const diffDays = Math.floor(diffHours / 24);
+  return `${diffDays}d ago`;
 }

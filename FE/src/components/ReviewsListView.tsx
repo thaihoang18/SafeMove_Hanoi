@@ -1,24 +1,17 @@
 import { ChevronLeft, Star, Filter } from "lucide-react";
 import { useState } from "react";
+import type { LocationReview } from "@/lib/types";
 import "../styles/demo-reviews.css";
-
-type Review = {
-  id: number;
-  author: string;
-  rating: number;
-  date: string;
-  text: string;
-  avatar?: string;
-  helpful?: number;
-};
 
 type Props = {
   locationName: string;
-  reviews: Review[];
+  reviews: LocationReview[];
   onBack: () => void;
+  reviewsLoading?: boolean;
+  reviewsError?: string | null;
 };
 
-export function ReviewsListView({ locationName, reviews, onBack }: Props) {
+export function ReviewsListView({ locationName, reviews, onBack, reviewsLoading = false, reviewsError }: Props) {
   const [sortBy, setSortBy] = useState<"recent" | "rating-high" | "rating-low">("recent");
 
   // Calculate statistics
@@ -107,11 +100,16 @@ export function ReviewsListView({ locationName, reviews, onBack }: Props) {
 
         {/* Reviews List */}
         <div className="all-reviews-list">
-          {sortedReviews.length > 0 ? (
+          {reviewsError && <div className="no-reviews-message"><p>{reviewsError}</p></div>}
+          {reviewsLoading ? (
+            <div className="no-reviews-message">
+              <p>Loading reviews...</p>
+            </div>
+          ) : sortedReviews.length > 0 ? (
             sortedReviews.map((review) => (
               <div key={review.id} className="review-card-full">
                 <div className="review-header-row">
-                  <span className="review-avatar">{review.avatar || "👤"}</span>
+                  <span className="review-avatar">{review.author.slice(0, 1).toUpperCase()}</span>
                   <div className="review-meta">
                     <h5 className="review-author">{review.author}</h5>
                     <div className="review-rating">
@@ -127,12 +125,12 @@ export function ReviewsListView({ locationName, reviews, onBack }: Props) {
                         ))}
                     </div>
                   </div>
-                  <span className="review-date">{review.date}</span>
+                  <span className="review-date">{formatRelativeTime(review.created_at)}</span>
                 </div>
-                <p className="review-body">"{review.text}"</p>
-                {review.helpful !== undefined && (
+                <p className="review-body">"{review.content}"</p>
+                {review.helpful_count > 0 && (
                   <div className="review-footer">
-                    <button className="helpful-btn">👍 Helpful ({review.helpful})</button>
+                    <button className="helpful-btn">👍 Helpful ({review.helpful_count})</button>
                   </div>
                 )}
               </div>
@@ -147,4 +145,23 @@ export function ReviewsListView({ locationName, reviews, onBack }: Props) {
       </main>
     </div>
   );
+}
+
+function formatRelativeTime(value: string) {
+  const timestamp = new Date(value).getTime();
+  if (Number.isNaN(timestamp)) {
+    return "Just now";
+  }
+
+  const diffSeconds = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
+  if (diffSeconds < 60) return "Just now";
+
+  const diffMinutes = Math.floor(diffSeconds / 60);
+  if (diffMinutes < 60) return `${diffMinutes}m ago`;
+
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) return `${diffHours}h ago`;
+
+  const diffDays = Math.floor(diffHours / 24);
+  return `${diffDays}d ago`;
 }

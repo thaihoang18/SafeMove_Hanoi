@@ -433,4 +433,36 @@ INSERT INTO activities (slug, name, description) VALUES
 ('gym', 'Gym', 'Tập trong nhà')
 ON CONFLICT (slug) DO NOTHING;
 
+CREATE TABLE IF NOT EXISTS airpath.location_reviews (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  location_id uuid NOT NULL,
+  user_id uuid NOT NULL,
+  rating smallint NOT NULL CHECK (rating BETWEEN 1 AND 5),
+  content text NOT NULL CHECK (char_length(btrim(content)) > 0),
+  helpful_count int NOT NULL DEFAULT 0 CHECK (helpful_count >= 0),
+  is_hidden boolean NOT NULL DEFAULT false,
+  moderation_note text,
+  metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+ALTER TABLE airpath.location_reviews
+  ADD CONSTRAINT fk_location_reviews_location
+  FOREIGN KEY (location_id) REFERENCES airpath.locations(id) ON DELETE CASCADE;
+
+ALTER TABLE airpath.location_reviews
+  ADD CONSTRAINT fk_location_reviews_user
+  FOREIGN KEY (user_id) REFERENCES airpath.users(id) ON DELETE CASCADE;
+
+CREATE INDEX IF NOT EXISTS idx_location_reviews_location_time
+  ON airpath.location_reviews(location_id, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_location_reviews_user_time
+  ON airpath.location_reviews(user_id, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_location_reviews_visible
+  ON airpath.location_reviews(location_id, created_at DESC)
+  WHERE is_hidden = false;
+
 COMMIT;

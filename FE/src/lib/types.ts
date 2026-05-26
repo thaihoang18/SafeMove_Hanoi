@@ -107,6 +107,20 @@ export type PlaceSuggestion = {
   source: "nominatim" | "local";
 };
 
+export type LocationReview = {
+  id: string;
+  location_id: string;
+  user_id: string;
+  author: string;
+  rating: number;
+  content: string;
+  helpful_count: number;
+  is_hidden: boolean;
+  created_at: string;
+  updated_at: string;
+  metadata?: Record<string, unknown>;
+};
+
 export type RouteStep = {
   stepIndex: number;
   distanceM: number;
