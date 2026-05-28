@@ -1,4 +1,4 @@
-import rawPlaces from "../../../assets/address/phòng-gym-ở-hà-nội-20-9945353-105-843831-14z-overview.json";
+import rawPlaces from "./guest-exercise-places-data";
 
 type AssetPlaceRecord = {
   place_id: string;
@@ -18,12 +18,12 @@ type AssetPlaceRecord = {
 };
 
 export type PlaceCatalogItem = {
-  type: string;
-  image_url: import("react/jsx-runtime").JSX.Element;
-  distance_km: any;
-  is_japan_friendly: import("react/jsx-runtime").JSX.Element;
-  aqi_level: any;
-  amenities: boolean;
+  type?: string;
+  image_url?: string | import("react").ReactNode;
+  distance_km?: number | null;
+  is_japan_friendly?: boolean | import("react").ReactNode;
+  aqi_level?: number | null;
+  amenities?: boolean;
   id: string;
   name: string;
   location_type: string;
@@ -143,7 +143,9 @@ function pickDistrict(parts: string[]) {
 
 function pickCity(parts: string[]) {
   const city = parts.find((part) => /ha noi/i.test(part));
-  return city ?? parts.at(-1) ?? null;
+  if (city) return city;
+  if (parts.length === 0) return null;
+  return parts[parts.length - 1] ?? null;
 }
 
 function createKey(place: PlaceCatalogItem) {

@@ -26,6 +26,7 @@ export function ProfileViewDemo({
   const [editValue, setEditValue] = useState("");
   const [aqiThreshold, setAqiThreshold] = useState(50);
   const [pushNotifications, setPushNotifications] = useState(true);
+  const [emailUpdates, setEmailUpdates] = useState(false);
 
   const handleEditClick = (field: string, currentValue: string) => {
     setEditingField(field);
@@ -253,6 +254,22 @@ export function ProfileViewDemo({
           </div>
 
           <div className="divider-line"></div>
+
+          {/* Email Updates */}
+          <div className="toggle-row">
+            <span className="setting-item-title">
+              <Mail size={16} className="inline-icon" />
+              Email Updates
+            </span>
+            <label className="switch">
+              <input
+                type="checkbox"
+                checked={emailUpdates}
+                onChange={(e) => setEmailUpdates(e.target.checked)}
+              />
+              <span className="slider round"></span>
+            </label>
+          </div>
         </div>
       </div>
 

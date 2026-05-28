@@ -1,21 +1,6 @@
-import { Bell, Clock3, Home, LogOut, Map, Search, Shield, User, Wind, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { Home, Search, Map, User, Wind, LogOut, Shield } from "lucide-react";
 import type { ReactNode } from "react";
 import "../styles/demo-shell.css";
-
-export type AqiTone = "good" | "moderate" | "sensitive" | "bad" | "very-bad" | "unknown";
-
-export type AqiAlertItem = {
-  id: string;
-  title: string;
-  body: string;
-  tone: AqiTone;
-  toneLabel: string;
-  aqi: number | null;
-  location: string;
-  createdAt: string;
-  deltaText: string | null;
-};
 
 export type Role = "guest" | "user" | "admin";
 export type View =
@@ -44,10 +29,6 @@ type Props = {
   view: View;
   setView: (view: View) => void;
   userName: string;
-  aqiAlerts: AqiAlertItem[];
-  aqiUnreadCount: number;
-  onAqiBellClick: () => void;
-  onOpenAqiDetail: () => void;
   onRequireLogin: () => void;
   onLogout?: () => void;
   children: ReactNode;
@@ -79,21 +60,15 @@ export function ShellDemo({
   view,
   setView,
   userName,
-  aqiAlerts,
-  aqiUnreadCount,
-  onAqiBellClick,
-  onOpenAqiDetail,
   onRequireLogin,
   onLogout,
   children,
 }: Props) {
   const navItems = role === "admin" ? adminNavItems : role === "user" ? userNavItems : guestNavItems;
-  const [isAqiPanelOpen, setIsAqiPanelOpen] = useState(false);
-  const latestAlert = useMemo(() => aqiAlerts[0] ?? null, [aqiAlerts]);
 
   function handleNavigate(nextView: View) {
     // Auth-required views
-    if (role === "guest" && ["route", "profile"].includes(nextView)) {
+    if (role === "guest" && ["route", "profile", "alert"].includes(nextView)) {
       onRequireLogin();
       return;
     }
@@ -112,11 +87,6 @@ export function ShellDemo({
     }
   };
 
-  const openAqiPanel = () => {
-    setIsAqiPanelOpen((current) => !current);
-    onAqiBellClick();
-  };
-
   return (
     <div className="demo-shell">
       {/* Header */}
@@ -125,15 +95,9 @@ export function ShellDemo({
           <Wind className="logo-icon" />
           <span className="logo-text">SafeMove HaNoi</span>
         </div>
-        <div className="header-actions-demo">
-          <button className="aqi-bell-btn-demo" onClick={openAqiPanel} title="Thông báo AQI" aria-label="Thông báo AQI">
-            <Bell size={18} />
-            {aqiUnreadCount > 0 && <span className="aqi-bell-badge-demo">{aqiUnreadCount > 9 ? "9+" : aqiUnreadCount}</span>}
-          </button>
-          <button className="avatar-btn-demo" onClick={avatarClick} title={userName} aria-label="Mở hồ sơ người dùng">
-            {role === "guest" ? <User size={18} /> : <span className="avatar-letter">{userName.charAt(0).toUpperCase()}</span>}
-          </button>
-        </div>
+        <button className="avatar-btn-demo" onClick={avatarClick} title={userName}>
+          {role === "guest" ? <User size={18} /> : <span className="avatar-letter">{userName.charAt(0).toUpperCase()}</span>}
+        </button>
       </header>
 
       {/* Main Content */}
@@ -155,51 +119,6 @@ export function ShellDemo({
           </button>
         ))}
       </nav>
-
-      {isAqiPanelOpen && (
-        <div className="aqi-popover-layer-demo" role="presentation" onClick={() => setIsAqiPanelOpen(false)}>
-          <section
-            className="aqi-popover-demo"
-            role="dialog"
-            aria-modal="false"
-            aria-label="Thông báo AQI"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <header className="aqi-popover-header-demo">
-              <div>
-                <div className="aqi-panel-kicker-demo">Thông báo AQI</div>
-                <h2>Cập nhật gần đây</h2>
-              </div>
-              <button className="aqi-panel-close-demo" onClick={() => setIsAqiPanelOpen(false)} aria-label="Đóng">
-                <X size={18} />
-              </button>
-            </header>
-
-            <div className="aqi-alert-list-demo">
-              {aqiAlerts.length > 0 ? (
-                aqiAlerts.map((alert) => (
-                  <article key={alert.id} className={`aqi-alert-item-demo aqi-tone-${alert.tone}`}>
-                    <div className="aqi-alert-topline-demo">
-                      <span className="aqi-alert-title-demo">{alert.title}</span>
-                      <span className="aqi-alert-time-demo">
-                        <Clock3 size={14} />
-                        {new Date(alert.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                      </span>
-                    </div>
-                    <p className="aqi-alert-body-demo">{alert.body}</p>
-                    {alert.deltaText && <p className="aqi-alert-delta-demo">{alert.deltaText}</p>}
-                  </article>
-                ))
-              ) : (
-                <div className="aqi-alert-empty-demo">
-                  Chưa có cảnh báo mới. Khi AQI đổi sang khoảng khác, thẻ mới sẽ xuất hiện ở đây, tối đa 5 thẻ gần nhất.
-                </div>
-              )}
-            </div>
-
-          </section>
-        </div>
-      )}
     </div>
   );
 }

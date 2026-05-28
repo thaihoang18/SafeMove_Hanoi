@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   createRouteRequest,
   createLocationReview,
@@ -44,20 +44,6 @@ import { AdminWorkspace } from "./components/AdminWorkspace";
 type Role = "guest" | "user" | "admin";
 type View = ShellView;
 
-type AqiTone = "good" | "moderate" | "sensitive" | "bad" | "very-bad" | "unknown";
-
-type AqiAlertItem = {
-  id: string;
-  title: string;
-  body: string;
-  tone: AqiTone;
-  toneLabel: string;
-  aqi: number | null;
-  location: string;
-  createdAt: string;
-  deltaText: string | null;
-};
-
 type LocationItem = PlaceCatalogItem;
 
 function normalizeLocationKey(location: Pick<LocationItem, "name" | "address">) {
@@ -72,102 +58,6 @@ function normalizeText(value: string) {
     .replace(/[^a-z0-9\s]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
-}
-
-function getAqiTone(value: number | null): { tone: AqiTone; label: string; advice: string } {
-  if (value === null) {
-    return {
-      tone: "unknown",
-      label: "Chưa có dữ liệu",
-      advice: "Chưa nhận được AQI mới. Hãy bật GPS hoặc thử lại sau để nhận cảnh báo chính xác hơn.",
-    };
-  }
-
-  if (value <= 50) {
-    return {
-      tone: "good",
-      label: "Tốt",
-      advice: "Không khí tốt. Bạn có thể ra ngoài, tập nhẹ và giữ nhịp sinh hoạt bình thường.",
-    };
-  }
-
-  if (value <= 100) {
-    return {
-      tone: "moderate",
-      label: "Trung bình",
-      advice: "Không khí vẫn chấp nhận được. Người nhạy cảm nên theo dõi thêm trước khi vận động dài ngoài trời.",
-    };
-  }
-
-  if (value <= 150) {
-    return {
-      tone: "sensitive",
-      label: "Kém cho nhóm nhạy cảm",
-      advice: "Hạn chế vận động mạnh ngoài trời. Nếu phải ra ngoài, hãy dùng khẩu trang lọc tốt và rút ngắn thời gian tiếp xúc.",
-    };
-  }
-
-  if (value <= 200) {
-    return {
-      tone: "bad",
-      label: "Xấu",
-      advice: "Nên giảm tối đa hoạt động ngoài trời, chuyển sang tập trong nhà và đóng cửa khi không cần thông gió.",
-    };
-  }
-
-  return {
-    tone: "very-bad",
-    label: "Rất xấu",
-    advice: "Không khí đang rất xấu. Tránh ra ngoài nếu không thật sự cần thiết và ưu tiên bảo vệ hô hấp trong nhà.",
-  };
-}
-
-function formatAqiDelta(previousAqi: number | null, nextAqi: number | null) {
-  if (previousAqi === null || nextAqi === null || previousAqi === nextAqi) {
-    return null;
-  }
-
-  const delta = nextAqi - previousAqi;
-  const direction = delta > 0 ? "tăng" : "giảm";
-  return `AQI đã ${direction} ${Math.abs(delta)} điểm so với lần đo trước.`;
-}
-
-function getAqiRangeTone(value: number | null): AqiTone {
-  if (value === null) {
-    return "unknown";
-  }
-
-  if (value <= 50) return "good";
-  if (value <= 100) return "moderate";
-  if (value <= 150) return "sensitive";
-  if (value <= 200) return "bad";
-  return "very-bad";
-}
-
-function buildAqiAlert(measurement: GpsAqiMeasurement, previousAqi: number | null): AqiAlertItem | null {
-  const aqiValue = measurement.aqi;
-
-  if (aqiValue === null) {
-    return null;
-  }
-
-  const toneInfo = getAqiTone(aqiValue);
-  const deltaText = formatAqiDelta(previousAqi, aqiValue);
-
-  return {
-    id: `${measurement.location_name}-${measurement.measured_at ?? Date.now()}-${aqiValue}`,
-    title:
-      deltaText && previousAqi !== null
-        ? `AQI vừa ${aqiValue > previousAqi ? "tăng lên" : "giảm xuống"} ${aqiValue}`
-        : `AQI hiện tại: ${aqiValue}`,
-    body: `${toneInfo.advice}${measurement.location_name ? ` Khu vực đo: ${measurement.location_name}.` : ""}`,
-    tone: toneInfo.tone,
-    toneLabel: toneInfo.label,
-    aqi: aqiValue,
-    location: measurement.location_name || "Khu vực hiện tại",
-    createdAt: measurement.measured_at ?? new Date().toISOString(),
-    deltaText,
-  };
 }
 
 export default function App() {
@@ -202,10 +92,6 @@ export default function App() {
   const [gpsCoords, setGpsCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [gpsLoading, setGpsLoading] = useState(false);
   const [gpsError, setGpsError] = useState<string | null>(null);
-  const [aqiAlerts, setAqiAlerts] = useState<AqiAlertItem[]>([]);
-  const [aqiUnreadCount, setAqiUnreadCount] = useState(0);
-  const lastStoredAqiRef = useRef<number | null>(null);
-  const lastStoredAqiToneRef = useRef<AqiTone>("unknown");
 
   const guestUser = useMemo<User>(
     () => ({
@@ -232,19 +118,6 @@ export default function App() {
     fetchLocations()
       .then((data) => setLocations(data.locations))
       .catch((error) => setGlobalError(error.message));
-
-    if (typeof window !== "undefined") {
-      const savedAqi = window.localStorage.getItem("safemove:lastAqiValue");
-      if (savedAqi !== null) {
-        const parsed = Number(savedAqi);
-        lastStoredAqiRef.current = Number.isFinite(parsed) ? parsed : null;
-      }
-
-      const savedTone = window.localStorage.getItem("safemove:lastAqiTone");
-      if (savedTone === "good" || savedTone === "moderate" || savedTone === "sensitive" || savedTone === "bad" || savedTone === "very-bad" || savedTone === "unknown") {
-        lastStoredAqiToneRef.current = savedTone;
-      }
-    }
   }, []);
 
   useEffect(() => {
@@ -276,8 +149,6 @@ export default function App() {
       setUser(response.user);
       setRole(response.user.role === "admin" ? "admin" : "user");
       setView(response.user.role === "admin" ? "dashboard" : "home");
-      setAqiAlerts([]);
-      setAqiUnreadCount(0);
     } catch (error) {
       setAuthError(error instanceof Error ? error.message : "Login failed.");
     } finally {
@@ -293,8 +164,6 @@ export default function App() {
       setUser(response.user);
       setRole(response.user.role === "admin" ? "admin" : "user");
       setView(response.user.role === "admin" ? "dashboard" : "home");
-      setAqiAlerts([]);
-      setAqiUnreadCount(0);
     } catch (error) {
       setAuthError(error instanceof Error ? error.message : "Login failed.");
     } finally {
@@ -310,8 +179,6 @@ export default function App() {
       setUser(response.user);
       setRole("user");
       setView("home");
-      setAqiAlerts([]);
-      setAqiUnreadCount(0);
     } catch (error) {
       setAuthError(error instanceof Error ? error.message : "Register failed.");
     } finally {
@@ -325,8 +192,6 @@ export default function App() {
     setView("home");
     setAuthError(null);
     setGlobalError(null);
-    setAqiAlerts([]);
-    setAqiUnreadCount(0);
   }
 
   async function handleMarkRead(notificationId: string) {
@@ -445,29 +310,6 @@ export default function App() {
       try {
         const data = await fetchIqAirAqiByCoordinates(latitude, longitude);
         setGpsAqi(data.measurement);
-
-        const nextAqi = data.measurement.aqi;
-        const nextTone = getAqiRangeTone(nextAqi);
-        const previousTone = lastStoredAqiToneRef.current;
-
-        if (typeof window !== "undefined" && nextAqi !== null) {
-          window.localStorage.setItem("safemove:lastAqiValue", String(nextAqi));
-        }
-
-        if (typeof window !== "undefined") {
-          window.localStorage.setItem("safemove:lastAqiTone", nextTone);
-        }
-
-        if (nextAqi !== null && nextTone !== previousTone) {
-          const alertItem = buildAqiAlert(data.measurement, lastStoredAqiRef.current);
-          if (alertItem) {
-            setAqiAlerts((current) => [alertItem, ...current].slice(0, 5));
-            setAqiUnreadCount((current) => current + 1);
-          }
-        }
-
-        lastStoredAqiRef.current = nextAqi;
-        lastStoredAqiToneRef.current = nextTone;
       } catch (innerError) {
         if (innerError instanceof Error) {
           setGpsError(`Không lấy được AQI từ vị trí GPS: ${innerError.message}`);
@@ -623,8 +465,6 @@ export default function App() {
       setGpsAqi(null);
       setGpsCoords(null);
       setGpsError(null);
-      setAqiAlerts([]);
-      setAqiUnreadCount(0);
     }} />;
   }
 
@@ -634,10 +474,6 @@ export default function App() {
       view={view}
       setView={setView}
       userName={user.full_name || user.email}
-      aqiAlerts={aqiAlerts}
-      aqiUnreadCount={aqiUnreadCount}
-      onAqiBellClick={() => setAqiUnreadCount(0)}
-      onOpenAqiDetail={() => setView("alert")}
       onRequireLogin={() => {
         setGlobalError("Vui lòng đăng nhập để mở chức năng này.");
         setView("home");
@@ -655,8 +491,6 @@ export default function App() {
         setGpsError(null);
         setRole("user");
         setView("home");
-        setAqiAlerts([]);
-        setAqiUnreadCount(0);
       }}
     >
       {globalError && (
@@ -674,6 +508,7 @@ export default function App() {
           gpsLoading={gpsLoading}
           onOpenAqiAlert={() => setView("alert")}
           onRefreshGpsAqi={handleRefreshGpsAqi}
+          
         />
       )}
 

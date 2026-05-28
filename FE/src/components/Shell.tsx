@@ -52,7 +52,7 @@ export function Shell({
   const avatarLabel = userName.trim().charAt(0).toUpperCase() || "S";
 
   function handleNavigate(nextView: View) {
-    if (role === "guest" && ["route", "profile"].includes(nextView)) {
+    if (role === "guest" && ["route", "profile", "alert"].includes(nextView)) {
       onRequireLogin();
       return;
     }
