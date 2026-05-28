@@ -1,0 +1,40 @@
+<div class="phone-container">
+    <header class="app-header moderation-header">
+        <button class="back-btn-mod" data-id="1">← ダッシュボード</button>
+    </header>
+
+    <main class="scrollable-content mod-page">
+        <h2 class="mod-title" data-id="2">不適切なコメント管理</h2>
+        
+        <p class="mod-desc" data-id="3">
+            コミュニティの安全を守るため、報告された違反コメントの確認と処置を行ってください。
+        </p>
+
+        <div class="filter-section-box" data-id="4">
+            <h4 class="filter-lbl" data-id="5">場所でフィルタ</h4>
+            
+            <div class="location-filters-group" data-id="6">
+                <button class="loc-filter-btn active" data-loc="all">すべて</button>
+                <button class="loc-filter-btn" data-loc="bachthao">バックタオ公園</button>
+                <button class="loc-filter-btn" data-loc="hoankiem">ホアンキエム湖</button>
+                <button class="loc-filter-btn" data-loc="tayho">タイ湖周辺</button>
+            </div>
+
+            <h4 class="filter-lbl" data-id="7">ステータス</h4>
+            
+            <div class="status-filters-group">
+                <label class="custom-checkbox">
+                    <input type="checkbox" id="filter-unprocessed" checked data-id="8">
+                    <span class="checkmark"></span> 未処理
+                </label>
+                <label class="custom-checkbox">
+                    <input type="checkbox" id="filter-deleted" data-id="9">
+                    <span class="checkmark"></span> 削除済み
+                </label>
+            </div>
+        </div>
+
+        <div id="comments-container">
+            </div>
+    </main>
+</div>

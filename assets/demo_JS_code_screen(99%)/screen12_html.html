@@ -1,0 +1,70 @@
+<div class="phone-container">
+    <header class="app-header auth-header">
+        <div class="logo-area" data-id="1">
+            <img src="logo-icon.png" alt="Icon">
+            <span class="logo-text">SafeMove HaNoi</span>
+        </div>
+    </header>
+
+    <main class="scrollable-content signup-page">
+        <div class="welcome-section">
+            <p class="sub-greeting" data-id="2">今日から安全で快適なスポーツライフを始めましょう</p>
+            <h1 class="main-greeting" data-id="3">新規登録</h1>
+        </div>
+
+        <div class="auth-card signup-card">
+            <form id="signup-form" onsubmit="return false;">
+                
+                <div class="input-group">
+                    <label class="input-label">氏名 (Họ và tên)</label>
+                    <input type="text" id="reg-name" class="auth-input no-icon" placeholder="例: 山田 太郎" data-id="4">
+                    <span class="error-text" id="name-error"></span>
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label">メールアドレス</label>
+                    <input type="email" id="reg-email" class="auth-input no-icon" placeholder="username@email.com" data-id="5">
+                    <span class="error-text" id="email-error"></span>
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label">パスワード</label>
+                    <input type="password" id="reg-password" class="auth-input no-icon" placeholder="8~16文字の英数字" data-id="6">
+                    <span class="error-text" id="password-error"></span>
+                </div>
+
+                <button type="button" class="btn-primary-auth" data-id="7">
+                    アカウントを作成する
+                </button>
+            </form>
+
+            <div class="login-prompt">
+                <span class="prompt-text" data-id="8">すでにアカウントをお持ちですか？</span>
+                <a href="#" class="login-link" data-id="9">ログイン</a>
+            </div>
+
+            <div class="social-divider">
+                <span>または (Hoặc)</span>
+            </div>
+
+            <div class="social-auth-group">
+                <button class="btn-social google" data-id="10">
+                    <img src="google-icon.png" alt="G"> Googleで登録
+                </button>
+                <button class="btn-social facebook" data-id="11">
+                    <img src="fb-icon.png" alt="F"> Facebookで登録
+                </button>
+                <button class="btn-social apple" data-id="12">
+                    <img src="apple-icon.png" alt="A"> Appleで登録
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <nav class="bottom-nav">
+        <a href="#" class="nav-item active" data-id="13">🏠<span class="nav-label">ホーム</span></a>
+        <a href="#" class="nav-item" data-id="14">🔍<span class="nav-label">検索</span></a>
+        <a href="#" class="nav-item" data-id="15">🏃<span class="nav-label">ルート</span></a>
+        <a href="#" class="nav-item" data-id="16">👤<span class="nav-label">プロフィール</span></a>
+    </nav>
+</div>

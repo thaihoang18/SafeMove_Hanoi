@@ -1,0 +1,54 @@
+<div class="phone-container">
+    <header class="app-header auth-header">
+        <div class="logo-area" data-id="1">
+            <img src="logo-icon.png" alt="Icon">
+            <span class="logo-text">SafeMove HaNoi</span>
+        </div>
+    </header>
+
+    <main class="scrollable-content login-page">
+        
+        <div class="welcome-section">
+            <h1 class="main-greeting" data-id="2">おかえりなさい</h1>
+            <p class="sub-greeting" data-id="3">ログインして、運動を続けましょう</p>
+        </div>
+
+        <div class="auth-card">
+            <h2 class="form-title" data-id="4">ログイン</h2>
+
+            <form id="login-form" onsubmit="return false;">
+                
+                <div class="input-group">
+                    <label class="input-label" data-id="5">メールアドレス</label>
+                    <div class="input-icon-wrapper">
+                        <span class="input-icon">✉️</span>
+                        <input type="email" id="login-email" class="auth-input" placeholder="username@email.com" data-id="6">
+                    </div>
+                    <span class="error-text" id="email-error"></span>
+                </div>
+
+                <div class="input-group">
+                    <div class="label-row">
+                        <label class="input-label" data-id="7">パスワード</label>
+                        <a href="#" class="forgot-pwd-link" data-id="8">パスワードをお忘れですか？</a>
+                    </div>
+                    <div class="input-icon-wrapper">
+                        <span class="input-icon">🔒</span>
+                        <input type="password" id="login-password" class="auth-input" placeholder="••••••••" data-id="9">
+                    </div>
+                    <span class="error-text" id="password-error"></span>
+                </div>
+
+                <button type="button" class="btn-primary-auth" data-id="10">
+                    ログイン
+                </button>
+            </form>
+
+            <div class="register-prompt">
+                <span class="prompt-text" data-id="11">アカウントをお持ちではありませんか？</span>
+                <a href="#" class="register-link" data-id="12">今すぐ登録</a>
+            </div>
+        </div>
+
+    </main>
+</div>
