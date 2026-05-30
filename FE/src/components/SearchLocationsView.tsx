@@ -6,12 +6,46 @@ import "../styles/demo-search.css";
 type Props = {
   locations: PlaceCatalogItem[];
   onSelectLocation: (location: PlaceCatalogItem) => void;
+  onRequireLogin?: () => void;
 };
+
+function getFilterType(location: PlaceCatalogItem): "park" | "gym" | "sports" {
+  if (location.filter_type) {
+    return location.filter_type;
+  }
+
+  const haystack = [location.name, location.location_type, location.categories, location.description]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  if (/(cong vien|park|garden|outdoor)/.test(haystack)) {
+    return "park";
+  }
+
+  if (/(stadium|court|track|arena|sports complex|sport|gymnastics|boxing|martial arts|badminton|tennis|basketball|football|futsal|swimming|pool)/.test(haystack)) {
+    return "sports";
+  }
+
+  return "gym";
+}
+
+const CARD_IMAGES: Record<"gym" | "park" | "sports", string> = {
+  gym: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=240&q=80",
+  park: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=240&q=80",
+  sports: "https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=240&q=80",
+};
+
+function getSpotCardImage(location: PlaceCatalogItem) {
+  return CARD_IMAGES[getFilterType(location)];
+}
 
 export function SearchLocationsView({
   locations,
   onSelectLocation,
+  onRequireLogin,
 }: Props) {
+  void onRequireLogin;
   const [searchKeyword, setSearchKeyword] = useState("");
   const [activeFilter, setActiveFilter] = useState<"all" | "park" | "gym" | "sports">("all");
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
@@ -24,16 +58,9 @@ export function SearchLocationsView({
     const matchesKeyword = searchKeyword === "" || loc.name.toLowerCase().includes(searchKeyword.toLowerCase());
     
     if (activeFilter === "all") return matchesKeyword;
-    
-    const typeMap: Record<string, string[]> = {
-      park: ["park", "garden", "outdoor"],
-      gym: ["gym", "fitness", "exercise"],
-      sports: ["stadium", "court", "track"],
-    };
-    
-    const locTypes = (loc.type || "").toLowerCase();
-    const matchesType = typeMap[activeFilter]?.some(t => locTypes.includes(t)) ?? false;
-    
+
+    const matchesType = getFilterType(loc) === activeFilter;
+
     return matchesKeyword && matchesType;
   });
 
@@ -176,9 +203,7 @@ export function SearchLocationsView({
                 className="spot-card"
                 onClick={() => onSelectLocation(location)}
               >
-                {typeof location.image_url === "string" && (
-                  <img src={location.image_url} alt={location.name} className="spot-img" />
-                )}
+                <img src={getSpotCardImage(location)} alt={location.name} className="spot-img" loading="lazy" />
 
                 <div className="spot-info-mid">
                   <h4 className="spot-name">{location.name}</h4>

@@ -43,6 +43,12 @@ body {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
+.header-actions-demo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .logo-area-demo {
   display: flex;
   align-items: center;
@@ -90,6 +96,163 @@ body {
 .avatar-letter {
   font-weight: 600;
   color: var(--primary-green);
+}
+
+.aqi-bell-btn-demo {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background: #fff;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.aqi-bell-btn-demo:hover {
+  background: var(--light-green);
+  border-color: var(--primary-green);
+  color: var(--primary-green);
+}
+
+.aqi-badge-demo {
+  position: absolute;
+  top: -5px;
+  right: -6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
+
+.aqi-popover-layer-demo {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: rgba(15, 23, 42, 0.12);
+}
+
+.aqi-popover-demo {
+  position: absolute;
+  top: 64px;
+  right: 16px;
+  width: min(360px, calc(100vw - 32px));
+  max-height: min(70vh, 560px);
+  display: flex;
+  flex-direction: column;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.2);
+  overflow: hidden;
+}
+
+.aqi-popover-header-demo {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.aqi-popover-title-demo {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.aqi-popover-subtitle-demo {
+  margin-top: 2px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.aqi-popover-close-demo {
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.aqi-popover-feed-demo {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  overflow: auto;
+}
+
+.aqi-popover-empty-demo {
+  padding: 24px 12px;
+  text-align: center;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.aqi-alert-item-demo {
+  border-radius: 16px;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  background: #f8fafc;
+}
+
+.aqi-alert-item-demo.tone-good { border-left: 4px solid #16a34a; }
+.aqi-alert-item-demo.tone-moderate { border-left: 4px solid #f59e0b; }
+.aqi-alert-item-demo.tone-sensitive { border-left: 4px solid #f97316; }
+.aqi-alert-item-demo.tone-bad { border-left: 4px solid #ef4444; }
+.aqi-alert-item-demo.tone-very-bad { border-left: 4px solid #b91c1c; }
+.aqi-alert-item-demo.tone-unknown { border-left: 4px solid #64748b; }
+
+.aqi-alert-item-top-demo {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+  color: #0f172a;
+}
+
+.aqi-alert-item-top-demo span {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: #64748b;
+}
+
+.aqi-alert-item-spacer-demo {
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.aqi-alert-item-body-demo {
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #334155;
+}
+
+.aqi-alert-item-meta-demo,
+.aqi-alert-item-delta-demo {
+  margin-top: 8px;
+  font-size: 11px;
+  color: #64748b;
+}
+
+.aqi-alert-item-meta-demo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 /* Main Content */
@@ -246,6 +409,15 @@ body {
   .avatar-btn-demo {
     width: 28px;
     height: 28px;
+  }
+
+  .header-actions-demo {
+    gap: 8px;
+  }
+
+  .aqi-popover-demo {
+    right: 10px;
+    top: 60px;
   }
 
   .bottom-nav-demo {

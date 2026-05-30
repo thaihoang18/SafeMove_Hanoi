@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   createRouteRequest,
   createLocationReview,
@@ -44,6 +44,27 @@ import { AdminWorkspace } from "./components/AdminWorkspace";
 type Role = "guest" | "user" | "admin";
 type View = ShellView;
 
+type AqiTone = "good" | "moderate" | "sensitive" | "bad" | "very-bad" | "unknown";
+
+type AqiAlertItem = {
+  id: string;
+  title: string;
+  body: string;
+  tone: AqiTone;
+  toneLabel: string;
+  aqi: number | null;
+  location: string;
+  createdAt: string;
+  deltaText: string | null;
+};
+
+const demoLocationPrompts = [
+  "Hãy khám phá danh sách phòng gym nổi bật trong khu vực để chọn nơi phù hợp nhất cho hôm nay.",
+  "Bạn có thể mở tab tìm kiếm để xem thêm các địa điểm gần bạn đang được đề xuất.",
+  "Thử xem một địa điểm trong danh sách để so sánh rating, thời gian mở cửa và khoảng cách.",
+  "Nếu muốn đi tập ngay, hãy xem nhanh các địa điểm có rating cao trước nhé.",
+];
+
 type LocationItem = PlaceCatalogItem;
 
 function normalizeLocationKey(location: Pick<LocationItem, "name" | "address">) {
@@ -58,6 +79,132 @@ function normalizeText(value: string) {
     .replace(/[^a-z0-9\s]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function getAqiTone(value: number | null): { tone: AqiTone; label: string; advice: string } {
+  if (value === null) {
+    return {
+      tone: "unknown",
+      label: "Chưa có dữ liệu",
+      advice: "Chưa nhận được AQI mới. Hãy bật GPS hoặc thử lại sau để nhận cảnh báo chính xác hơn.",
+    };
+  }
+
+  if (value <= 50) {
+    return {
+      tone: "good",
+      label: "Tốt",
+      advice: "Không khí tốt. Bạn có thể ra ngoài, tập nhẹ và giữ nhịp sinh hoạt bình thường.",
+    };
+  }
+
+  if (value <= 100) {
+    return {
+      tone: "moderate",
+      label: "Trung bình",
+      advice: "Không khí vẫn chấp nhận được. Người nhạy cảm nên theo dõi thêm trước khi vận động dài ngoài trời.",
+    };
+  }
+
+  if (value <= 150) {
+    return {
+      tone: "sensitive",
+      label: "Kém cho nhóm nhạy cảm",
+      advice: "Hạn chế vận động mạnh ngoài trời. Nếu phải ra ngoài, hãy dùng khẩu trang lọc tốt và rút ngắn thời gian tiếp xúc.",
+    };
+  }
+
+  if (value <= 200) {
+    return {
+      tone: "bad",
+      label: "Xấu",
+      advice: "Nên giảm tối đa hoạt động ngoài trời, chuyển sang tập trong nhà và đóng cửa khi không cần thông gió.",
+    };
+  }
+
+  return {
+    tone: "very-bad",
+    label: "Rất xấu",
+    advice: "Không khí đang rất xấu. Tránh ra ngoài nếu không thật sự cần thiết và ưu tiên bảo vệ hô hấp trong nhà.",
+  };
+}
+
+function getAqiRangeTone(value: number | null): AqiTone {
+  if (value === null) {
+    return "unknown";
+  }
+
+  if (value <= 50) return "good";
+  if (value <= 100) return "moderate";
+  if (value <= 150) return "sensitive";
+  if (value <= 200) return "bad";
+  return "very-bad";
+}
+
+function formatAqiDelta(previousAqi: number | null, nextAqi: number | null) {
+  if (previousAqi === null || nextAqi === null || previousAqi === nextAqi) {
+    return null;
+  }
+
+  const delta = nextAqi - previousAqi;
+  const direction = delta > 0 ? "tăng" : "giảm";
+  return `AQI đã ${direction} ${Math.abs(delta)} điểm so với lần đo trước.`;
+}
+
+function buildAqiAlert(measurement: GpsAqiMeasurement, previousAqi: number | null): AqiAlertItem | null {
+  const aqiValue = measurement.aqi;
+
+  if (aqiValue === null) {
+    return null;
+  }
+
+  const toneInfo = getAqiTone(aqiValue);
+  const deltaText = formatAqiDelta(previousAqi, aqiValue);
+
+  return {
+    id: `${measurement.location_name}-${measurement.measured_at ?? Date.now()}-${aqiValue}`,
+    title:
+      deltaText && previousAqi !== null
+        ? `AQI vừa ${aqiValue > previousAqi ? "tăng lên" : "giảm xuống"} ${aqiValue}`
+        : `AQI hiện tại: ${aqiValue}`,
+    body: `${toneInfo.advice}${measurement.location_name ? ` Khu vực đo: ${measurement.location_name}.` : ""}`,
+    tone: toneInfo.tone,
+    toneLabel: toneInfo.label,
+    aqi: aqiValue,
+    location: measurement.location_name || "Khu vực hiện tại",
+    createdAt: measurement.measured_at ?? new Date().toISOString(),
+    deltaText,
+  };
+}
+
+function buildDemoWelcomeAlert(userName: string): AqiAlertItem {
+  return {
+    id: `demo-welcome-${Date.now()}`,
+    title: `Chào mừng bạn trở lại, ${userName}!`,
+    body: "Sẵn sàng tập thể dục chưa? Hãy xem các cảnh báo AQI mới nhất để lựa chọn thời điểm và địa điểm tập phù hợp nhé.",
+    tone: "moderate",
+    toneLabel: "",
+    aqi: null,
+    location: "SafeMove HaNoi",
+    createdAt: new Date().toISOString(),
+    deltaText: null,
+  };
+}
+
+function buildDemoExploreAlert(stepIndex: number): AqiAlertItem {
+  const prompt = demoLocationPrompts[stepIndex % demoLocationPrompts.length];
+
+  return {
+    id: `demo-explore-${stepIndex}-${Date.now()}`,
+    title: "Gợi ý khám phá địa điểm",
+    body: prompt,
+    tone: "good",
+    toneLabel: "Khám phá",
+    aqi: null,
+    location: "Danh sách địa điểm",
+    createdAt: new Date().toISOString(),
+    deltaText: null,
+  };
 }
 
 export default function App() {
@@ -92,6 +239,11 @@ export default function App() {
   const [gpsCoords, setGpsCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [gpsLoading, setGpsLoading] = useState(false);
   const [gpsError, setGpsError] = useState<string | null>(null);
+  const [aqiAlerts, setAqiAlerts] = useState<AqiAlertItem[]>([]);
+  const [aqiUnreadCount, setAqiUnreadCount] = useState(0);
+  const demoAlertStepRef = useRef(0);
+  const lastStoredAqiRef = useRef<number | null>(null);
+  const lastStoredToneRef = useRef<AqiTone>("unknown");
 
   const guestUser = useMemo<User>(
     () => ({
@@ -121,7 +273,30 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const savedAqi = window.localStorage.getItem("safemove:lastAqiValue");
+    if (savedAqi !== null) {
+      const parsed = Number(savedAqi);
+      lastStoredAqiRef.current = Number.isFinite(parsed) ? parsed : null;
+    }
+
+    const savedTone = window.localStorage.getItem("safemove:lastAqiTone");
+    if (savedTone === "good" || savedTone === "moderate" || savedTone === "sensitive" || savedTone === "bad" || savedTone === "very-bad") {
+      lastStoredToneRef.current = savedTone;
+    }
+  }, []);
+
+  useEffect(() => {
     if (!user || role === "guest" || role === "admin") return;
+
+    seedDemoAlerts(user.full_name ?? user.email);
+
+    const demoTimer = window.setInterval(() => {
+      pushDemoExploreAlert();
+    }, 180000);
 
     Promise.all([
       fetchDashboard(user.id),
@@ -139,6 +314,8 @@ export default function App() {
         setMaxRatio(Number(profileData.profile?.default_max_route_ratio ?? 1.5));
       })
       .catch((error) => setGlobalError(error.message));
+
+    return () => window.clearInterval(demoTimer);
   }, [role, user]);
 
   async function handleUserLogin(email: string, password: string) {
@@ -192,6 +369,9 @@ export default function App() {
     setView("home");
     setAuthError(null);
     setGlobalError(null);
+    demoAlertStepRef.current = 0;
+    setAqiAlerts([buildDemoWelcomeAlert(guestUser.full_name ?? "bạn")]);
+    setAqiUnreadCount(1);
   }
 
   async function handleMarkRead(notificationId: string) {
@@ -201,6 +381,22 @@ export default function App() {
     setNotifications(data.notifications);
     const dashboardData = await fetchDashboard(user.id);
     setDashboard(dashboardData);
+  }
+
+  function handleAqiBellClick() {
+    setAqiUnreadCount(0);
+  }
+
+  function seedDemoAlerts(displayName: string) {
+    demoAlertStepRef.current = 0;
+    setAqiAlerts([buildDemoWelcomeAlert(displayName)]);
+    setAqiUnreadCount(1);
+  }
+
+  function pushDemoExploreAlert() {
+    demoAlertStepRef.current += 1;
+    setAqiAlerts((current) => [buildDemoExploreAlert(demoAlertStepRef.current), ...current].slice(0, 5));
+    setAqiUnreadCount((current) => current + 1);
   }
 
   async function handleSaveProfile(payload: Record<string, unknown>) {
@@ -310,6 +506,27 @@ export default function App() {
       try {
         const data = await fetchIqAirAqiByCoordinates(latitude, longitude);
         setGpsAqi(data.measurement);
+
+        const nextAqi = data.measurement.aqi;
+        const nextTone = getAqiRangeTone(nextAqi);
+        const previousAqi = lastStoredAqiRef.current;
+        const previousTone = lastStoredToneRef.current;
+
+        if (nextAqi !== null && nextTone !== previousTone) {
+          const alertItem = buildAqiAlert(data.measurement, previousAqi);
+          if (alertItem) {
+            setAqiAlerts((current) => [alertItem, ...current].slice(0, 5));
+            setAqiUnreadCount((current) => current + 1);
+          }
+        }
+
+        lastStoredAqiRef.current = nextAqi;
+        lastStoredToneRef.current = nextTone;
+
+        if (typeof window !== "undefined") {
+          window.localStorage.setItem("safemove:lastAqiValue", nextAqi === null ? "" : String(nextAqi));
+          window.localStorage.setItem("safemove:lastAqiTone", nextTone);
+        }
       } catch (innerError) {
         if (innerError instanceof Error) {
           setGpsError(`Không lấy được AQI từ vị trí GPS: ${innerError.message}`);
@@ -478,6 +695,9 @@ export default function App() {
         setGlobalError("Vui lòng đăng nhập để mở chức năng này.");
         setView("home");
       }}
+      aqiAlerts={aqiAlerts}
+      aqiUnreadCount={aqiUnreadCount}
+      onAqiBellClick={handleAqiBellClick}
       onLogout={() => {
         setUser(null);
         setDashboard(null);
@@ -489,6 +709,8 @@ export default function App() {
         setGpsAqi(null);
         setGpsCoords(null);
         setGpsError(null);
+        setAqiAlerts([]);
+        setAqiUnreadCount(0);
         setRole("user");
         setView("home");
       }}
@@ -615,6 +837,8 @@ export default function App() {
             setGpsAqi(null);
             setGpsCoords(null);
             setGpsError(null);
+            setAqiAlerts([]);
+            setAqiUnreadCount(0);
             setRole("user");
             setView("home");
           }}

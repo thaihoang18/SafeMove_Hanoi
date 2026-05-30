@@ -1,4 +1,4 @@
-import rawPlaces from "./guest-exercise-places-data";
+import rawPlaces from "../../../assets/address/phòng-gym-ở-hà-nội-20-9945353-105-843831-14z-overview.json";
 
 type AssetPlaceRecord = {
   place_id: string;
@@ -18,12 +18,13 @@ type AssetPlaceRecord = {
 };
 
 export type PlaceCatalogItem = {
-  type?: string;
-  image_url?: string | import("react").ReactNode;
-  distance_km?: number | null;
-  is_japan_friendly?: boolean | import("react").ReactNode;
-  aqi_level?: number | null;
-  amenities?: boolean;
+  type: string;
+  image_url: import("react/jsx-runtime").JSX.Element;
+  distance_km: any;
+  is_japan_friendly: import("react/jsx-runtime").JSX.Element;
+  aqi_level: any;
+  amenities: boolean;
+  filter_type?: "park" | "gym" | "sports";
   id: string;
   name: string;
   location_type: string;
@@ -67,7 +68,10 @@ export function mergeExercisePlaces(basePlaces: PlaceCatalogItem[]) {
     }
 
     seen.add(key);
-    merged.push(place);
+    merged.push({
+      ...place,
+      filter_type: place.filter_type ?? inferFilterType(place.name, place.location_type, place.categories, place.description),
+    });
   }
 
   return merged;
@@ -101,8 +105,28 @@ function normalizeAssetPlace(record: AssetPlaceRecord): PlaceCatalogItem | null 
     phone: record.phone,
     featured_image: record.featured_image,
     description: record.description,
+    filter_type: inferFilterType(record.name, record.main_category, record.categories, record.description),
     source: "asset",
   };
+}
+
+function inferFilterType(
+  name: string,
+  locationType: string | null | undefined,
+  categories: string | null | undefined,
+  description: string | null | undefined,
+): "park" | "gym" | "sports" {
+  const haystack = normalizeText([name, locationType ?? "", categories ?? "", description ?? ""].join(" "));
+
+  if (/(cong vien|park|garden|outdoor)/.test(haystack)) {
+    return "park";
+  }
+
+  if (/(stadium|court|track|arena|sports complex|sport|gymnastics|boxing|martial arts|badminton|tennis|basketball|football|futsal|swimming|pool)/.test(haystack)) {
+    return "sports";
+  }
+
+  return "gym";
 }
 
 function extractCoordinates(link: string | null, query: string | null) {
@@ -143,9 +167,7 @@ function pickDistrict(parts: string[]) {
 
 function pickCity(parts: string[]) {
   const city = parts.find((part) => /ha noi/i.test(part));
-  if (city) return city;
-  if (parts.length === 0) return null;
-  return parts[parts.length - 1] ?? null;
+  return city ?? parts.at(-1) ?? null;
 }
 
 function createKey(place: PlaceCatalogItem) {

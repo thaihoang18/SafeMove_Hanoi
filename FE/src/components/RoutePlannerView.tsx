@@ -214,6 +214,7 @@ export function RoutePlannerView({ locations, origin, destination, maxRatio, set
     : selectedRoute
       ? "Luồng dẫn đường sẵn sàng. Bắt đầu để xem chỉ dẫn tiếp theo."
       : "Đang chờ lộ trình.";
+  const routeAqiLabel = routeData.averageAqi > 0 ? `${Math.round(routeData.averageAqi)}` : "Đang tải";
 
   const routeData = selectedRoute
     ? {
@@ -423,7 +424,7 @@ export function RoutePlannerView({ locations, origin, destination, maxRatio, set
                 </div>
                 <div className="inline-flex items-center gap-2 rounded-3xl bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-900">
                   <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                  GPS đang hoạt động
+                  AQI tuyến đường
                 </div>
               </div>
 
@@ -444,8 +445,8 @@ export function RoutePlannerView({ locations, origin, destination, maxRatio, set
 
               <div className="mt-4 grid gap-2.5 sm:grid-cols-2">
                 <div className="rounded-3xl bg-slate-50 p-3.5">
-                  <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Vị trí hiện tại</div>
-                  <div className="mt-1.5 text-base font-semibold text-slate-950">{currentPosition ? `${currentPosition.lat.toFixed(4)}, ${currentPosition.lng.toFixed(4)}` : "Đang đợi GPS"}</div>
+                  <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">AQI tuyến đường</div>
+                  <div className="mt-1.5 text-base font-semibold text-slate-950">AQI {routeAqiLabel}</div>
                 </div>
                 <div className="rounded-3xl bg-slate-50 p-3.5">
                   <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Thông báo</div>
