@@ -146,17 +146,44 @@ export async function updateLocationReviewController(reviewId, body) {
   if (body.is_hidden !== undefined) {
     fields.push(sql`is_hidden = ${Boolean(body.is_hidden)}`);
   }
+  if (body.metadata !== undefined) {
+    // replace metadata entirely with provided object
+    fields.push(sql`metadata = ${JSON.stringify(body.metadata)}::jsonb`);
+  }
 
   if (fields.length === 0) {
     throw new Error('No updatable fields provided.');
   }
 
-  const [updated] = await sql`
-    update airpath.location_reviews
-    set ${sql.join(fields, sql`, `)}, updated_at = ${new Date().toISOString()}
-    where id = ${reviewId}
-    returning id, location_id, user_id, rating, content, helpful_count, is_hidden, created_at, updated_at, metadata
-  `;
+  // Run specific update queries for provided fields.
+  let updatedRow = null;
+  if (body.is_hidden !== undefined && body.metadata !== undefined) {
+    const [u] = await sql`
+      update airpath.location_reviews
+      set is_hidden = ${Boolean(body.is_hidden)}, metadata = ${JSON.stringify(body.metadata)}::jsonb, updated_at = ${new Date().toISOString()}
+      where id = ${reviewId}
+      returning id, location_id, user_id, rating, content, helpful_count, is_hidden, created_at, updated_at, metadata
+    `;
+    updatedRow = u;
+  } else if (body.is_hidden !== undefined) {
+    const [u] = await sql`
+      update airpath.location_reviews
+      set is_hidden = ${Boolean(body.is_hidden)}, updated_at = ${new Date().toISOString()}
+      where id = ${reviewId}
+      returning id, location_id, user_id, rating, content, helpful_count, is_hidden, created_at, updated_at, metadata
+    `;
+    updatedRow = u;
+  } else if (body.metadata !== undefined) {
+    const [u] = await sql`
+      update airpath.location_reviews
+      set metadata = ${JSON.stringify(body.metadata)}::jsonb, updated_at = ${new Date().toISOString()}
+      where id = ${reviewId}
+      returning id, location_id, user_id, rating, content, helpful_count, is_hidden, created_at, updated_at, metadata
+    `;
+    updatedRow = u;
+  }
+
+  const updated = updatedRow;
 
   if (!updated) throw new Error('Review not found');
 

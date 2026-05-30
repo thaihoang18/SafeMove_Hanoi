@@ -23,7 +23,7 @@ type LocationFormState = {
 type ModerationStatus = "unprocessed" | "deleted";
 
 type ModerationItem = {
-  id: number;
+  id: string;
   locationId: string;
   locationName: string;
   userId: string;
@@ -58,24 +58,32 @@ export function AdminWorkspace({ userName, onLogout }: Props) {
   const [moderationLocation, setModerationLocation] = useState("all");
   const [showUnprocessed, setShowUnprocessed] = useState(true);
   const [showDeleted, setShowDeleted] = useState(false);
-  const [moderationStatusById, setModerationStatusById] = useState<Record<number, ModerationStatus>>({});
+  const [moderationStatusById, setModerationStatusById] = useState<Record<string, ModerationStatus>>({});
   const [moderationItemsList, setModerationItemsList] = useState<ModerationItem[]>([]);
+  const [moderationUpdatingById, setModerationUpdatingById] = useState<Record<string, boolean>>({});
 
   const loadModerationItems = async () => {
     try {
       const resp = await fetchAdminHiddenReviews();
       const items: ModerationItem[] = (resp.reviews || []).map((r: any) => ({
-        id: Number(r.id),
+        id: String(r.id),
         locationId: String(r.location_id || ""),
         locationName: r.location_name || r.location_id || "",
         userId: String(r.user_id || ""),
         violationCount: 1,
         content: String(r.content || ""),
         timestamp: r.created_at ? new Date(r.created_at).toLocaleString() : "",
-        status: r.is_hidden ? "unprocessed" : "deleted",
+        status: r.metadata && r.metadata.moderation && r.metadata.moderation.status === "deleted" ? "deleted" : "unprocessed",
       }));
       setModerationItemsList(items);
-      setModerationStatusById(Object.fromEntries(items.map((it) => [it.id, it.status])));
+      // Initialize statuses only for items we just loaded, but preserve existing manual overrides
+      setModerationStatusById((current) => {
+        const next = { ...current } as Record<string, ModerationStatus>;
+        for (const it of items) {
+          if (!(it.id in next)) next[it.id] = it.status;
+        }
+        return next;
+      });
     } catch (err) {
       // ignore
     }
@@ -208,13 +216,46 @@ export function AdminWorkspace({ userName, onLogout }: Props) {
     }
   }
 
-  function setCommentStatus(commentId: number, status: ModerationStatus) {
+  function setCommentStatus(commentId: string, status: ModerationStatus) {
+    // mark local state immediately
     setModerationStatusById((current) => ({ ...current, [commentId]: status }));
-    // send to backend: if status === 'deleted' keep is_hidden true, otherwise unhide
-    const isHidden = status === "deleted";
-    void updateReview(String(commentId), { is_hidden: isHidden }).then(() => {
-      void loadModerationItems();
-    });
+
+    const payload: { is_hidden?: boolean; metadata?: Record<string, unknown> } = {};
+    if (status === "deleted") {
+      payload.is_hidden = true;
+      payload.metadata = { moderation: { status: "deleted", processed_by: "admin", processed_at: new Date().toISOString() } };
+    } else {
+      payload.is_hidden = false;
+      payload.metadata = { moderation: { status: "approved", processed_by: "admin", processed_at: new Date().toISOString() } };
+    }
+
+    setModerationUpdatingById((cur) => ({ ...cur, [commentId]: true }));
+
+    updateReview(commentId, payload)
+      .then((resp) => {
+        // update local list based on result without full reload
+        if (payload.is_hidden === false) {
+          // approved/unhidden: remove from hidden list
+          setModerationItemsList((cur) => cur.filter((it) => it.id !== commentId));
+          setModerationStatusById((cur) => {
+            const next = { ...cur };
+            delete next[commentId];
+            return next;
+          });
+        } else {
+          // marked deleted: update item's status in list
+          setModerationItemsList((cur) => cur.map((it) => (it.id === commentId ? { ...it, status: "deleted" } : it)));
+          setModerationStatusById((cur) => ({ ...cur, [commentId]: "deleted" }));
+        }
+      })
+      .catch((err) => {
+        // revert status on error
+        setModerationStatusById((cur) => ({ ...cur, [commentId]: status === "deleted" ? "unprocessed" : "deleted" }));
+        window.alert(err instanceof Error ? err.message : "Không thể cập nhật bình luận.");
+      })
+      .finally(() => {
+        setModerationUpdatingById((cur) => ({ ...cur, [commentId]: false }));
+      });
   }
 
   useEffect(() => {
