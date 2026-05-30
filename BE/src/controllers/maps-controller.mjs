@@ -1,5 +1,6 @@
 import { sql } from "../db.mjs";
 import { assert, isNonEmptyString } from "../utils/validation.mjs";
+import { fetchIqAirMeasurement } from "../services/iqair-service.mjs";
 
 function parseCoordinate(rawValue, fieldName, min, max) {
   const value = Number(rawValue);
@@ -117,42 +118,19 @@ function pickSampleCoordinates(routeGeometry) {
 }
 
 async function fetchAqiFromIqAir(lat, lng) {
-  const apiKey = process.env.IQAIR_API_KEY;
-  if (!isNonEmptyString(apiKey)) {
+  try {
+    const measurement = await fetchIqAirMeasurement(lat, lng);
+    if (!Number.isFinite(measurement?.aqi)) {
+      return null;
+    }
+
+    return {
+      aqi: Number(measurement.aqi),
+      source: "IQAir",
+    };
+  } catch {
     return null;
   }
-
-  const iqAirUrl = new URL("https://api.airvisual.com/v2/nearest_city");
-  iqAirUrl.searchParams.set("lat", String(lat));
-  iqAirUrl.searchParams.set("lon", String(lng));
-  iqAirUrl.searchParams.set("key", apiKey.trim());
-
-  const response = await fetch(iqAirUrl, {
-    method: "GET",
-    headers: {
-      Accept: "application/json",
-    },
-  });
-
-  if (!response.ok) {
-    return null;
-  }
-
-  const payload = await response.json();
-  if (payload?.status !== "success") {
-    return null;
-  }
-
-  const pollution = payload?.data?.current?.pollution;
-  const aqi = Number(pollution?.aqius);
-  if (!Number.isFinite(aqi)) {
-    return null;
-  }
-
-  return {
-    aqi,
-    source: "IQAir",
-  };
 }
 
 async function fetchAqiFromDatabase(lat, lng) {

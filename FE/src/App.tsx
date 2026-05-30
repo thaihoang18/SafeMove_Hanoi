@@ -242,6 +242,7 @@ export default function App() {
   const [aqiAlerts, setAqiAlerts] = useState<AqiAlertItem[]>([]);
   const [aqiUnreadCount, setAqiUnreadCount] = useState(0);
   const demoAlertStepRef = useRef(0);
+  const hasAutoLoadedGpsAqiRef = useRef(false);
   const lastStoredAqiRef = useRef<number | null>(null);
   const lastStoredToneRef = useRef<AqiTone>("unknown");
 
@@ -326,6 +327,7 @@ export default function App() {
       setUser(response.user);
       setRole(response.user.role === "admin" ? "admin" : "user");
       setView(response.user.role === "admin" ? "dashboard" : "home");
+      hasAutoLoadedGpsAqiRef.current = false;
     } catch (error) {
       setAuthError(error instanceof Error ? error.message : "Login failed.");
     } finally {
@@ -341,6 +343,7 @@ export default function App() {
       setUser(response.user);
       setRole(response.user.role === "admin" ? "admin" : "user");
       setView(response.user.role === "admin" ? "dashboard" : "home");
+      hasAutoLoadedGpsAqiRef.current = false;
     } catch (error) {
       setAuthError(error instanceof Error ? error.message : "Login failed.");
     } finally {
@@ -356,6 +359,7 @@ export default function App() {
       setUser(response.user);
       setRole("user");
       setView("home");
+      hasAutoLoadedGpsAqiRef.current = false;
     } catch (error) {
       setAuthError(error instanceof Error ? error.message : "Register failed.");
     } finally {
@@ -369,6 +373,7 @@ export default function App() {
     setView("home");
     setAuthError(null);
     setGlobalError(null);
+    hasAutoLoadedGpsAqiRef.current = false;
     demoAlertStepRef.current = 0;
     setAqiAlerts([buildDemoWelcomeAlert(guestUser.full_name ?? "bạn")]);
     setAqiUnreadCount(1);
@@ -564,10 +569,11 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (!user || view !== "home" || gpsAqi || gpsLoading) {
+    if (!user || view !== "home" || gpsAqi || gpsLoading || hasAutoLoadedGpsAqiRef.current) {
       return;
     }
 
+    hasAutoLoadedGpsAqiRef.current = true;
     void handleRefreshGpsAqi();
   }, [gpsAqi, gpsLoading, handleRefreshGpsAqi, user, view]);
 

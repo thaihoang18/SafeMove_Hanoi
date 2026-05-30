@@ -216,11 +216,9 @@ export async function fetchIqAirAqiByCoordinates(
 ) {
   const cacheKey = getIqAirCacheKey(lat, lng);
 
-  if (!options?.signal) {
-    const cached = iqAirAqiCache.get(cacheKey);
-    if (cached && cached.expiresAt > Date.now()) {
-      return cached.promise;
-    }
+  const cached = iqAirAqiCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) {
+    return options?.signal ? raceWithAbortSignal(cached.promise, options.signal) : cached.promise;
   }
 
   const params = new URLSearchParams({
@@ -228,26 +226,50 @@ export async function fetchIqAirAqiByCoordinates(
     lng: String(lng),
   });
 
-  const promise = request<{ ok: true; measurement: GpsAqiMeasurement }>(
+  const basePromise = request<{ ok: true; measurement: GpsAqiMeasurement }>(
     `/api/aqi/iqair?${params.toString()}`,
-    options,
+    options?.signal ? undefined : options,
   );
 
-  if (!options?.signal) {
-    iqAirAqiCache.set(cacheKey, {
-      expiresAt: Date.now() + 120000,
-      promise,
-    });
+  iqAirAqiCache.set(cacheKey, {
+    expiresAt: Date.now() + 120000,
+    promise: basePromise,
+  });
 
-    promise.catch(() => {
-      const current = iqAirAqiCache.get(cacheKey);
-      if (current?.promise === promise) {
-        iqAirAqiCache.delete(cacheKey);
-      }
-    });
+  basePromise.catch(() => {
+    const current = iqAirAqiCache.get(cacheKey);
+    if (current?.promise === basePromise) {
+      iqAirAqiCache.delete(cacheKey);
+    }
+  });
+
+  return options?.signal ? raceWithAbortSignal(basePromise, options.signal) : basePromise;
+}
+
+function raceWithAbortSignal<T>(promise: Promise<T>, signal: AbortSignal) {
+  if (signal.aborted) {
+    return Promise.reject(new DOMException("The operation was aborted.", "AbortError"));
   }
 
-  return promise;
+  return new Promise<T>((resolve, reject) => {
+    const onAbort = () => {
+      signal.removeEventListener("abort", onAbort);
+      reject(new DOMException("The operation was aborted.", "AbortError"));
+    };
+
+    signal.addEventListener("abort", onAbort, { once: true });
+
+    promise.then(
+      (value) => {
+        signal.removeEventListener("abort", onAbort);
+        resolve(value);
+      },
+      (error) => {
+        signal.removeEventListener("abort", onAbort);
+        reject(error);
+      },
+    );
+  });
 }
 
 export async function searchPlaces(query: string, limit = 6) {
