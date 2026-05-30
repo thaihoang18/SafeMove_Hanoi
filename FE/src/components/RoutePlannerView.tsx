@@ -208,14 +208,6 @@ export function RoutePlannerView({ locations, origin, destination, maxRatio, set
     }
   }, [currentPosition, navigationStarted, selectedRoute, routeDestination, lastRerouteAt]);
 
-  const currentStep = selectedRoute?.route.steps?.[0] ?? null;
-  const currentInstruction = currentStep
-    ? `${currentStep.instruction} trong ${Math.round(currentStep.distanceM)} m`
-    : selectedRoute
-      ? "Luồng dẫn đường sẵn sàng. Bắt đầu để xem chỉ dẫn tiếp theo."
-      : "Đang chờ lộ trình.";
-  const routeAqiLabel = routeData.averageAqi > 0 ? `${Math.round(routeData.averageAqi)}` : "Đang tải";
-
   const routeData = selectedRoute
     ? {
         title: selectedRoute.title,
@@ -231,6 +223,14 @@ export function RoutePlannerView({ locations, origin, destination, maxRatio, set
         averageAqi: 0,
         exposure: "low" as const,
       };
+
+  const currentStep = selectedRoute?.route.steps?.[0] ?? null;
+  const currentInstruction = currentStep
+    ? `${currentStep.instruction} trong ${Math.round(currentStep.distanceM)} m`
+    : selectedRoute
+      ? "Luồng dẫn đường sẵn sàng. Bắt đầu để xem chỉ dẫn tiếp theo."
+      : "Đang chờ lộ trình.";
+  const routeAqiLabel = routeData.averageAqi > 0 ? `${Math.round(routeData.averageAqi)}` : "Đang tải";
 
   async function startRealTimeNavigation() {
     if (!planResult || !selectedRoute || !originPosition || !routeDestination) {
@@ -405,9 +405,9 @@ export function RoutePlannerView({ locations, origin, destination, maxRatio, set
                   <div>Thời gian</div>
                   <div className="mt-1 text-sm font-semibold text-slate-950">{routeData.durationMinutes} phút</div>
                 </div>
-                <div className="inline-flex items-center gap-2 rounded-3xl bg-slate-100 px-3 py-2 text-sm font-medium text-slate-900">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                  GPS
+                <div className="rounded-2xl bg-slate-50 px-3 py-2 text-center text-[11px] uppercase tracking-[0.18em] text-slate-500">
+                  <div>AQI</div>
+                  <div className="mt-1 text-sm font-semibold text-slate-950">{routeAqiLabel}</div>
                 </div>
               </div>
             </div>
@@ -421,10 +421,6 @@ export function RoutePlannerView({ locations, origin, destination, maxRatio, set
                 <div>
                   <div className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{routeStatus}</div>
                   <div className="mt-1.5 text-base font-semibold text-slate-950">{currentInstruction}</div>
-                </div>
-                <div className="inline-flex items-center gap-2 rounded-3xl bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-900">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                  AQI tuyến đường
                 </div>
               </div>
 
@@ -446,7 +442,7 @@ export function RoutePlannerView({ locations, origin, destination, maxRatio, set
               <div className="mt-4 grid gap-2.5 sm:grid-cols-2">
                 <div className="rounded-3xl bg-slate-50 p-3.5">
                   <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">AQI tuyến đường</div>
-                  <div className="mt-1.5 text-base font-semibold text-slate-950">AQI {routeAqiLabel}</div>
+                  <div className="mt-1.5 text-base font-semibold text-slate-950">{routeAqiLabel}</div>
                 </div>
                 <div className="rounded-3xl bg-slate-50 p-3.5">
                   <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Thông báo</div>
