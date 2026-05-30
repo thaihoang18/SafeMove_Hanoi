@@ -337,6 +337,15 @@ export function RoutePlannerView({ locations, origin, destination, maxRatio, set
     : 0;
 
   const routeStatus = navigationStarted ? "Đang dẫn đường" : "Xem trước lộ trình";
+  function handleBackToPreview() {
+    setNavigationStarted(false);
+    setTrackingError(null);
+    setRerouteMessage(null);
+    if (originPosition) {
+      setCurrentPosition(originPosition);
+    }
+  }
+
   return (
     <div className="route-page absolute inset-0 isolate overflow-hidden bg-slate-950 text-slate-900">
       <div className="absolute inset-0 z-0">
@@ -367,7 +376,7 @@ export function RoutePlannerView({ locations, origin, destination, maxRatio, set
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={() => window.history.back()}
+              onClick={handleBackToPreview}
               className="inline-flex h-12 w-12 items-center justify-center rounded-3xl bg-slate-900/90 text-white ring-1 ring-white/10 transition hover:bg-slate-800"
             >
               <ArrowLeft className="h-5 w-5" />
