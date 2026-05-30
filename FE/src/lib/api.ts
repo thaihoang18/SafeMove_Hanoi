@@ -180,6 +180,17 @@ export async function createLocationReview(
   });
 }
 
+export async function fetchAdminHiddenReviews() {
+  return request<{ ok: true; reviews: LocationReview[] }>(`/api/admin/reviews`);
+}
+
+export async function updateReview(reviewId: string, payload: { is_hidden?: boolean }) {
+  return request<{ ok: true; review: LocationReview }>(`/api/reviews/${reviewId}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
 export async function createRouteRequest(payload: {
   userId: string;
   originLabel: string;

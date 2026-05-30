@@ -8,6 +8,7 @@ import { handleMapsRoutes } from "./maps-routes.mjs";
 import { handleNotificationRoutes } from "./notification-routes.mjs";
 import { handleRouteRequestRoutes } from "./route-request-routes.mjs";
 import { handleSystemRoutes } from "./system-routes.mjs";
+import { handleAdminRoutes } from "./admin-routes.mjs";
 import { handleUserRoutes } from "./user-routes.mjs";
 import { notFound, sendJson } from "../utils/http.mjs";
 
@@ -23,6 +24,7 @@ const routeHandlers = [
   handleIndoorPlaceRoutes,
   handleRouteRequestRoutes,
   handleAdviceRoutes,
+  handleAdminRoutes,
 ];
 
 export async function handleRoute(req, res, url) {

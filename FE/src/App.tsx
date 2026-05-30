@@ -36,6 +36,7 @@ import { HomeViewDemo } from "./components/HomeViewDemo";
 import { SearchLocationsView } from "./components/SearchLocationsView";
 import { LocationDetailView } from "./components/LocationDetailView";
 import { ReviewsListView } from "./components/ReviewsListView";
+import { containsBlockedKeyword } from "./lib/comment-blocklist";
 import { RoutePlannerView } from "./components/RoutePlannerView";
 import { AqiAlertScreen } from "./components/AqiAlertScreen";
 import { ProfileViewDemo } from "./components/ProfileViewDemo";
@@ -202,6 +203,20 @@ function buildDemoExploreAlert(stepIndex: number): AqiAlertItem {
     toneLabel: "Khám phá",
     aqi: null,
     location: "Danh sách địa điểm",
+    createdAt: new Date().toISOString(),
+    deltaText: null,
+  };
+}
+
+function buildFlaggedCommentAlert(userName: string, content: string): AqiAlertItem {
+  return {
+    id: `flagged-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    title: "Bình luận có nguy cơ vi phạm",
+    body: `Hãy chờ admin kiểm duyệt nội dung. Nội dung bạn vừa bình luận: "${content}"`,
+    tone: "bad",
+    toneLabel: "Kiểm duyệt nội dung",
+    aqi: null,
+    location: userName,
     createdAt: new Date().toISOString(),
     deltaText: null,
   };
@@ -634,21 +649,44 @@ export default function App() {
     };
   }, [loadSelectedLocationReviews, selectedBackendLocation, view]);
 
+
   const handleSubmitLocationReview = useCallback(
     async ({ rating, content }: { rating: number; content: string }) => {
       if (!selectedBackendLocation || !user) {
         throw new Error("Missing selected location or user.");
       }
 
+      const isFlagged = containsBlockedKeyword(content);
+
       const response = await createLocationReview(selectedBackendLocation.id, {
         userId: user.id,
         rating,
         content,
-      });
+        is_hidden: isFlagged,
+      } as any);
 
-      setSelectedLocationReviews((current) => [response.review, ...current]);
-      if (view === "reviews") {
-        void loadSelectedLocationReviews(selectedBackendLocation.id);
+      // If flagged, don't show it in public review list. Instead refresh notifications and moderation.
+      if (response.review.is_hidden) {
+        setAqiAlerts((current) => [buildFlaggedCommentAlert(user.full_name ?? user.email, content), ...current].slice(0, 5));
+        setAqiUnreadCount((current) => current + 1);
+
+        // refresh notifications so bell shows the new flagged notice
+        try {
+          const data = await fetchNotifications(user.id);
+          setNotifications(data.notifications);
+        } catch (err) {
+          // ignore
+        }
+
+        // reload visible reviews from backend (they exclude hidden ones)
+        if (view === "reviews") {
+          void loadSelectedLocationReviews(selectedBackendLocation.id);
+        }
+      } else {
+        setSelectedLocationReviews((current) => [response.review, ...current]);
+        if (view === "reviews") {
+          void loadSelectedLocationReviews(selectedBackendLocation.id);
+        }
       }
     },
     [loadSelectedLocationReviews, selectedBackendLocation, user, view],

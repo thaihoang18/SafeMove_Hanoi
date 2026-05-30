@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { Building2, Edit3, MapPin, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Building2, CircleAlert, Edit3, MapPin, Plus, Trash2, Users } from "lucide-react";
+import { fetchAdminHiddenReviews, updateReview } from "@/lib/api";
 import { Shell, type View } from "./Shell";
 import { createLocation, deleteLocation, fetchLocations, updateLocation } from "@/lib/api";
 import type { LocationRecord } from "@/lib/types";
@@ -19,6 +20,19 @@ type LocationFormState = {
   lng: string;
 };
 
+type ModerationStatus = "unprocessed" | "deleted";
+
+type ModerationItem = {
+  id: number;
+  locationId: string;
+  locationName: string;
+  userId: string;
+  violationCount: number;
+  content: string;
+  timestamp: string;
+  status: ModerationStatus;
+};
+
 const emptyForm: LocationFormState = {
   name: "",
   locationType: "indoor_place",
@@ -28,6 +42,8 @@ const emptyForm: LocationFormState = {
   lat: "",
   lng: "",
 };
+
+// moderation items will be loaded from backend hidden reviews
 
 export function AdminWorkspace({ userName, onLogout }: Props) {
   const [view, setView] = useState<View>("dashboard");
@@ -39,6 +55,31 @@ export function AdminWorkspace({ userName, onLogout }: Props) {
   const [formState, setFormState] = useState<LocationFormState>(emptyForm);
   const [formError, setFormError] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [moderationLocation, setModerationLocation] = useState("all");
+  const [showUnprocessed, setShowUnprocessed] = useState(true);
+  const [showDeleted, setShowDeleted] = useState(false);
+  const [moderationStatusById, setModerationStatusById] = useState<Record<number, ModerationStatus>>({});
+  const [moderationItemsList, setModerationItemsList] = useState<ModerationItem[]>([]);
+
+  const loadModerationItems = async () => {
+    try {
+      const resp = await fetchAdminHiddenReviews();
+      const items: ModerationItem[] = (resp.reviews || []).map((r: any) => ({
+        id: Number(r.id),
+        locationId: String(r.location_id || ""),
+        locationName: r.location_name || r.location_id || "",
+        userId: String(r.user_id || ""),
+        violationCount: 1,
+        content: String(r.content || ""),
+        timestamp: r.created_at ? new Date(r.created_at).toLocaleString() : "",
+        status: r.is_hidden ? "unprocessed" : "deleted",
+      }));
+      setModerationItemsList(items);
+      setModerationStatusById(Object.fromEntries(items.map((it) => [it.id, it.status])));
+    } catch (err) {
+      // ignore
+    }
+  };
 
   const refreshLocations = async () => {
     setLoadingLocations(true);
@@ -70,6 +111,18 @@ export function AdminWorkspace({ userName, onLogout }: Props) {
       { label: "Quận / khu", value: String(uniqueDistricts.size), detail: "Đã nhập" },
     ];
   }, [locations]);
+
+  const moderationLocations = useMemo(() => ["all", ...new Set(moderationItemsList.map((item) => item.locationId))], [moderationItemsList]);
+
+  const moderationItems = useMemo(() => {
+    return moderationItemsList.filter((item) => {
+      const status = moderationStatusById[item.id] ?? item.status;
+      const locationMatch = moderationLocation === "all" ? true : item.locationId === moderationLocation;
+      const statusMatch = (status === "unprocessed" && showUnprocessed) || (status === "deleted" && showDeleted);
+
+      return locationMatch && statusMatch;
+    });
+  }, [moderationLocation, moderationStatusById, showDeleted, showUnprocessed, moderationItemsList]);
 
   function startEdit(location: LocationRecord) {
     setEditingLocationId(location.id);
@@ -155,6 +208,21 @@ export function AdminWorkspace({ userName, onLogout }: Props) {
     }
   }
 
+  function setCommentStatus(commentId: number, status: ModerationStatus) {
+    setModerationStatusById((current) => ({ ...current, [commentId]: status }));
+    // send to backend: if status === 'deleted' keep is_hidden true, otherwise unhide
+    const isHidden = status === "deleted";
+    void updateReview(String(commentId), { is_hidden: isHidden }).then(() => {
+      void loadModerationItems();
+    });
+  }
+
+  useEffect(() => {
+    if (view === "moderation") {
+      void loadModerationItems();
+    }
+  }, [view]);
+
   return (
     <Shell
       role="admin"
@@ -190,28 +258,19 @@ export function AdminWorkspace({ userName, onLogout }: Props) {
             </div>
           </section>
 
-          <section className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
-            <div className="rounded-4xl bg-white p-5 ring-1 ring-slate-200">
-              <div className="flex items-center gap-2 text-slate-900">
-                <Building2 className="h-5 w-5 text-emerald-600" />
-                <h3 className="text-lg">Lối tắt</h3>
+          <section className="rounded-4xl bg-white p-5 ring-1 ring-slate-200">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <div className="text-sm text-slate-500">Kiểm duyệt nội dung vi phạm</div>
+                <h3 className="text-lg text-slate-900">Mở màn kiểm duyệt giống screen 10</h3>
+                <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600">
+                  Chuyển sang màn riêng để lọc, xem và xử lý các bình luận vi phạm thay cho khối lối tắt / trạng thái đồng bộ.
+                </p>
               </div>
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <button onClick={() => setView("facilities")} className="rounded-[1.25rem] bg-emerald-600 px-4 py-3 text-sm text-white">
-                  Mở CRUD địa điểm
-                </button>
-                <button onClick={() => setView("admin-profile")} className="rounded-[1.25rem] bg-slate-100 px-4 py-3 text-sm text-slate-700 ring-1 ring-slate-200">
-                  Xem profile admin
-                </button>
-              </div>
-            </div>
-
-            <div className="rounded-4xl bg-slate-900 p-5 text-white">
-              <div className="text-sm text-white/70">Trạng thái đồng bộ</div>
-              <div className="mt-2 text-2xl">{loadingLocations ? "Đang tải..." : "Sẵn sàng"}</div>
-              <p className="mt-2 text-sm leading-6 text-white/70">
-                Danh sách địa điểm đang được lấy từ backend, sau đó dùng để thêm, sửa và xóa trong tab location.
-              </p>
+              <button onClick={() => setView("moderation")} className="rounded-[1.25rem] bg-rose-600 px-4 py-3 text-sm text-white shadow-sm shadow-rose-600/15">
+                <CircleAlert className="mr-2 inline h-4 w-4" />
+                Kiểm duyệt nội dung vi phạm
+              </button>
             </div>
           </section>
         </div>
@@ -367,6 +426,95 @@ export function AdminWorkspace({ userName, onLogout }: Props) {
                   <div className="rounded-[1.7rem] bg-white p-5 text-sm text-slate-500 ring-1 ring-slate-200">Chưa có địa điểm nào trong DB.</div>
                 )}
               </div>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {view === "moderation" && (
+        <div className="space-y-5">
+          <section className="rounded-4xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <div className="text-sm text-slate-500">Screen 10</div>
+                <h2 className="mt-1 text-2xl text-slate-900">不適切なコメント管理</h2>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                  Kiểm tra các bình luận vi phạm, lọc theo địa điểm và xử lý trạng thái ngay trong màn quản trị.
+                </p>
+              </div>
+              <button onClick={() => setView("dashboard")} className="rounded-full bg-slate-100 px-4 py-2 text-sm text-slate-600 ring-1 ring-slate-200">
+                <ArrowLeft className="mr-2 inline h-4 w-4" />
+                Dashboard
+              </button>
+            </div>
+
+            <div className="mt-5 rounded-3xl bg-slate-50 p-4 ring-1 ring-slate-200">
+              <h4 className="text-sm font-medium text-slate-900">Bộ lọc</h4>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {moderationLocations.map((locationId) => (
+                  <button
+                    key={locationId}
+                    onClick={() => setModerationLocation(locationId)}
+                    className={`rounded-full px-3 py-1.5 text-xs ring-1 ${
+                      moderationLocation === locationId ? "bg-emerald-600 text-white ring-emerald-600" : "bg-white text-slate-600 ring-slate-200"
+                    }`}
+                  >
+                    {locationId === "all" ? "Tất cả" : locationId}
+                  </button>
+                ))}
+              </div>
+
+              <div className="mt-4 flex flex-wrap gap-4 text-xs text-slate-600">
+                <label className="inline-flex items-center gap-2">
+                  <input type="checkbox" checked={showUnprocessed} onChange={(event) => setShowUnprocessed(event.target.checked)} className="accent-emerald-600" />
+                  Chưa xử lý
+                </label>
+                <label className="inline-flex items-center gap-2">
+                  <input type="checkbox" checked={showDeleted} onChange={(event) => setShowDeleted(event.target.checked)} className="accent-emerald-600" />
+                  Đã xóa
+                </label>
+              </div>
+            </div>
+
+            <div className="mt-5 space-y-4">
+              {moderationItems.length ? (
+                moderationItems.map((item) => {
+                  const status = moderationStatusById[item.id] ?? item.status;
+
+                  return (
+                    <article key={item.id} className="rounded-[1.7rem] bg-slate-50 p-5 ring-1 ring-slate-200">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <div className="text-sm text-slate-500">User ID: {item.userId}</div>
+                          <div className="mt-1 text-lg text-slate-900">{item.locationName}</div>
+                          <div className="mt-2 text-sm text-slate-600">{item.content}</div>
+                        </div>
+                        <span className={`rounded-full px-3 py-1 text-xs ring-1 ${status === "unprocessed" ? "bg-rose-50 text-rose-700 ring-rose-200" : "bg-sky-50 text-sky-700 ring-sky-200"}`}>
+                          {status === "unprocessed" ? `Vi phạm ${item.violationCount} lần` : "Đã xóa"}
+                        </span>
+                      </div>
+
+                      <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                        <span className="rounded-full bg-white px-3 py-1 ring-1 ring-slate-200">{item.locationId}</span>
+                        <span className="rounded-full bg-white px-3 py-1 ring-1 ring-slate-200">{item.timestamp}</span>
+                      </div>
+
+                      <div className="mt-4 flex gap-3">
+                        <button onClick={() => setCommentStatus(item.id, "deleted")} className="rounded-2xl bg-rose-600 px-4 py-2 text-sm text-white">
+                          Xóa
+                        </button>
+                        <button onClick={() => setCommentStatus(item.id, "unprocessed")} className="rounded-2xl bg-emerald-100 px-4 py-2 text-sm text-emerald-700">
+                          Khôi phục
+                        </button>
+                      </div>
+                    </article>
+                  );
+                })
+              ) : (
+                <div className="rounded-[1.7rem] bg-white p-5 text-sm text-slate-500 ring-1 ring-slate-200">
+                  Không có bình luận nào khớp bộ lọc.
+                </div>
+              )}
             </div>
           </section>
         </div>
