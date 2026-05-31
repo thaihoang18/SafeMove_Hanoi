@@ -255,6 +255,46 @@ export async function getUserDashboardController(userId) {
   };
 }
 
+export async function getAdminDashboardController() {
+  const [systemAqiRows, usersRows, locationsRows, moderationRows] = await sql.transaction([
+    sql`
+      select coalesce(round(avg(measured.aqi))::int, 42) as system_aqi
+      from airpath.locations l
+      join lateral (
+        select aqi
+        from airpath.aqi_measurements
+        where location_id = l.id
+        order by measured_at desc
+        limit 1
+      ) measured on true
+    `,
+    sql`
+      select count(*)::int as active_users
+      from airpath.users
+      where updated_at >= now() - interval '7 days'
+        and role = 'user'
+    `,
+    sql`
+      select count(*)::int as total_locations
+      from airpath.locations
+    `,
+    sql`
+      select count(*)::int as pending_moderation
+      from airpath.location_reviews
+      where is_hidden = true
+    `,
+  ]);
+
+  return {
+    overview: {
+      systemAqi: systemAqiRows[0]?.system_aqi ?? 42,
+      activeUsers: usersRows[0]?.active_users ?? 0,
+      totalLocations: locationsRows[0]?.total_locations ?? 0,
+      pendingModeration: moderationRows[0]?.pending_moderation ?? 0,
+    },
+  };
+}
+
 export async function listUserRouteRequestsController(userId) {
   const routeRequests = await sql`
     select

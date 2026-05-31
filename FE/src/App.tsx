@@ -794,7 +794,7 @@ export default function App() {
   }
 
   if (role === "admin") {
-    return <AdminWorkspace userName={user.full_name || user.email} onLogout={() => {
+    return <AdminWorkspace userId={user.id} userName={user.full_name || user.email} onLogout={() => {
       setUser(null);
       setRole("user");
       setView("home");

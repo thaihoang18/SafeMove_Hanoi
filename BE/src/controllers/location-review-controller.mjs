@@ -12,6 +12,7 @@ function toReview(row) {
   return {
     id: row.id,
     location_id: row.location_id,
+    location_name: row.location_name ?? null,
     user_id: row.user_id,
     author: normalizeAuthor(row),
     rating: Number(row.rating),
@@ -121,6 +122,7 @@ export async function listHiddenLocationReviewsController() {
     select
       lr.id,
       lr.location_id,
+      l.name as location_name,
       lr.user_id,
       lr.rating,
       lr.content,
@@ -133,6 +135,7 @@ export async function listHiddenLocationReviewsController() {
       u.email
     from airpath.location_reviews lr
     join airpath.users u on u.id = lr.user_id
+    left join airpath.locations l on l.id = lr.location_id
     where lr.is_hidden = true
     order by lr.created_at desc
     limit 200

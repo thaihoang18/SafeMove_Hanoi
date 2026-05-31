@@ -76,6 +76,18 @@ export async function fetchDashboard(userId: string) {
   return request<{ ok: true } & DashboardResponse>(`/api/users/${userId}/dashboard`);
 }
 
+export async function fetchAdminDashboard() {
+  return request<{
+    ok: true;
+    overview: {
+      systemAqi: number;
+      activeUsers: number;
+      totalLocations: number;
+      pendingModeration: number;
+    };
+  }>(`/api/admin/dashboard`);
+}
+
 export async function fetchProfile(userId: string) {
   return request<{ ok: true } & ProfileResponse>(`/api/users/${userId}/profile`);
 }

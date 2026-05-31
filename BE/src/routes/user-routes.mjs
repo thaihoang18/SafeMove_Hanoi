@@ -1,4 +1,5 @@
 import {
+  getAdminDashboardController,
   getUserDashboardController,
   getUserProfileController,
   listUserAdviceEventsController,
@@ -9,6 +10,20 @@ import { methodNotAllowed, readJsonBody, sendJson } from "../utils/http.mjs";
 import { parseUuidParam } from "../utils/validation.mjs";
 
 export async function handleUserRoutes(req, res, pathname) {
+  const adminDashboardMatch = pathname.match(/^\/api\/admin\/dashboard$/);
+  if (adminDashboardMatch) {
+    if (req.method !== "GET") {
+      methodNotAllowed(res);
+      return true;
+    }
+
+    sendJson(res, 200, {
+      ok: true,
+      ...(await getAdminDashboardController()),
+    });
+    return true;
+  }
+
   const userProfileMatch = pathname.match(/^\/api\/users\/([^/]+)\/profile$/);
   if (userProfileMatch) {
     const userId = parseUuidParam(userProfileMatch[1], "userId");
