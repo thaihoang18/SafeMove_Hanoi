@@ -37,6 +37,12 @@ import { SearchLocationsView } from "./components/SearchLocationsView";
 import { LocationDetailView } from "./components/LocationDetailView";
 import { ReviewsListView } from "./components/ReviewsListView";
 import { containsBlockedKeyword } from "./lib/comment-blocklist";
+import {
+  defaultAvatarSelection,
+  loadAvatarSelection,
+  saveAvatarSelection,
+  type AvatarSelection,
+} from "./lib/avatar-presets";
 import { RoutePlannerView } from "./components/RoutePlannerView";
 import { AqiAlertScreen } from "./components/AqiAlertScreen";
 import { ProfileViewDemo } from "./components/ProfileViewDemo";
@@ -256,6 +262,7 @@ export default function App() {
   const [gpsError, setGpsError] = useState<string | null>(null);
   const [aqiAlerts, setAqiAlerts] = useState<AqiAlertItem[]>([]);
   const [aqiUnreadCount, setAqiUnreadCount] = useState(0);
+  const [avatarSelection, setAvatarSelection] = useState<AvatarSelection>(defaultAvatarSelection);
   const demoAlertStepRef = useRef(0);
   const hasAutoLoadedGpsAqiRef = useRef(false);
   const lastStoredAqiRef = useRef<number | null>(null);
@@ -304,6 +311,15 @@ export default function App() {
       lastStoredToneRef.current = savedTone;
     }
   }, []);
+
+  useEffect(() => {
+    if (!user?.id || role === "guest") {
+      setAvatarSelection(defaultAvatarSelection);
+      return;
+    }
+
+    setAvatarSelection(loadAvatarSelection(user.id));
+  }, [role, user?.id]);
 
   useEffect(() => {
     if (!user || role === "guest" || role === "admin") return;
@@ -692,6 +708,18 @@ export default function App() {
     [loadSelectedLocationReviews, selectedBackendLocation, user, view],
   );
 
+  const handleUpdateAvatarSelection = useCallback(
+    (selection: AvatarSelection) => {
+      if (!user?.id) {
+        return;
+      }
+
+      saveAvatarSelection(user.id, selection);
+      setAvatarSelection(selection);
+    },
+    [user?.id],
+  );
+
   if (!user) {
     return showRegister ? (
       <RegisterScreenDemo
@@ -814,6 +842,8 @@ export default function App() {
           reviews={selectedLocationReviews}
           reviewsLoading={selectedLocationReviewsLoading}
           reviewsError={selectedLocationReviewsError}
+          currentUserId={user.id}
+          currentUserAvatarSelection={avatarSelection}
           onRequireLogin={() => {
             setGlobalError("Vui lòng đăng nhập để viết đánh giá hoặc xem chi tiết.");
           }}
@@ -835,6 +865,8 @@ export default function App() {
           reviews={selectedLocationReviews}
           reviewsLoading={selectedLocationReviewsLoading}
           reviewsError={selectedLocationReviewsError}
+          currentUserId={user.id}
+          currentUserAvatarSelection={avatarSelection}
           onBack={() => setView("spot-detail")}
         />
       )}
@@ -870,6 +902,8 @@ export default function App() {
             joinDate: profile?.user.created_at ?? new Date().toISOString(),
           }}
           onUpdateProfile={handleSaveProfileField}
+          avatarSelection={avatarSelection}
+          onUpdateAvatarSelection={handleUpdateAvatarSelection}
           onLogout={() => {
             setUser(null);
             setDashboard(null);
@@ -883,6 +917,7 @@ export default function App() {
             setGpsError(null);
             setAqiAlerts([]);
             setAqiUnreadCount(0);
+            setAvatarSelection(defaultAvatarSelection);
             setRole("user");
             setView("home");
           }}

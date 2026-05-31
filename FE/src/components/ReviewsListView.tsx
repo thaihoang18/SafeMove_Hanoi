@@ -1,6 +1,7 @@
 import { ChevronLeft, Star, Filter } from "lucide-react";
 import { useState } from "react";
 import type { LocationReview } from "@/lib/types";
+import { getAvatarPreset, getAvatarSelectionStyle, type AvatarSelection } from "@/lib/avatar-presets";
 import "../styles/demo-reviews.css";
 
 type Props = {
@@ -9,9 +10,19 @@ type Props = {
   onBack: () => void;
   reviewsLoading?: boolean;
   reviewsError?: string | null;
+  currentUserId: string;
+  currentUserAvatarSelection: AvatarSelection;
 };
 
-export function ReviewsListView({ locationName, reviews, onBack, reviewsLoading = false, reviewsError }: Props) {
+export function ReviewsListView({
+  locationName,
+  reviews,
+  onBack,
+  reviewsLoading = false,
+  reviewsError,
+  currentUserId,
+  currentUserAvatarSelection,
+}: Props) {
   const [sortBy, setSortBy] = useState<"recent" | "rating-high" | "rating-low">("recent");
 
   // Calculate statistics
@@ -109,7 +120,19 @@ export function ReviewsListView({ locationName, reviews, onBack, reviewsLoading 
             sortedReviews.map((review) => (
               <div key={review.id} className="review-card-full">
                 <div className="review-header-row">
-                  <span className="review-avatar">{review.author.slice(0, 1).toUpperCase()}</span>
+                  {review.user_id === currentUserId ? (
+                    <span className="review-avatar review-avatar-custom" style={getAvatarSelectionStyle(currentUserAvatarSelection)}>
+                      <img
+                        src={getAvatarPreset(currentUserAvatarSelection.avatarId).src}
+                        alt="Avatar của bạn"
+                        onError={(event) => {
+                          event.currentTarget.src = getAvatarPreset(currentUserAvatarSelection.avatarId).fallbackSrc;
+                        }}
+                      />
+                    </span>
+                  ) : (
+                    <span className="review-avatar">{review.author.slice(0, 1).toUpperCase()}</span>
+                  )}
                   <div className="review-meta">
                     <h5 className="review-author">{review.author}</h5>
                     <div className="review-rating">

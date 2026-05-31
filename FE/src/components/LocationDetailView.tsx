@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import type { PlaceCatalogItem } from "@/lib/guest-exercise-places";
 import { fetchIqAirAqiByCoordinates } from "@/lib/api";
 import type { GpsAqiMeasurement, LocationReview } from "@/lib/types";
+import { getAvatarPreset, getAvatarSelectionStyle, type AvatarSelection } from "@/lib/avatar-presets";
 import "../styles/demo-detail.css";
 
 type Props = {
@@ -15,6 +16,8 @@ type Props = {
   reviewsLoading?: boolean;
   reviewsError?: string | null;
   onSubmitReview: (payload: { rating: number; content: string }) => Promise<void>;
+  currentUserId: string;
+  currentUserAvatarSelection: AvatarSelection;
 };
 
 export function LocationDetailView({
@@ -27,6 +30,8 @@ export function LocationDetailView({
   reviewsLoading = false,
   reviewsError,
   onSubmitReview,
+  currentUserId,
+  currentUserAvatarSelection,
 }: Props) {
   const [reviewText, setReviewText] = useState("");
   const [userRating, setUserRating] = useState(0);
@@ -244,7 +249,19 @@ export function LocationDetailView({
             reviews.map((review) => (
               <div key={review.id} className="review-card">
                 <div className="rev-user-info">
-                  <span className="rev-avatar">{review.author.slice(0, 1).toUpperCase()}</span>
+                  {review.user_id === currentUserId ? (
+                    <span className="rev-avatar rev-avatar-custom" style={getAvatarSelectionStyle(currentUserAvatarSelection)}>
+                      <img
+                        src={getAvatarPreset(currentUserAvatarSelection.avatarId).src}
+                        alt="Avatar của bạn"
+                        onError={(event) => {
+                          event.currentTarget.src = getAvatarPreset(currentUserAvatarSelection.avatarId).fallbackSrc;
+                        }}
+                      />
+                    </span>
+                  ) : (
+                    <span className="rev-avatar">{review.author.slice(0, 1).toUpperCase()}</span>
+                  )}
                   <div className="rev-user-details">
                     <h5>{review.author}</h5>
                     <span className="stars">

@@ -1,5 +1,12 @@
-import { Mail, Phone, Bell, LogOut, Edit2, AlertCircle } from "lucide-react";
-import { useState } from "react";
+import { Bell, Edit2, AlertCircle, LogOut, Mail, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import {
+  avatarFrames,
+  avatarPresets,
+  defaultAvatarSelection,
+  getAvatarSelectionStyle,
+  type AvatarSelection,
+} from "@/lib/avatar-presets";
 import "../styles/demo-profile.css";
 
 type Props = {
@@ -12,6 +19,8 @@ type Props = {
     avatar?: string;
   } | null;
   onUpdateProfile: (field: string, value: string) => Promise<void>;
+  avatarSelection: AvatarSelection;
+  onUpdateAvatarSelection: (selection: AvatarSelection) => Promise<void> | void;
   onLogout: () => void;
   isLoading?: boolean;
 };
@@ -19,6 +28,8 @@ type Props = {
 export function ProfileViewDemo({
   user,
   onUpdateProfile,
+  avatarSelection,
+  onUpdateAvatarSelection,
   onLogout,
   isLoading = false,
 }: Props) {
@@ -27,10 +38,22 @@ export function ProfileViewDemo({
   const [aqiThreshold, setAqiThreshold] = useState(50);
   const [pushNotifications, setPushNotifications] = useState(true);
   const [emailUpdates, setEmailUpdates] = useState(false);
+  const [avatarModalOpen, setAvatarModalOpen] = useState(false);
+  const [pendingAvatarSelection, setPendingAvatarSelection] = useState<AvatarSelection>(avatarSelection);
+  const selectedAvatarPreset = avatarPresets.find((preset) => preset.id === avatarSelection.avatarId) ?? avatarPresets[0];
+
+  useEffect(() => {
+    setPendingAvatarSelection(avatarSelection ?? defaultAvatarSelection);
+  }, [avatarSelection]);
 
   const handleEditClick = (field: string, currentValue: string) => {
     setEditingField(field);
     setEditValue(currentValue);
+  };
+
+  const handleAvatarSave = async () => {
+    await onUpdateAvatarSelection(pendingAvatarSelection);
+    setAvatarModalOpen(false);
   };
 
   const handleSaveEdit = async (field: string) => {
@@ -70,14 +93,16 @@ export function ProfileViewDemo({
       {/* Profile Header */}
       <div className="profile-header-center">
         <div className="main-avatar-wrapper">
-          <div className="main-avatar-img">
-            {user.avatar ? (
-              <img src={user.avatar} alt="Avatar" />
-            ) : (
-              <span>{user.name.charAt(0).toUpperCase()}</span>
-            )}
+          <div className="main-avatar-img" style={getAvatarSelectionStyle(avatarSelection)}>
+            <img
+              src={selectedAvatarPreset.src}
+              alt="Avatar local"
+              onError={(event) => {
+                event.currentTarget.src = selectedAvatarPreset.fallbackSrc;
+              }}
+            />
           </div>
-          <button className="edit-avatar-badge" title="Change avatar">
+          <button className="edit-avatar-badge" title="Change avatar" onClick={() => setAvatarModalOpen(true)} type="button">
             📷
           </button>
         </div>
@@ -88,6 +113,77 @@ export function ProfileViewDemo({
           </span>
         </div>
       </div>
+
+      {avatarModalOpen && (
+        <div className="avatar-modal-backdrop" onClick={() => setAvatarModalOpen(false)} role="presentation">
+          <div className="avatar-modal-card" role="dialog" aria-modal="true" aria-labelledby="avatar-modal-title" onClick={(event) => event.stopPropagation()}>
+            <div className="avatar-modal-header">
+              <div>
+                <h3 id="avatar-modal-title">Chọn avatar</h3>
+              </div>
+              <button className="avatar-modal-close" type="button" onClick={() => setAvatarModalOpen(false)} aria-label="Close avatar picker">
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="avatar-modal-section">
+              <div className="avatar-section-title">Khung</div>
+              <div className="avatar-choice-grid">
+                {avatarFrames.map((frame) => (
+                  <button
+                    key={frame.id}
+                    type="button"
+                    className={`avatar-choice-chip ${pendingAvatarSelection.frameId === frame.id ? "is-selected" : ""}`}
+                    onClick={() => setPendingAvatarSelection((current) => ({ ...current, frameId: frame.id }))}
+                    aria-label={frame.label}
+                    title={frame.label}
+                  >
+                    <span className="avatar-choice-swatch" style={{ background: frame.color, boxShadow: `0 0 0 3px ${frame.color}` }} />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="avatar-modal-section">
+              <div className="avatar-section-title">Avatar</div>
+              <div className="avatar-preset-grid">
+                {avatarPresets.map((preset) => {
+                  const isSelected = pendingAvatarSelection.avatarId === preset.id;
+                  return (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      className={`avatar-preset-card ${isSelected ? "is-selected" : ""}`}
+                      onClick={() => setPendingAvatarSelection((current) => ({ ...current, avatarId: preset.id }))}
+                      aria-label={preset.label}
+                      title={preset.label}
+                    >
+                      <span className="avatar-preset-preview">
+                        <img
+                          src={preset.src}
+                          alt={preset.label}
+                          onError={(event) => {
+                            event.currentTarget.src = preset.fallbackSrc;
+                          }}
+                        />
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="avatar-modal-actions">
+              <button type="button" className="avatar-modal-secondary" onClick={() => setAvatarModalOpen(false)}>
+                Hủy
+              </button>
+              <button type="button" className="avatar-modal-primary" onClick={() => void handleAvatarSave()} disabled={isLoading}>
+                Lưu avatar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Personal Info Section */}
       <div className="settings-section">
