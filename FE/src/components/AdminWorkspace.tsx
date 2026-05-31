@@ -1,9 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import L from "leaflet";
-import { ArrowLeft, Building2, ChevronDown, CircleAlert, Edit3, MapPin, Plus, Trash2, Users } from "lucide-react";
+import { ArrowLeft, Building2, ChevronDown, CircleAlert, Edit3, MapPin, Plus, Trash2, Users, X } from "lucide-react";
 import { fetchAdminDashboard, fetchAdminHiddenReviews, fetchIqAirAqiByCoordinates, updateReview } from "@/lib/api";
 import { Shell, type View } from "./Shell";
+import {
+  avatarFrames,
+  avatarPresets,
+  defaultAvatarSelection,
+  getAvatarSelectionStyle,
+  type AvatarSelection,
+  loadAvatarSelection,
+  saveAvatarSelection,
+} from "@/lib/avatar-presets";
+import "../styles/demo-profile.css";
 import { createLocation, deleteLocation, fetchLocations, updateLocation } from "@/lib/api";
 import type { GpsAqiMeasurement, LocationRecord } from "@/lib/types";
 import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from "react-leaflet";
@@ -205,6 +215,11 @@ export function AdminWorkspace({ userId, userName, onLogout }: Props) {
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>(["water"]);
   const [isJapanFriendly, setIsJapanFriendly] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [adminAvatarSelection, setAdminAvatarSelection] = useState<AvatarSelection>(() =>
+    loadAvatarSelection(`admin_${userId}`),
+  );
+  const [avatarModalOpen, setAvatarModalOpen] = useState(false);
+  const [pendingAvatarSelection, setPendingAvatarSelection] = useState<AvatarSelection>(adminAvatarSelection);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [moderationLocation, setModerationLocation] = useState("all");
   const [moderationLocationMenuOpen, setModerationLocationMenuOpen] = useState(false);
@@ -313,7 +328,12 @@ export function AdminWorkspace({ userId, userName, onLogout }: Props) {
   useEffect(() => {
     void refreshLocations();
     void loadOverview();
-  }, []);
+    setAdminAvatarSelection(loadAvatarSelection(`admin_${userId}`));
+  }, [userId]);
+
+  useEffect(() => {
+    setPendingAvatarSelection(adminAvatarSelection);
+  }, [adminAvatarSelection]);
 
   useEffect(() => {
     if (view !== "dashboard") {
@@ -355,6 +375,12 @@ export function AdminWorkspace({ userId, userName, onLogout }: Props) {
   }, [moderationItemsList]);
 
   const moderationLocationLabel = moderationLocations.find((location) => location.id === moderationLocation)?.label ?? "Tất cả";
+
+  async function handleAdminAvatarSave() {
+    setAdminAvatarSelection(pendingAvatarSelection);
+    saveAvatarSelection(`admin_${userId}`, pendingAvatarSelection);
+    setAvatarModalOpen(false);
+  }
 
   function getModerationLocationImage(locationId: string) {
     const normalized = locationId.toLowerCase();
@@ -1055,16 +1081,20 @@ export function AdminWorkspace({ userId, userName, onLogout }: Props) {
               <div className="rounded-[1.8rem] bg-[#1f2937] p-6 text-white shadow-sm">
                 <div className="flex items-center justify-between gap-3">
                   <div className="relative mx-auto">
-                    <div className="flex h-32 w-32 items-center justify-center rounded-full bg-white/10 p-2 ring-1 ring-white/15">
+                    <div className="flex h-32 w-32 items-center justify-center rounded-full bg-white/10 p-2 ring-1 ring-white/15" style={getAvatarSelectionStyle(adminAvatarSelection)}>
                       <img
-                        src="https://i.pravatar.cc/150?img=11"
-                        alt="Main Avatar"
+                        src={(avatarPresets.find((p) => p.id === adminAvatarSelection.avatarId) ?? avatarPresets[0]).src}
+                        alt="Avatar"
                         className="h-full w-full rounded-full object-cover"
+                        onError={(event) => {
+                          event.currentTarget.src = (avatarPresets.find((p) => p.id === adminAvatarSelection.avatarId) ?? avatarPresets[0]).fallbackSrc;
+                        }}
                       />
                     </div>
                     <button
                       type="button"
-                      title="画像変更"
+                      title="Đổi avatar"
+                      onClick={() => setAvatarModalOpen(true)}
                       className="absolute -bottom-1 -right-1 flex h-10 w-10 items-center justify-center rounded-full bg-white text-slate-700 shadow-lg ring-1 ring-slate-200"
                     >
                       <span className="text-base">📷</span>
@@ -1103,6 +1133,77 @@ export function AdminWorkspace({ userId, userName, onLogout }: Props) {
                 </div>
               </div>
             </div>
+
+            {avatarModalOpen && (
+              <div className="avatar-modal-backdrop" onClick={() => setAvatarModalOpen(false)} role="presentation">
+                <div className="avatar-modal-card" role="dialog" aria-modal="true" aria-labelledby="avatar-modal-title" onClick={(event) => event.stopPropagation()}>
+                  <div className="avatar-modal-header">
+                    <div>
+                      <h3 id="avatar-modal-title">Chọn avatar</h3>
+                    </div>
+                    <button className="avatar-modal-close" type="button" onClick={() => setAvatarModalOpen(false)} aria-label="Close avatar picker">
+                      <X size={16} />
+                    </button>
+                  </div>
+
+                  <div className="avatar-modal-section">
+                    <div className="avatar-section-title">Khung</div>
+                    <div className="avatar-choice-grid">
+                      {avatarFrames.map((frame) => (
+                        <button
+                          key={frame.id}
+                          type="button"
+                          className={`avatar-choice-chip ${pendingAvatarSelection.frameId === frame.id ? "is-selected" : ""}`}
+                          onClick={() => setPendingAvatarSelection((current) => ({ ...current, frameId: frame.id }))}
+                          aria-label={frame.label}
+                          title={frame.label}
+                        >
+                          <span className="avatar-choice-swatch" style={{ background: frame.color, boxShadow: `0 0 0 3px ${frame.color}` }} />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="avatar-modal-section">
+                    <div className="avatar-section-title">Avatar</div>
+                    <div className="avatar-preset-grid">
+                      {avatarPresets.map((preset) => {
+                        const isSelected = pendingAvatarSelection.avatarId === preset.id;
+                        return (
+                          <button
+                            key={preset.id}
+                            type="button"
+                            className={`avatar-preset-card ${isSelected ? "is-selected" : ""}`}
+                            onClick={() => setPendingAvatarSelection((current) => ({ ...current, avatarId: preset.id }))}
+                            aria-label={preset.label}
+                            title={preset.label}
+                          >
+                            <span className="avatar-preset-preview">
+                              <img
+                                src={preset.src}
+                                alt={preset.label}
+                                onError={(event) => {
+                                  event.currentTarget.src = preset.fallbackSrc;
+                                }}
+                              />
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="avatar-modal-actions">
+                    <button type="button" className="avatar-modal-secondary" onClick={() => setAvatarModalOpen(false)}>
+                      Hủy
+                    </button>
+                    <button type="button" className="avatar-modal-primary" onClick={() => void handleAdminAvatarSave()}>
+                      Lưu avatar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <button
               className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-5 py-3 text-white shadow-sm"
