@@ -1,4 +1,4 @@
-import { Bell, Edit2, AlertCircle, LogOut, Mail, X } from "lucide-react";
+import { Bell, Edit2, AlertCircle, LogOut, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
   avatarFrames,
@@ -39,7 +39,6 @@ export function ProfileViewDemo({
   const [editValue, setEditValue] = useState("");
   const [aqiThreshold, setAqiThreshold] = useState(currentAqiThreshold);
   const [pushNotifications, setPushNotifications] = useState(true);
-  const [emailUpdates, setEmailUpdates] = useState(false);
   const [avatarModalOpen, setAvatarModalOpen] = useState(false);
   const [pendingAvatarSelection, setPendingAvatarSelection] = useState<AvatarSelection>(avatarSelection);
   const selectedAvatarPreset = avatarPresets.find((preset) => preset.id === avatarSelection.avatarId) ?? avatarPresets[0];
@@ -367,23 +366,6 @@ export function ProfileViewDemo({
             </label>
           </div>
 
-          <div className="divider-line"></div>
-
-          {/* Email Updates */}
-          <div className="toggle-row">
-            <span className="setting-item-title">
-              <Mail size={16} className="inline-icon" />
-              Email Updates
-            </span>
-            <label className="switch">
-              <input
-                type="checkbox"
-                checked={emailUpdates}
-                onChange={(e) => setEmailUpdates(e.target.checked)}
-              />
-              <span className="slider round"></span>
-            </label>
-          </div>
         </div>
       </div>
 
