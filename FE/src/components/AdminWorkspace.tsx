@@ -695,7 +695,7 @@ export function AdminWorkspace({ userId, userName, onLogout }: Props) {
       )}
 
       {view === "facility-add" && (
-        <div className="space-y-5">
+        <div className="space-y-5 pb-40 md:pb-48 lg:pb-56">
           <section className="rounded-4xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
@@ -718,8 +718,8 @@ export function AdminWorkspace({ userId, userName, onLogout }: Props) {
             </div>
 
             <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_1.05fr]">
-              <div className="overflow-hidden rounded-[1.7rem] bg-slate-50 ring-1 ring-slate-200">
-                <div className="relative min-h-[620px]">
+              <div className="overflow-hidden rounded-[1.7rem] bg-slate-50 ring-1 ring-slate-200 lg:sticky lg:top-4 lg:h-[calc(100vh-12rem)] lg:min-h-[520px]">
+                <div className="relative min-h-[620px] lg:h-full lg:min-h-0">
                   <MapContainer
                     center={[hanoiCenter.lat, hanoiCenter.lng]}
                     zoom={mapZoom}
@@ -727,7 +727,7 @@ export function AdminWorkspace({ userId, userName, onLogout }: Props) {
                     maxZoom={17}
                     scrollWheelZoom
                     zoomControl={false}
-                    className="h-full min-h-[620px] w-full"
+                    className="h-full min-h-[420px] w-full lg:min-h-0 z-0"
                     style={{ background: "#eef4ea" }}
                   >
                     <TileLayer
@@ -1043,24 +1043,41 @@ export function AdminWorkspace({ userId, userName, onLogout }: Props) {
       )}
 
       {view === "admin-profile" && (
-        <div className="mx-auto max-w-4xl space-y-5">
+        <div className="mx-auto max-w-4xl space-y-5 pb-40 md:pb-48">
           <section className="rounded-4xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <div className="text-sm text-slate-500">Screen 14</div>
                 <h2 className="mt-1 text-2xl text-slate-900">Hồ sơ quản trị viên</h2>
               </div>
-              <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs text-emerald-700 ring-1 ring-emerald-200">smhn</span>
             </div>
 
-            <div className="mt-5 grid gap-4 lg:grid-cols-[0.85fr_1.15fr]">
-              <div className="rounded-[1.8rem] bg-linear-to-br from-slate-900 to-slate-700 p-6 text-white">
-                <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-white/15 ring-1 ring-white/20">
-                  <Building2 className="h-7 w-7" />
+            <div className="mt-5 grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
+              <div className="rounded-[1.8rem] bg-[#1f2937] p-6 text-white shadow-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="relative mx-auto">
+                    <div className="flex h-32 w-32 items-center justify-center rounded-full bg-white/10 p-2 ring-1 ring-white/15">
+                      <img
+                        src="https://i.pravatar.cc/150?img=11"
+                        alt="Main Avatar"
+                        className="h-full w-full rounded-full object-cover"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      title="画像変更"
+                      className="absolute -bottom-1 -right-1 flex h-10 w-10 items-center justify-center rounded-full bg-white text-slate-700 shadow-lg ring-1 ring-slate-200"
+                    >
+                      <span className="text-base">📷</span>
+                    </button>
+                  </div>
                 </div>
-                <div className="mt-4 text-2xl">{userName}</div>
-                <div className="mt-1 text-sm text-white/70">Quản trị viên hệ thống</div>
-                <div className="mt-6 rounded-2xl bg-white/12 p-4 text-sm ring-1 ring-white/15">
+
+                <div className="mt-5 text-center">
+                  <div className="text-2xl font-semibold">{userName}</div>
+                  <div className="mt-1 text-sm text-white/70">システム管理者</div>
+                </div>
+
+                <div className="mt-6 rounded-2xl bg-white/10 p-4 text-sm leading-6 ring-1 ring-white/15">
                   Tài khoản đăng nhập: <strong>admin</strong>
                   <br />
                   Mã bảo mật: <strong>smhn</strong>
@@ -1068,17 +1085,34 @@ export function AdminWorkspace({ userId, userName, onLogout }: Props) {
               </div>
 
               <div className="rounded-[1.8rem] bg-slate-50 p-5 ring-1 ring-slate-200">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <Field label="Tên hiển thị" value={userName} readOnly />
-                  <Field label="Vai trò" value="admin" readOnly />
-                  <Field label="Username" value="admin" readOnly />
-                  <Field label="Security code" value="smhn" readOnly />
+                <h3 className="text-sm font-medium uppercase tracking-[0.16em] text-slate-500">個人情報</h3>
+                <div className="mt-4 space-y-3 rounded-[1.4rem] bg-white p-4 ring-1 ring-slate-200">
+                  <ProfileRow label="氏名" value={userName} />
+                  <ProfileRow label="メール" value="admin@safemove.hanoi" />
+                  <ProfileRow label="電話番号" value="0987 *** 321" noBorder />
                 </div>
-                <div className="mt-4 rounded-2xl bg-white p-4 text-sm leading-6 text-slate-600 ring-1 ring-slate-200">
-                  Tab này dùng để mô phỏng màn hồ sơ quản trị như mẫu 14: chỉ hiển thị thông tin xác thực, quyền truy cập và trạng thái admin.
+
+                <div className="mt-4 rounded-2xl bg-emerald-50 p-4 text-sm leading-6 text-emerald-800 ring-1 ring-emerald-200">
+                  <div className="flex items-center gap-2 font-medium">
+                    <span>✅</span>
+                    認証済み管理者
+                  </div>
+                  <div className="mt-1 text-emerald-700/90">
+                    あなたの身元は完全に検証されており、すべての管理ツールへのアクセスが許可されています。
+                  </div>
                 </div>
               </div>
             </div>
+
+            <button
+              className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-5 py-3 text-white shadow-sm"
+              onClick={onLogout}
+            >
+              <span>↗</span>
+              ログアウト
+            </button>
+
+            <div className="mt-4 text-center text-xs text-slate-400">バージョン 2.4.0 - SAFEMOVE HANOI 2024</div>
           </section>
         </div>
       )}
@@ -1112,5 +1146,27 @@ function Field({
         </div>
       )}
     </label>
+  );
+}
+
+function ProfileRow({
+  label,
+  value,
+  noBorder = false,
+}: {
+  label: string;
+  value: string;
+  noBorder?: boolean;
+}) {
+  return (
+    <div className={`flex items-center justify-between gap-3 py-3 ${noBorder ? "" : "border-b border-slate-100"}`}>
+      <div>
+        <div className="text-xs uppercase tracking-[0.16em] text-slate-500">{label}</div>
+        <div className="mt-1 text-sm text-slate-900">{value || "-"}</div>
+      </div>
+      <button type="button" className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-50 text-slate-500 ring-1 ring-slate-200">
+        <span className="text-sm">✎</span>
+      </button>
+    </div>
   );
 }

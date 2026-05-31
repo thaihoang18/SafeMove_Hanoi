@@ -61,7 +61,7 @@ export function Shell({
   }
 
   return (
-    <div className="min-h-screen bg-[#edf1ec] pb-28">
+    <div className="min-h-screen bg-[#edf1ec] pb-40 md:pb-44">
       <header className="mx-auto w-full max-w-107.5 px-4 pt-4">
         <div className="flex items-center justify-between rounded-[1.6rem] bg-white px-4 py-3 shadow-sm ring-1 ring-slate-200/70">
           <div className="flex items-center gap-3">
