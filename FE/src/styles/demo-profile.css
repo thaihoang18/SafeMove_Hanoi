@@ -167,6 +167,7 @@
   border-radius: 0;
   background: transparent;
   padding: 0;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -197,9 +198,17 @@
   height: 36px;
 }
 
+.avatar-choice-chip.is-selected .avatar-choice-swatch {
+  box-shadow: 0 0 0 3px var(--primary-green), 0 0 0 6px rgba(17, 120, 67, 0.18) !important;
+}
+
 .avatar-preset-preview {
   width: 92px;
   height: 92px;
+}
+
+.avatar-preset-card.is-selected .avatar-preset-preview {
+  box-shadow: 0 0 0 3px var(--primary-green), 0 0 0 6px rgba(17, 120, 67, 0.18);
 }
 
 .avatar-choice-swatch img,

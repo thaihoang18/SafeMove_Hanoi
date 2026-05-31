@@ -43,7 +43,7 @@ export const avatarPresets: AvatarPreset[] = [
   {
     id: "gym",
     label: "John Cena",
-    src: "https://loremflickr.com/320/320/john,cena,wwe,muscle",
+    src: "https://thumbs.dreamstime.com/b/muscled-male-model-showing-his-back-bodybuilder-biceps-muscles-personal-fitness-trainer-strong-man-flexing-muscles-78933810.jpg",
     fallbackSrc: toDataUri(
       buildSvg(
         "#0f766e",
@@ -62,7 +62,7 @@ export const avatarPresets: AvatarPreset[] = [
   {
     id: "yoga",
     label: "Puppy",
-    src: "https://loremflickr.com/320/320/puppy,dog,pet",
+    src: "https://thumbs.dreamstime.com/b/young-women-yoga-class-doing-meditation-lotus-pose-group-healthy-people-meditating-yoga-studio-healthy-people-doing-102079220.jpg",
     fallbackSrc: toDataUri(
       buildSvg(
         "#7c3aed",
@@ -80,7 +80,7 @@ export const avatarPresets: AvatarPreset[] = [
   {
     id: "park",
     label: "Cycling",
-    src: "https://loremflickr.com/320/320/road,bike,racing,bicycle",
+    src: "https://thumbs.dreamstime.com/b/tour-de-france-10094407.jpg",
     fallbackSrc: toDataUri(
       buildSvg(
         "#166534",
@@ -97,7 +97,7 @@ export const avatarPresets: AvatarPreset[] = [
   {
     id: "fresh-air",
     label: "Cat",
-    src: "https://loremflickr.com/320/320/cat,pet,kitten",
+    src: "https://thumbs.dreamstime.com/b/running-gym-group-young-people-treadmill-30717981.jpg",
     fallbackSrc: toDataUri(
       buildSvg(
         "#0ea5e9",
@@ -117,7 +117,7 @@ export const avatarPresets: AvatarPreset[] = [
   {
     id: "running",
     label: "Running",
-    src: "https://loremflickr.com/320/320/running,runner,fitness",
+    src: "https://thumbs.dreamstime.com/b/golden-retriever-dog-21668976.jpg",
     fallbackSrc: toDataUri(
       buildSvg(
         "#ea580c",
@@ -136,7 +136,7 @@ export const avatarPresets: AvatarPreset[] = [
   {
     id: "meadow",
     label: "Meadow",
-    src: "https://loremflickr.com/320/320/meadow,landscape,grass",
+    src: "https://thumbs.dreamstime.com/b/pet-cat-green-cats-eyes-gray-big-102425920.jpg",
     fallbackSrc: toDataUri(
       buildSvg(
         "#2563eb",

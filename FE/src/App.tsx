@@ -328,7 +328,7 @@ export default function App() {
 
     const demoTimer = window.setInterval(() => {
       pushDemoExploreAlert();
-    }, 180000);
+    }, 1800000);
 
     Promise.all([
       fetchDashboard(user.id),
