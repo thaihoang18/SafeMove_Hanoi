@@ -184,6 +184,32 @@ function buildAqiAlert(measurement: GpsAqiMeasurement, previousAqi: number | nul
   };
 }
 
+function buildThresholdAqiAlert(
+  measurement: GpsAqiMeasurement,
+  threshold: number,
+  isUnsafe: boolean,
+): AqiAlertItem | null {
+  const aqiValue = measurement.aqi;
+
+  if (aqiValue === null) {
+    return null;
+  }
+
+  return {
+    id: `threshold-${measurement.location_name}-${measurement.measured_at ?? Date.now()}-${aqiValue}-${threshold}`,
+    title: isUnsafe ? "AQI vượt ngưỡng cảnh báo" : "AQI an toàn đối với bạn",
+    body: isUnsafe
+      ? `AQI hiện là ${aqiValue}, đã cao hơn ngưỡng ${threshold} của bạn. Hãy giảm vận động ngoài trời hoặc chuyển sang không gian kín.`
+      : `AQI hiện là ${aqiValue}, thấp hơn ngưỡng ${threshold} của bạn. Điều kiện hiện tại đang an toàn để bạn tiếp tục hoạt động phù hợp.`,
+    tone: isUnsafe ? "bad" : "good",
+    toneLabel: isUnsafe ? "Vượt ngưỡng" : "An toàn",
+    aqi: aqiValue,
+    location: measurement.location_name || "Khu vực hiện tại",
+    createdAt: measurement.measured_at ?? new Date().toISOString(),
+    deltaText: null,
+  };
+}
+
 function buildDemoWelcomeAlert(userName: string): AqiAlertItem {
   return {
     id: `demo-welcome-${Date.now()}`,
@@ -267,6 +293,7 @@ export default function App() {
   const hasAutoLoadedGpsAqiRef = useRef(false);
   const lastStoredAqiRef = useRef<number | null>(null);
   const lastStoredToneRef = useRef<AqiTone>("unknown");
+  const lastThresholdAlertStateRef = useRef<"safe" | "unsafe" | null>(null);
 
   const guestUser = useMemo<User>(
     () => ({
@@ -406,6 +433,7 @@ export default function App() {
     setGlobalError(null);
     hasAutoLoadedGpsAqiRef.current = false;
     demoAlertStepRef.current = 0;
+    lastThresholdAlertStateRef.current = null;
     setAqiAlerts([buildDemoWelcomeAlert(guestUser.full_name ?? "bạn")]);
     setAqiUnreadCount(1);
   }
@@ -598,6 +626,31 @@ export default function App() {
       setGpsLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    if (!user || role === "guest" || role === "admin") {
+      lastThresholdAlertStateRef.current = null;
+      return;
+    }
+
+    const currentGpsAqi = gpsAqi;
+    if (!currentGpsAqi || currentGpsAqi.aqi === null || currentGpsAqi.aqi === undefined) {
+      return;
+    }
+
+    const threshold = profile?.profile?.alert_threshold ?? 140;
+    const nextState: "safe" | "unsafe" = currentGpsAqi.aqi >= threshold ? "unsafe" : "safe";
+
+    if (lastThresholdAlertStateRef.current !== nextState) {
+      const alertItem = buildThresholdAqiAlert(currentGpsAqi, threshold, nextState === "unsafe");
+      if (alertItem) {
+        setAqiAlerts((current) => [alertItem, ...current].slice(0, 5));
+        setAqiUnreadCount((current) => current + 1);
+      }
+
+      lastThresholdAlertStateRef.current = nextState;
+    }
+  }, [gpsAqi, profile?.profile?.alert_threshold, role, user]);
 
   useEffect(() => {
     if (!user || view !== "home" || gpsAqi || gpsLoading || hasAutoLoadedGpsAqiRef.current) {
@@ -901,6 +954,7 @@ export default function App() {
             phone: profile?.profile?.phone ?? "",
             joinDate: profile?.user.created_at ?? new Date().toISOString(),
           }}
+          aqiThreshold={profile?.profile?.alert_threshold ?? 140}
           onUpdateProfile={handleSaveProfileField}
           avatarSelection={avatarSelection}
           onUpdateAvatarSelection={handleUpdateAvatarSelection}
@@ -917,6 +971,7 @@ export default function App() {
             setGpsError(null);
             setAqiAlerts([]);
             setAqiUnreadCount(0);
+            lastThresholdAlertStateRef.current = null;
             setAvatarSelection(defaultAvatarSelection);
             setRole("user");
             setView("home");

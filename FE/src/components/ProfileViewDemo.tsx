@@ -18,6 +18,7 @@ type Props = {
     joinDate?: string;
     avatar?: string;
   } | null;
+  aqiThreshold: number;
   onUpdateProfile: (field: string, value: string) => Promise<void>;
   avatarSelection: AvatarSelection;
   onUpdateAvatarSelection: (selection: AvatarSelection) => Promise<void> | void;
@@ -27,6 +28,7 @@ type Props = {
 
 export function ProfileViewDemo({
   user,
+  aqiThreshold: currentAqiThreshold,
   onUpdateProfile,
   avatarSelection,
   onUpdateAvatarSelection,
@@ -35,7 +37,7 @@ export function ProfileViewDemo({
 }: Props) {
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
-  const [aqiThreshold, setAqiThreshold] = useState(50);
+  const [aqiThreshold, setAqiThreshold] = useState(currentAqiThreshold);
   const [pushNotifications, setPushNotifications] = useState(true);
   const [emailUpdates, setEmailUpdates] = useState(false);
   const [avatarModalOpen, setAvatarModalOpen] = useState(false);
@@ -45,6 +47,22 @@ export function ProfileViewDemo({
   useEffect(() => {
     setPendingAvatarSelection(avatarSelection ?? defaultAvatarSelection);
   }, [avatarSelection]);
+
+  useEffect(() => {
+    setAqiThreshold(currentAqiThreshold);
+  }, [currentAqiThreshold]);
+
+  useEffect(() => {
+    if (aqiThreshold === currentAqiThreshold) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      void onUpdateProfile("alertThreshold", String(aqiThreshold));
+    }, 300);
+
+    return () => window.clearTimeout(timer);
+  }, [aqiThreshold, currentAqiThreshold, onUpdateProfile]);
 
   const handleEditClick = (field: string, currentValue: string) => {
     setEditingField(field);
