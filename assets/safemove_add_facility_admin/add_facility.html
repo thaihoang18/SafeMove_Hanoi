@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeMove HaNoi - Add New Facility</title>
+    
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app-container">
+    <!-- Map Area (Item 1) -->
+    <div class="map-section" id="mapSection">
+        <!-- Placeholder for Map -->
+        <img src="https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=600&q=80" alt="Map" class="map-image">
+        <div class="map-pin">
+            <i class="fa-solid fa-location-dot"></i>
+        </div>
+        <div class="map-instruction">地図上で位置を選択</div>
+    </div>
+
+    <!-- Form Area -->
+    <main class="form-container">
+        
+        <!-- Spot Name (Item 2) -->
+        <div class="form-group">
+            <label class="form-label" for="spotName">スポット名 <span class="required-asterisk">*</span></label>
+            <input type="text" id="spotName" class="form-input" placeholder="例: ホアンキエム湖畔ルート" required>
+        </div>
+
+        <!-- Address (Item 3) -->
+        <div class="form-group">
+            <label class="form-label" for="address">所在地</label>
+            <input type="text" id="address" class="form-input" placeholder="住所またはランドマークを入力">
+        </div>
+
+        <!-- Japan-friendly Toggle (Item 4) -->
+        <div class="form-group toggle-group">
+            <div class="toggle-info">
+                <div class="tag-japan-label">
+                    <span class="icon-jp">あa</span> 日本対応
+                </div>
+                <div class="toggle-desc">日本人にオススメのスポットとして表示</div>
+            </div>
+            <label class="switch">
+                <input type="checkbox" id="chkJapanFriendly">
+                <span class="slider round"></span>
+            </label>
+        </div>
+
+        <!-- Amenities (Item 5) -->
+        <div class="form-group">
+            <label class="form-label">主要な設備</label>
+            <div class="amenities-chips" id="amenitiesList">
+                <button type="button" class="chip active" data-value="water"><i class="fa-solid fa-droplet"></i> 給水所</button>
+                <button type="button" class="chip" data-value="shade"><i class="fa-regular fa-sun"></i> 日陰</button>
+                <button type="button" class="chip" data-value="toilet"><i class="fa-solid fa-restroom"></i> トイレ</button>
+                <button type="button" class="chip" data-value="bench"><i class="fa-solid fa-chair"></i> ベンチ</button>
+                <button type="button" class="chip chip-add" id="btnAddAmenity">+ 追加</button>
+            </div>
+        </div>
+
+        <!-- Introduction / Description (Item 6) -->
+        <div class="form-group">
+            <label class="form-label" for="description">紹介文</label>
+            <textarea id="description" class="form-textarea" placeholder="スポットの特徴やおすすめの利用時間などを入力してください..."></textarea>
+        </div>
+
+        <!-- Action Buttons (Item 7, 8) -->
+        <div class="action-buttons">
+            <button type="button" class="btn-save" id="btnSave">保存する</button>
+            <button type="button" class="btn-cancel" id="btnCancel">キャンセル</button>
+        </div>
+
+    </main>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

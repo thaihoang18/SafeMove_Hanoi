@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
+import type { Dispatch, SetStateAction } from "react";
+import L from "leaflet";
 import { ArrowLeft, Building2, ChevronDown, CircleAlert, Edit3, MapPin, Plus, Trash2, Users } from "lucide-react";
 import { fetchAdminDashboard, fetchAdminHiddenReviews, fetchIqAirAqiByCoordinates, updateReview } from "@/lib/api";
 import { Shell, type View } from "./Shell";
 import { createLocation, deleteLocation, fetchLocations, updateLocation } from "@/lib/api";
 import type { GpsAqiMeasurement, LocationRecord } from "@/lib/types";
+import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from "react-leaflet";
 
 type Props = {
   userId: string;
@@ -26,6 +29,12 @@ type LocationFormState = {
   address: string;
   lat: string;
   lng: string;
+  description: string;
+};
+
+type MapPoint = {
+  x: number;
+  y: number;
 };
 
 type ModerationStatus = "unprocessed" | "deleted";
@@ -50,7 +59,124 @@ const emptyForm: LocationFormState = {
   address: "",
   lat: "",
   lng: "",
+  description: "",
 };
+
+const addFacilityAmenities = [
+  { value: "water", label: "給水所" },
+  { value: "shade", label: "日陰" },
+  { value: "toilet", label: "トイレ" },
+  { value: "bench", label: "ベンチ" },
+];
+
+const hanoiMapBounds = {
+  latMin: 20.96,
+  latMax: 21.08,
+  lngMin: 105.72,
+  lngMax: 105.89,
+};
+
+const hanoiCenter = {
+  lat: 21.0285,
+  lng: 105.8542,
+};
+
+function mapPointToLatLng(point: MapPoint) {
+  const lat = hanoiMapBounds.latMax - (point.y / 100) * (hanoiMapBounds.latMax - hanoiMapBounds.latMin);
+  const lng = hanoiMapBounds.lngMin + (point.x / 100) * (hanoiMapBounds.lngMax - hanoiMapBounds.lngMin);
+
+  return {
+    lat: Number(lat.toFixed(6)),
+    lng: Number(lng.toFixed(6)),
+  };
+}
+
+function latLngToMapPoint(lat: number, lng: number) {
+  const x = ((lng - hanoiMapBounds.lngMin) / (hanoiMapBounds.lngMax - hanoiMapBounds.lngMin)) * 100;
+  const y = ((hanoiMapBounds.latMax - lat) / (hanoiMapBounds.latMax - hanoiMapBounds.latMin)) * 100;
+
+  return {
+    x: Math.min(100, Math.max(0, x)),
+    y: Math.min(100, Math.max(0, y)),
+  };
+}
+
+function HanoiFacilityPickerMap({
+  mapPoint,
+  setMapPoint,
+  setFormState,
+}: {
+  mapPoint: MapPoint;
+  setMapPoint: (point: MapPoint) => void;
+  setFormState: Dispatch<SetStateAction<LocationFormState>>;
+}) {
+  const markerLatLng = useMemo<[number, number]>(() => {
+    return [
+      hanoiMapBounds.latMax - (mapPoint.y / 100) * (hanoiMapBounds.latMax - hanoiMapBounds.latMin),
+      hanoiMapBounds.lngMin + (mapPoint.x / 100) * (hanoiMapBounds.lngMax - hanoiMapBounds.lngMin),
+    ];
+  }, [mapPoint]);
+
+  useMapEvents({
+    click(event) {
+      const nextPoint = latLngToMapPoint(event.latlng.lat, event.latlng.lng);
+      setMapPoint(nextPoint);
+      setFormState((current) => ({
+        ...current,
+        lat: String(Number(event.latlng.lat.toFixed(6))),
+        lng: String(Number(event.latlng.lng.toFixed(6))),
+      }));
+    },
+  });
+
+  return <Marker position={markerLatLng} icon={facilityPickerIcon} draggable eventHandlers={{ dragend: (event) => {
+    const latLng = event.target.getLatLng();
+    const nextPoint = latLngToMapPoint(latLng.lat, latLng.lng);
+    setMapPoint(nextPoint);
+    setFormState((current) => ({
+      ...current,
+      lat: String(Number(latLng.lat.toFixed(6))),
+      lng: String(Number(latLng.lng.toFixed(6))),
+    }));
+  } }} />;
+}
+
+function HanoiMapZoomSync({
+  zoom,
+  onZoomChange,
+}: {
+  zoom: number;
+  onZoomChange: (zoom: number) => void;
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (map.getZoom() !== zoom) {
+      map.setZoom(zoom, { animate: true });
+    }
+  }, [map, zoom]);
+
+  useMapEvents({
+    zoomend() {
+      onZoomChange(map.getZoom());
+    },
+  });
+
+  return null;
+}
+
+const hanoiMapTileUrl = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+
+const facilityPickerIcon = L.divIcon({
+  className: "",
+  html: `
+    <div style="width: 34px; height: 34px; border-radius: 9999px; background: white; display: grid; place-items: center; box-shadow: 0 10px 24px rgba(15, 23, 42, 0.18); border: 1px solid rgba(226, 232, 240, 1);">
+      <div style="width: 18px; height: 18px; border-radius: 9999px; background: #059669;"></div>
+    </div>
+  `,
+  iconSize: [34, 34],
+  iconAnchor: [17, 17],
+});
 
 // moderation items will be loaded from backend hidden reviews
 
@@ -74,6 +200,10 @@ export function AdminWorkspace({ userId, userName, onLogout }: Props) {
   const [savingLocation, setSavingLocation] = useState(false);
   const [editingLocationId, setEditingLocationId] = useState<string | null>(null);
   const [formState, setFormState] = useState<LocationFormState>(emptyForm);
+  const [mapPoint, setMapPoint] = useState<MapPoint>(() => latLngToMapPoint(hanoiCenter.lat, hanoiCenter.lng));
+  const [mapZoom, setMapZoom] = useState(14);
+  const [selectedAmenities, setSelectedAmenities] = useState<string[]>(["water"]);
+  const [isJapanFriendly, setIsJapanFriendly] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [moderationLocation, setModerationLocation] = useState("all");
@@ -263,13 +393,21 @@ export function AdminWorkspace({ userId, userName, onLogout }: Props) {
       address: location.address ?? "",
       lat: String(location.lat),
       lng: String(location.lng),
+      description: "",
     });
+    setMapPoint(latLngToMapPoint(location.lat, location.lng));
+    setSelectedAmenities(["water"]);
+    setIsJapanFriendly(false);
     setView("facility-add");
   }
 
   function resetForm() {
     setEditingLocationId(null);
     setFormState(emptyForm);
+    setMapPoint(latLngToMapPoint(hanoiCenter.lat, hanoiCenter.lng));
+    setMapZoom(14);
+    setSelectedAmenities(["water"]);
+    setIsJapanFriendly(false);
     setFormError(null);
   }
 
@@ -309,6 +447,7 @@ export function AdminWorkspace({ userId, userName, onLogout }: Props) {
 
       await refreshLocations();
       resetForm();
+      setView("facilities");
     } catch (error) {
       setFormError(error instanceof Error ? error.message : "Không thể lưu địa điểm.");
     } finally {
@@ -480,11 +619,7 @@ export function AdminWorkspace({ userId, userName, onLogout }: Props) {
           <section className="rounded-4xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <div className="text-sm text-slate-500">Screen 7</div>
-                <h2 className="mt-1 text-2xl text-slate-900">CRUD địa điểm tập thể dục</h2>
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                  Thêm, sửa, xóa địa điểm trong DB. Màn này dùng dữ liệu thật từ bảng locations.
-                </p>
+                <h2 className="mt-1 text-2xl text-slate-900">Quản lý địa điểm tập thể dục</h2>
               </div>
               <button onClick={() => { resetForm(); setView("facility-add"); }} className="rounded-full bg-emerald-600 px-4 py-2 text-sm text-white">
                 <Plus className="mr-2 inline h-4 w-4" />
@@ -494,8 +629,17 @@ export function AdminWorkspace({ userId, userName, onLogout }: Props) {
 
             <div className="mt-5 grid gap-5 lg:grid-cols-[0.95fr_1.05fr]">
               <div className="rounded-[1.7rem] bg-slate-50 p-4 ring-1 ring-slate-200">
-                <div className="text-xs uppercase tracking-[0.16em] text-slate-500">Danh sách và quản lý địa điểm</div>
-                <div className="mt-4 text-sm text-slate-600">Chọn một địa điểm để chỉnh sửa, hoặc bấm "Thêm địa điểm" để mở tab tạo mới.</div>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-3xl bg-white/10 text-emerald-700">
+                    <Building2 className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <div className="text-xs uppercase tracking-[0.16em] text-slate-500">Quản lý địa điểm</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                    <div className="text-sm text-slate-500">稼働中: {locations.length}</div>
+                  </div>
               </div>
               <div className="space-y-3">
                 {loadingLocations ? (
@@ -508,25 +652,35 @@ export function AdminWorkspace({ userId, userName, onLogout }: Props) {
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <div className="text-sm text-slate-500">{location.location_type}</div>
-                          <div className="mt-1 text-lg text-slate-900">{location.name}</div>
+                          <div className="mt-1 text-lg text-slate-900 flex items-center gap-2">
+                            <span>{location.name}</span>
+                          </div>
                           <div className="mt-2 text-sm text-slate-600">{location.address ?? "Chưa có địa chỉ"}</div>
                           <div className="mt-2 text-xs text-slate-500">
                             {location.city ?? "-"} · {location.district ?? "-"}
                           </div>
+                          <div className="mt-3 text-xs text-slate-500 flex items-center gap-3">
+                            <span className="flex items-center gap-1"><i className="fa-regular fa-clock"></i> Cập nhật: vài phút trước</span>
+                            <span className="battery-status text-xs"> <i className="fa-solid fa-battery-half"></i> {50 + (location.name.length % 50)}%</span>
+                          </div>
                         </div>
-                        <MapPin className="h-5 w-5 shrink-0 text-emerald-600" />
+                        <div className="flex flex-col items-end gap-3">
+                          <MapPin className="h-5 w-5 shrink-0 text-emerald-600" />
+                          <div className="flex gap-2">
+                            <button onClick={() => startEdit(location)} className="rounded-2xl bg-emerald-50 px-4 py-2 text-sm text-emerald-700 ring-1 ring-emerald-200">
+                              <Edit3 className="mr-2 inline h-4 w-4" />
+                              Sửa
+                            </button>
+                            <button onClick={() => void handleDelete(location.id)} className="rounded-2xl bg-rose-50 px-4 py-2 text-sm text-rose-700 ring-1 ring-rose-200">
+                              <Trash2 className="mr-2 inline h-4 w-4" />
+                              Xóa
+                            </button>
+                          </div>
+                          <button onClick={() => toggleJapanFriendly(location.id)} className="mt-2 text-xs text-slate-500 underline">Toggle 日本対応</button>
+                        </div>
                       </div>
 
-                      <div className="mt-4 flex gap-3">
-                        <button onClick={() => startEdit(location)} className="rounded-2xl bg-emerald-50 px-4 py-2 text-sm text-emerald-700 ring-1 ring-emerald-200">
-                          <Edit3 className="mr-2 inline h-4 w-4" />
-                          Sửa
-                        </button>
-                        <button onClick={() => void handleDelete(location.id)} className="rounded-2xl bg-rose-50 px-4 py-2 text-sm text-rose-700 ring-1 ring-rose-200">
-                          <Trash2 className="mr-2 inline h-4 w-4" />
-                          Xóa
-                        </button>
-                      </div>
+                      
                     </article>
                   ))
                 ) : (
@@ -545,86 +699,176 @@ export function AdminWorkspace({ userId, userName, onLogout }: Props) {
           <section className="rounded-4xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <div className="text-sm text-slate-500">Thêm / Chỉnh sửa địa điểm</div>
-                <h2 className="mt-1 text-2xl text-slate-900">Nhập thông tin địa điểm</h2>
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">Sử dụng form này để tạo mới hoặc chỉnh sửa một địa điểm trong cơ sở dữ liệu.</p>
+                <div className="text-sm text-slate-500">Thêm địa điểm mới</div>
+                <h2 className="mt-1 text-2xl text-slate-900">Add New Facility</h2>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                  Điền thông tin cơ sở, chọn vị trí trên bản đồ và lưu lại để tạo địa điểm mới.
+                </p>
               </div>
-              <div className="flex items-center gap-2">
-                <button onClick={() => { resetForm(); setView("facilities"); }} className="rounded-[1.25rem] bg-white px-4 py-2 text-sm text-slate-700 ring-1 ring-slate-200">
-                  Hủy
-                </button>
-                <button onClick={() => { resetForm(); setView("facilities"); }} className="rounded-full bg-emerald-50 px-3 py-1 text-xs text-emerald-700 ring-1 ring-emerald-200">Quay lại</button>
-              </div>
+              <button
+                onClick={() => {
+                  resetForm();
+                  setView("facilities");
+                }}
+                className="inline-flex items-center gap-2 rounded-[1.25rem] bg-white px-4 py-2 text-sm text-slate-700 ring-1 ring-slate-200"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back về quản lý cơ sở
+              </button>
             </div>
 
-            <div className="mt-5 grid gap-5 lg:grid-cols-[0.95fr_1.05fr]">
-              <div className="rounded-[1.7rem] bg-slate-50 p-4 ring-1 ring-slate-200">
-                <div className="text-xs uppercase tracking-[0.16em] text-slate-500">
-                  {editingLocationId ? "Chỉnh sửa địa điểm" : "Tạo địa điểm mới"}
+            <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_1.05fr]">
+              <div className="overflow-hidden rounded-[1.7rem] bg-slate-50 ring-1 ring-slate-200">
+                <div className="relative min-h-[620px]">
+                  <MapContainer
+                    center={[hanoiCenter.lat, hanoiCenter.lng]}
+                    zoom={mapZoom}
+                    minZoom={12}
+                    maxZoom={17}
+                    scrollWheelZoom
+                    zoomControl={false}
+                    className="h-full min-h-[620px] w-full"
+                    style={{ background: "#eef4ea" }}
+                  >
+                    <TileLayer
+                      url={hanoiMapTileUrl}
+                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    />
+                    <HanoiMapZoomSync zoom={mapZoom} onZoomChange={setMapZoom} />
+                    <HanoiFacilityPickerMap mapPoint={mapPoint} setMapPoint={setMapPoint} setFormState={setFormState} />
+                  </MapContainer>
+
+                  <div className="pointer-events-none absolute left-5 top-5 rounded-full bg-white/90 px-4 py-2 text-sm text-slate-700 shadow-sm ring-1 ring-slate-200">
+                    Hà Nội - chọn vị trí trên bản đồ
+                  </div>
+
+                  <div className="pointer-events-none absolute bottom-5 left-5 rounded-2xl bg-slate-900/85 px-4 py-3 text-xs text-white shadow-lg shadow-slate-900/10 backdrop-blur">
+                    <div className="font-medium">Vị trí đã chọn</div>
+                    <div className="mt-1">
+                      Lat {formState.lat || "--"} · Lng {formState.lng || "--"}
+                    </div>
+                  </div>
+
+                  <div className="absolute right-5 top-5 flex items-center gap-2 rounded-full bg-white/95 px-2 py-2 shadow-sm ring-1 ring-slate-200">
+                    <button
+                      type="button"
+                      onClick={() => setMapZoom((current) => Math.max(12, current - 1))}
+                      className="flex h-8 w-8 items-center justify-center rounded-full text-slate-700 hover:bg-slate-100"
+                    >
+                      −
+                    </button>
+                    <div className="min-w-12 text-center text-xs font-medium text-slate-700">Zoom {mapZoom}</div>
+                    <button
+                      type="button"
+                      onClick={() => setMapZoom((current) => Math.min(17, current + 1))}
+                      className="flex h-8 w-8 items-center justify-center rounded-full text-slate-700 hover:bg-slate-100"
+                    >
+                      +
+                    </button>
+                  </div>
                 </div>
-                <div className="mt-4 grid gap-3">
+              </div>
+
+              <main className="rounded-[1.7rem] bg-white p-5 ring-1 ring-slate-200">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-3xl bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">
+                    <Building2 className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <div className="text-xs uppercase tracking-[0.16em] text-slate-500">{editingLocationId ? "Chỉnh sửa địa điểm" : "Tạo địa điểm mới"}</div>
+                    <div className="mt-1 text-lg text-slate-900">Thông tin cơ sở</div>
+                  </div>
+                </div>
+
+                <div className="mt-5 grid gap-4">
                   <Field label="Tên địa điểm" value={formState.name} onChange={(value) => setFormState((current) => ({ ...current, name: value }))} />
-                  <Field label="Loại địa điểm" value={formState.locationType} onChange={(value) => setFormState((current) => ({ ...current, locationType: value }))} />
+                  <Field label="Địa chỉ" value={formState.address} onChange={(value) => setFormState((current) => ({ ...current, address: value }))} />
+
+                  <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="flex items-center gap-2 text-sm font-medium text-slate-900">
+                          <span className="inline-flex h-6 items-center rounded-full bg-emerald-50 px-2 text-xs text-emerald-700 ring-1 ring-emerald-200">あa</span>
+                          日本対応
+                        </div>
+                        <div className="mt-1 text-xs text-slate-500">日本人にオススメのスポットとして表示</div>
+                      </div>
+                      <label className="relative inline-flex cursor-pointer items-center">
+                        <input type="checkbox" checked={isJapanFriendly} onChange={(event) => setIsJapanFriendly(event.target.checked)} className="peer sr-only" />
+                        <span className="h-6 w-11 rounded-full bg-slate-300 transition peer-checked:bg-emerald-500" />
+                        <span className="absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow transition peer-checked:translate-x-5" />
+                      </label>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-sm font-medium text-slate-900">主要な設備</div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {addFacilityAmenities.map((amenity) => {
+                        const active = selectedAmenities.includes(amenity.value);
+
+                        return (
+                          <button
+                            key={amenity.value}
+                            type="button"
+                            onClick={() => {
+                              setSelectedAmenities((current) =>
+                                current.includes(amenity.value)
+                                  ? current.filter((item) => item !== amenity.value)
+                                  : [...current, amenity.value],
+                              );
+                            }}
+                            className={`rounded-full px-4 py-2 text-sm ring-1 transition ${
+                              active ? "bg-emerald-50 text-emerald-700 ring-emerald-200" : "bg-white text-slate-600 ring-slate-200 hover:bg-slate-50"
+                            }`}
+                          >
+                            {amenity.label}
+                          </button>
+                        );
+                      })}
+                      <button type="button" className="rounded-full bg-slate-900 px-4 py-2 text-sm text-white ring-1 ring-slate-900">
+                        + 追加
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-sm font-medium text-slate-900">紹介文</div>
+                    <textarea
+                      value={formState.description}
+                      onChange={(event) => setFormState((current) => ({ ...current, description: event.target.value }))}
+                      placeholder="スポットの特徴やおすすめの利用時間などを入力してください..."
+                      className="mt-3 min-h-32 w-full rounded-2xl bg-white px-4 py-3 text-slate-900 ring-1 ring-slate-200 outline-none placeholder:text-slate-400"
+                    />
+                  </div>
+
                   <div className="grid gap-3 md:grid-cols-2">
+                    <Field label="Loại địa điểm" value={formState.locationType} onChange={(value) => setFormState((current) => ({ ...current, locationType: value }))} />
                     <Field label="Thành phố" value={formState.city} onChange={(value) => setFormState((current) => ({ ...current, city: value }))} />
                     <Field label="Khu / quận" value={formState.district} onChange={(value) => setFormState((current) => ({ ...current, district: value }))} />
-                  </div>
-                  <Field label="Địa chỉ" value={formState.address} onChange={(value) => setFormState((current) => ({ ...current, address: value }))} />
-                  <div className="grid gap-3 md:grid-cols-2">
                     <Field label="Lat" value={formState.lat} onChange={(value) => setFormState((current) => ({ ...current, lat: value }))} />
                     <Field label="Lng" value={formState.lng} onChange={(value) => setFormState((current) => ({ ...current, lng: value }))} />
                   </div>
                 </div>
 
-                {formError && <div className="mt-3 rounded-2xl bg-rose-50 px-4 py-3 text-sm text-rose-700 ring-1 ring-rose-200">{formError}</div>}
-                {actionMessage && <div className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700 ring-1 ring-emerald-200">{actionMessage}</div>}
+                {formError && <div className="mt-4 rounded-2xl bg-rose-50 px-4 py-3 text-sm text-rose-700 ring-1 ring-rose-200">{formError}</div>}
+                {actionMessage && <div className="mt-4 rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700 ring-1 ring-emerald-200">{actionMessage}</div>}
 
-                <div className="mt-4 flex gap-3">
+                <div className="mt-5 flex gap-3">
                   <button onClick={() => void submitLocation()} disabled={savingLocation} className="flex-1 rounded-[1.2rem] bg-emerald-600 px-4 py-3 text-sm text-white disabled:opacity-60">
-                    {savingLocation ? "Đang lưu..." : editingLocationId ? "Cập nhật" : "Tạo mới"}
+                    {savingLocation ? "Đang lưu..." : editingLocationId ? "Cập nhật" : "保存する"}
                   </button>
-                  <button onClick={() => { resetForm(); setView("facilities"); }} className="flex-1 rounded-[1.2rem] bg-white px-4 py-3 text-sm text-slate-700 ring-1 ring-slate-200">
-                    Hủy
+                  <button
+                    onClick={() => {
+                      resetForm();
+                      setView("facilities");
+                    }}
+                    className="flex-1 rounded-[1.2rem] bg-white px-4 py-3 text-sm text-slate-700 ring-1 ring-slate-200"
+                  >
+                    キャンセル
                   </button>
                 </div>
-              </div>
-
-              <div className="space-y-3">
-                {loadingLocations ? (
-                  <div className="rounded-[1.7rem] bg-white p-5 text-sm text-slate-500 ring-1 ring-slate-200">Đang tải địa điểm...</div>
-                ) : locationsError ? (
-                  <div className="rounded-[1.7rem] bg-rose-50 p-5 text-sm text-rose-700 ring-1 ring-rose-200">{locationsError}</div>
-                ) : locations.length ? (
-                  locations.map((location) => (
-                    <article key={location.id} className="rounded-[1.7rem] bg-white p-4 ring-1 ring-slate-200">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="text-sm text-slate-500">{location.location_type}</div>
-                          <div className="mt-1 text-lg text-slate-900">{location.name}</div>
-                          <div className="mt-2 text-sm text-slate-600">{location.address ?? "Chưa có địa chỉ"}</div>
-                          <div className="mt-2 text-xs text-slate-500">
-                            {location.city ?? "-"} · {location.district ?? "-"}
-                          </div>
-                        </div>
-                        <MapPin className="h-5 w-5 shrink-0 text-emerald-600" />
-                      </div>
-
-                      <div className="mt-4 flex gap-3">
-                        <button onClick={() => startEdit(location)} className="rounded-2xl bg-emerald-50 px-4 py-2 text-sm text-emerald-700 ring-1 ring-emerald-200">
-                          <Edit3 className="mr-2 inline h-4 w-4" />
-                          Sửa
-                        </button>
-                        <button onClick={() => void handleDelete(location.id)} className="rounded-2xl bg-rose-50 px-4 py-2 text-sm text-rose-700 ring-1 ring-rose-200">
-                          <Trash2 className="mr-2 inline h-4 w-4" />
-                          Xóa
-                        </button>
-                      </div>
-                    </article>
-                  ))
-                ) : (
-                  <div className="rounded-[1.7rem] bg-white p-5 text-sm text-slate-500 ring-1 ring-slate-200">Chưa có địa điểm nào trong DB.</div>
-                )}
-              </div>
+              </main>
             </div>
           </section>
         </div>
@@ -680,7 +924,7 @@ export function AdminWorkspace({ userId, userName, onLogout }: Props) {
                           }`}
                         >
                           <span className="truncate">{location.label}</span>
-                          {active && <span className="ml-3 rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-white">Đang chọn</span>}
+                          {active }
                         </button>
                       );
                     })}

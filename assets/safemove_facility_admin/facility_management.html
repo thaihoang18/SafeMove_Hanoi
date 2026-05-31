@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeMove HaNoi - Facility Management</title>
+    
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app-container">
+    <!-- Header -->
+    <header>
+        <div class="logo" id="logoHeader">
+            <i class="fa-solid fa-money-bill-transfer"></i>
+            SafeMove HaNoi
+        </div>
+        <img src="https://ui-avatars.com/api/?name=Admin&background=333&color=fff" alt="Profile" class="avatar" id="avatarProfile">
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Page Titles -->
+        <h1 class="page-title">施設管理</h1>
+        <p class="page-desc">空気質モニタリングポイントと安全な休憩所のステータスを追跡し、更新します。</p>
+
+        <!-- Stats Card -->
+        <div class="stats-card">
+            <div class="stats-icon">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+            <div class="stats-info">
+                <div class="stats-number">12</div>
+                <div class="stats-label">稼働中</div>
+            </div>
+        </div>
+
+        <!-- List Header -->
+        <div class="list-header">
+            <h2 class="list-title">場所リスト</h2>
+            <button class="btn-add" id="btnAddFacility">
+                <i class="fa-solid fa-plus"></i> 新規追加
+            </button>
+        </div>
+
+        <!-- Facility List -->
+        <div class="facility-list">
+            
+            <!-- Item 1 -->
+            <div class="facility-item">
+                <div class="item-icon bg-light-red">
+                    <i class="fa-solid fa-satellite-dish"></i>
+                </div>
+                <div class="item-content">
+                    <div class="item-header">
+                        <div class="item-name">ホアンキエム駅A</div>
+                        <div class="item-actions">
+                            <span class="tag-japan">日本対応</span>
+                            <button class="btn-delete" title="削除"><i class="fa-regular fa-trash-can"></i></button>
+                        </div>
+                    </div>
+                    <div class="item-address">Ly Thai To, Hoan Kiem</div>
+                    <div class="item-meta">
+                        <span><i class="fa-regular fa-clock"></i> 更新: 22分前</span>
+                        <span class="battery-status"><i class="fa-solid fa-battery-full"></i> 98%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Item 2 -->
+            <div class="facility-item">
+                <div class="item-icon bg-light-blue">
+                    <i class="fa-solid fa-satellite-dish"></i>
+                </div>
+                <div class="item-content">
+                    <div class="item-header">
+                        <div class="item-name">タイホー駅 - ウォーターマーク</div>
+                        <div class="item-actions">
+                            <span class="tag-japan">日本対応</span>
+                            <button class="btn-delete" title="削除"><i class="fa-regular fa-trash-can"></i></button>
+                        </div>
+                    </div>
+                    <div class="item-address">Lạc Long Quân, Tây Hồ</div>
+                    <div class="item-meta">
+                        <span><i class="fa-regular fa-clock"></i> 更新: 1時間前</span>
+                        <span class="battery-status warning"><i class="fa-solid fa-battery-quarter"></i> 22%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Item 3 -->
+            <div class="facility-item">
+                <div class="item-icon bg-light-green">
+                    <i class="fa-solid fa-satellite-dish"></i>
+                </div>
+                <div class="item-content">
+                    <div class="item-header">
+                        <div class="item-name">バディン - スポーツセンター</div>
+                        <div class="item-actions">
+                            <!-- No Japan-friendly tag here -->
+                            <button class="btn-delete" title="削除"><i class="fa-regular fa-trash-can"></i></button>
+                        </div>
+                    </div>
+                    <div class="item-address">Quán Thánh, Ba Đình</div>
+                    <div class="item-meta">
+                        <span><i class="fa-regular fa-clock"></i> 更新: 5分前</span>
+                        <span class="battery-status"><i class="fa-solid fa-battery-three-quarters"></i> 75%</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <a class="nav-item" id="tabDashboard">
+            <i class="fa-solid fa-house"></i>
+            <span>ダッシュボード</span>
+        </a>
+        <a class="nav-item active" id="tabFacility">
+            <i class="fa-solid fa-briefcase"></i>
+            <span>施設</span>
+        </a>
+        <a class="nav-item" id="tabProfile">
+            <i class="fa-regular fa-user"></i>
+            <span>プロフィール</span>
+        </a>
+    </nav>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
