@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SafeMove HaNoi - Dashboard</title>
     
     <!-- Fonts & Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -26,17 +26,17 @@
     <main>
         <!-- Greeting -->
         <div class="greeting-section">
-            <div class="greeting-text">おはようございます。管理者様</div>
-            <h1 class="page-title">システム概要</h1>
+            <div class="greeting-text">Chào buổi sáng, quản trị viên</div>
+            <h1 class="page-title">Tổng quan hệ thống</h1>
         </div>
 
         <!-- System Average AQI Card -->
         <div class="card">
             <div class="card-header">
                 <div class="card-title">
-                    <i class="fa-solid fa-leaf"></i> システム平均AQI
+                    <i class="fa-solid fa-leaf"></i> AQI trung bình hệ thống
                 </div>
-                <div class="badge-good">良好</div>
+                <div class="badge-good">Tốt</div>
             </div>
             <div class="aqi-value-container">
                 <div class="aqi-number">42</div>
@@ -44,8 +44,8 @@
             </div>
             <div class="progress-bar-container">
                 <div class="progress-labels">
-                    <span>本日の指数</span>
-                    <span>50未満</span>
+                    <span>Chỉ số hôm nay</span>
+                    <span>Dưới 50</span>
                 </div>
                 <div class="progress-track">
                     <div class="progress-fill"></div>
@@ -55,13 +55,13 @@
 
         <!-- Active Users Card -->
         <div class="card user-card">
-            <div class="card-title" style="margin-bottom: 12px; color: var(--text-dark);">
-                <i class="fa-solid fa-user-group" style="color: var(--text-dark);"></i> アクティブユーザー
+                <div class="card-title" style="margin-bottom: 12px; color: var(--text-dark);">
+                <i class="fa-solid fa-user-group" style="color: var(--text-dark);"></i> Người dùng hoạt động
             </div>
             <div class="user-card-content">
                 <div class="user-stats">
                     <div class="user-number">1,284</div>
-                    <div class="user-increase">昨日より<span>12%増加</span></div>
+                    <div class="user-increase">Tăng <span>12% so với hôm qua</span></div>
                 </div>
                 <div class="avatar-stack">
                     <img src="https://i.pravatar.cc/100?img=11" alt="User 1">
@@ -73,12 +73,12 @@
         </div>
 
         <!-- Alert Section -->
-        <h2 class="section-title">迅速な対応が必要</h2>
+        <h2 class="section-title">Cần xử lý nhanh</h2>
         <div class="card alert-card" id="violationNotice">
             <i class="fa-solid fa-circle-exclamation alert-icon"></i>
             <div class="alert-content">
-                <div class="alert-title">新規規約違反コンテンツ</div>
-                <div class="alert-desc">バーディン駅での5件のコメントのモデレーション要求。</div>
+                <div class="alert-title">Nội dung vi phạm mới</div>
+                <div class="alert-desc">Yêu cầu kiểm duyệt 5 bình luận tại ga Ba Đình.</div>
             </div>
             <i class="fa-solid fa-chevron-right alert-arrow"></i>
         </div>
@@ -88,15 +88,15 @@
     <nav class="bottom-nav">
         <a class="nav-item active" id="tabDashboard">
             <i class="fa-solid fa-house"></i>
-            <span>ダッシュボード</span>
+            <span>Bảng điều khiển</span>
         </a>
         <a class="nav-item" id="tabFacility">
             <i class="fa-solid fa-briefcase"></i>
-            <span>施設</span>
+            <span>Địa điểm</span>
         </a>
         <a class="nav-item" id="tabProfile">
             <i class="fa-regular fa-user"></i>
-            <span>プロフィール</span>
+            <span>Hồ sơ</span>
         </a>
     </nav>
 </div>

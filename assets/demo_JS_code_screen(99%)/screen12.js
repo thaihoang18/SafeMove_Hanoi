@@ -48,25 +48,25 @@ function handleSignup() {
 
     // Kiểm tra tên rỗng
     if (!name) {
-        document.getElementById('name-error').innerText = "お名前を入力してください (Vui lòng nhập tên)";
+        document.getElementById('name-error').innerText = "Vui lòng nhập tên";
         isValid = false;
     }
 
     // Kiểm tra định dạng Email (Mục 5)
     if (!email || !validateEmail(email)) {
-        document.getElementById('email-error').innerText = "有効なメールアドレスを入力してください";
+        document.getElementById('email-error').innerText = "Vui lòng nhập địa chỉ email hợp lệ";
         isValid = false;
     }
 
     // Kiểm tra độ dài mật khẩu 8-16 (Mục 6)
     if (!pwd || pwd.length < 8 || pwd.length > 16) {
-        document.getElementById('password-error').innerText = "パスワードは8~16文字で入力してください";
+        document.getElementById('password-error').innerText = "Mật khẩu phải từ 8 đến 16 ký tự";
         isValid = false;
     }
 
     if (isValid) {
         console.log("Đăng ký thành công!", { name, email });
-        alert("アカウントが正常に作成されました！\n(Tài khoản đã được tạo thành công!)");
+        alert("Tài khoản đã được tạo thành công!");
         // Điều hướng sang trang chủ
         window.location.href = 'index.html'; 
     }
@@ -75,7 +75,7 @@ function handleSignup() {
 // 10, 11, 12. Giả lập OAuth Login
 function handleSocialLogin(platform) {
     console.log(`Đang kết nối tới ${platform}...`);
-    alert(`${platform}でログインしています...`);
+    alert(`Đang đăng nhập bằng ${platform}...`);
 }
 
 // --- ĐĂNG KÝ SỰ KIỆN (EVENT LISTENERS) ---

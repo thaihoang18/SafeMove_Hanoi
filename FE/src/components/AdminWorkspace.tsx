@@ -73,10 +73,10 @@ const emptyForm: LocationFormState = {
 };
 
 const addFacilityAmenities = [
-  { value: "water", label: "給水所" },
-  { value: "shade", label: "日陰" },
-  { value: "toilet", label: "トイレ" },
-  { value: "bench", label: "ベンチ" },
+  { value: "water", label: "Trạm nước" },
+  { value: "shade", label: "Bóng râm" },
+  { value: "toilet", label: "Nhà vệ sinh" },
+  { value: "bench", label: "Ghế ngồi" },
 ];
 
 const hanoiMapBounds = {
@@ -191,7 +191,7 @@ const facilityPickerIcon = L.divIcon({
 // moderation items will be loaded from backend hidden reviews
 
 function getAqiTone(value: number) {
-  if (value <= 50) return { label: "良好", badgeClass: "bg-emerald-100 text-emerald-700" };
+  if (value <= 50) return { label: "Tốt", badgeClass: "bg-emerald-100 text-emerald-700" };
   if (value <= 100) return { label: "Trung bình", badgeClass: "bg-amber-100 text-amber-700" };
   if (value <= 150) return { label: "Kém", badgeClass: "bg-orange-100 text-orange-700" };
   return { label: "Xấu", badgeClass: "bg-rose-100 text-rose-700" };
@@ -664,7 +664,7 @@ export function AdminWorkspace({ userId, userName, onLogout }: Props) {
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
-                    <div className="text-sm text-slate-500">稼働中: {locations.length}</div>
+                    <div className="text-sm text-slate-500">Đang hoạt động: {locations.length}</div>
                   </div>
               </div>
               <div className="space-y-3">
@@ -702,7 +702,7 @@ export function AdminWorkspace({ userId, userName, onLogout }: Props) {
                               Xóa
                             </button>
                           </div>
-                          <button onClick={() => toggleJapanFriendly(location.id)} className="mt-2 text-xs text-slate-500 underline">Toggle 日本対応</button>
+                          <button onClick={() => toggleJapanFriendly(location.id)} className="mt-2 text-xs text-slate-500 underline">Bật/Tắt hỗ trợ tiếng Nhật</button>
                         </div>
                       </div>
 
@@ -814,10 +814,10 @@ export function AdminWorkspace({ userId, userName, onLogout }: Props) {
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <div className="flex items-center gap-2 text-sm font-medium text-slate-900">
-                          <span className="inline-flex h-6 items-center rounded-full bg-emerald-50 px-2 text-xs text-emerald-700 ring-1 ring-emerald-200">あa</span>
-                          日本対応
+                            <span className="inline-flex h-6 items-center rounded-full bg-emerald-50 px-2 text-xs text-emerald-700 ring-1 ring-emerald-200">JP</span>
+                          Hỗ trợ tiếng Nhật
                         </div>
-                        <div className="mt-1 text-xs text-slate-500">日本人にオススメのスポットとして表示</div>
+                        <div className="mt-1 text-xs text-slate-500">Hiển thị như địa điểm gợi ý cho người dùng Nhật</div>
                       </div>
                       <label className="relative inline-flex cursor-pointer items-center">
                         <input type="checkbox" checked={isJapanFriendly} onChange={(event) => setIsJapanFriendly(event.target.checked)} className="peer sr-only" />
@@ -828,7 +828,7 @@ export function AdminWorkspace({ userId, userName, onLogout }: Props) {
                   </div>
 
                   <div>
-                    <div className="text-sm font-medium text-slate-900">主要な設備</div>
+                    <div className="text-sm font-medium text-slate-900">Tiện ích chính</div>
                     <div className="mt-3 flex flex-wrap gap-2">
                       {addFacilityAmenities.map((amenity) => {
                         const active = selectedAmenities.includes(amenity.value);
@@ -853,17 +853,17 @@ export function AdminWorkspace({ userId, userName, onLogout }: Props) {
                         );
                       })}
                       <button type="button" className="rounded-full bg-slate-900 px-4 py-2 text-sm text-white ring-1 ring-slate-900">
-                        + 追加
+                        + Thêm
                       </button>
                     </div>
                   </div>
 
                   <div>
-                    <div className="text-sm font-medium text-slate-900">紹介文</div>
+                    <div className="text-sm font-medium text-slate-900">Mô tả</div>
                     <textarea
                       value={formState.description}
                       onChange={(event) => setFormState((current) => ({ ...current, description: event.target.value }))}
-                      placeholder="スポットの特徴やおすすめの利用時間などを入力してください..."
+                        placeholder="Nhập đặc điểm địa điểm hoặc thời gian sử dụng được khuyến nghị..."
                       className="mt-3 min-h-32 w-full rounded-2xl bg-white px-4 py-3 text-slate-900 ring-1 ring-slate-200 outline-none placeholder:text-slate-400"
                     />
                   </div>
@@ -882,7 +882,7 @@ export function AdminWorkspace({ userId, userName, onLogout }: Props) {
 
                 <div className="mt-5 flex gap-3">
                   <button onClick={() => void submitLocation()} disabled={savingLocation} className="flex-1 rounded-[1.2rem] bg-emerald-600 px-4 py-3 text-sm text-white disabled:opacity-60">
-                    {savingLocation ? "Đang lưu..." : editingLocationId ? "Cập nhật" : "保存する"}
+                    {savingLocation ? "Đang lưu..." : editingLocationId ? "Cập nhật" : "Lưu"}
                   </button>
                   <button
                     onClick={() => {
@@ -891,7 +891,7 @@ export function AdminWorkspace({ userId, userName, onLogout }: Props) {
                     }}
                     className="flex-1 rounded-[1.2rem] bg-white px-4 py-3 text-sm text-slate-700 ring-1 ring-slate-200"
                   >
-                    キャンセル
+                    Hủy
                   </button>
                 </div>
               </main>
@@ -905,7 +905,7 @@ export function AdminWorkspace({ userId, userName, onLogout }: Props) {
           <section className="rounded-4xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <h2 className="mt-1 text-2xl text-slate-900">不適切なコメント管理</h2>
+                <h2 className="mt-1 text-2xl text-slate-900">Quản lý bình luận không phù hợp</h2>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
                   Kiểm tra các bình luận vi phạm
                 </p>
@@ -1102,9 +1102,9 @@ export function AdminWorkspace({ userId, userName, onLogout }: Props) {
                   </div>
                 </div>
 
-                <div className="mt-5 text-center">
+                  <div className="mt-5 text-center">
                   <div className="text-2xl font-semibold">{userName}</div>
-                  <div className="mt-1 text-sm text-white/70">システム管理者</div>
+                  <div className="mt-1 text-sm text-white/70">Quản trị viên hệ thống</div>
                 </div>
 
                 <div className="mt-6 rounded-2xl bg-white/10 p-4 text-sm leading-6 ring-1 ring-white/15">
@@ -1115,20 +1115,20 @@ export function AdminWorkspace({ userId, userName, onLogout }: Props) {
               </div>
 
               <div className="rounded-[1.8rem] bg-slate-50 p-5 ring-1 ring-slate-200">
-                <h3 className="text-sm font-medium uppercase tracking-[0.16em] text-slate-500">個人情報</h3>
+                <h3 className="text-sm font-medium uppercase tracking-[0.16em] text-slate-500">Thông tin cá nhân</h3>
                 <div className="mt-4 space-y-3 rounded-[1.4rem] bg-white p-4 ring-1 ring-slate-200">
-                  <ProfileRow label="氏名" value={userName} />
-                  <ProfileRow label="メール" value="admin@safemove.hanoi" />
-                  <ProfileRow label="電話番号" value="0987 *** 321" noBorder />
+                  <ProfileRow label="Họ và tên" value={userName} />
+                  <ProfileRow label="Email" value="admin@safemove.hanoi" />
+                  <ProfileRow label="Số điện thoại" value="0987 *** 321" noBorder />
                 </div>
 
                 <div className="mt-4 rounded-2xl bg-emerald-50 p-4 text-sm leading-6 text-emerald-800 ring-1 ring-emerald-200">
-                  <div className="flex items-center gap-2 font-medium">
+                    <div className="flex items-center gap-2 font-medium">
                     <span>✅</span>
-                    認証済み管理者
+                    Quản trị viên đã được xác minh
                   </div>
                   <div className="mt-1 text-emerald-700/90">
-                    あなたの身元は完全に検証されており、すべての管理ツールへのアクセスが許可されています。
+                    Danh tính của bạn đã được xác minh hoàn toàn, cho phép truy cập tất cả công cụ quản trị.
                   </div>
                 </div>
               </div>
@@ -1210,10 +1210,10 @@ export function AdminWorkspace({ userId, userName, onLogout }: Props) {
               onClick={onLogout}
             >
               <span>↗</span>
-              ログアウト
+              Đăng xuất
             </button>
 
-            <div className="mt-4 text-center text-xs text-slate-400">バージョン 2.4.0 - SAFEMOVE HANOI 2024</div>
+            <div className="mt-4 text-center text-xs text-slate-400">Phiên bản 2.4.0 - SAFEMOVE HANOI 2024</div>
           </section>
         </div>
       )}

@@ -34,7 +34,7 @@ const guestNavItems: Array<{ id: View; label: string; icon: typeof Home }> = [
 ];
 
 const adminNavItems: Array<{ id: View; label: string; icon: typeof Home }> = [
-  { id: "dashboard", label: "Dashboard", icon: Home },
+  { id: "dashboard", label: "Bảng điều khiển", icon: Home },
   { id: "facilities", label: "Cơ sở", icon: Building2 },
   { id: "admin-profile", label: "Hồ sơ", icon: Settings2 },
 ];
@@ -69,8 +69,8 @@ export function Shell({
               <Wind className="h-5 w-5" />
             </div>
             <div>
-              <div className="text-sm font-medium text-emerald-700">SafeMove HaNoi</div>
-              <div className="text-xs text-slate-500">AQI route and health companion</div>
+              <div className="text-sm font-medium text-emerald-700">SafeMove Hà Nội</div>
+              <div className="text-xs text-slate-500">Ứng dụng chỉ đường AQI và trợ lý sức khỏe</div>
             </div>
           </div>
 
@@ -78,7 +78,7 @@ export function Shell({
             <button
               onClick={() => (role === "guest" ? onRequireLogin() : setView("profile"))}
               className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-700 ring-1 ring-slate-200"
-              aria-label="Open profile"
+              aria-label="Mở hồ sơ"
             >
               {role === "guest" ? <UserCircle2 className="h-5 w-5" /> : avatarLabel}
             </button>

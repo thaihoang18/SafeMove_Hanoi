@@ -387,7 +387,15 @@ export default function App() {
       setView(response.user.role === "admin" ? "dashboard" : "home");
       hasAutoLoadedGpsAqiRef.current = false;
     } catch (error) {
-      setAuthError(error instanceof Error ? error.message : "Login failed.");
+      let msg = error instanceof Error ? error.message : "Đăng nhập thất bại.";
+      if (/invalid email or password/i.test(msg) || /invalid admin credentials/i.test(msg) || /401/.test(msg)) {
+        msg = "Tên đăng nhập hoặc mật khẩu không chính xác.";
+      } else if (/invalid security code/i.test(msg)) {
+        msg = "Mã bảo mật không đúng.";
+      } else if (/email is required/i.test(msg) || /password is required/i.test(msg)) {
+        msg = "Vui lòng nhập đầy đủ thông tin.";
+      }
+      setAuthError(msg);
     } finally {
       setLoadingAuth(false);
     }
@@ -403,7 +411,15 @@ export default function App() {
       setView(response.user.role === "admin" ? "dashboard" : "home");
       hasAutoLoadedGpsAqiRef.current = false;
     } catch (error) {
-      setAuthError(error instanceof Error ? error.message : "Login failed.");
+      let msg = error instanceof Error ? error.message : "Đăng nhập thất bại.";
+      if (/invalid admin credentials/i.test(msg) || /401/.test(msg) || /invalid email or password/i.test(msg)) {
+        msg = "Tên đăng nhập hoặc mật khẩu không chính xác.";
+      } else if (/invalid security code/i.test(msg)) {
+        msg = "Mã bảo mật không đúng.";
+      } else if (/email is required/i.test(msg) || /password is required/i.test(msg)) {
+        msg = "Vui lòng nhập đầy đủ thông tin.";
+      }
+      setAuthError(msg);
     } finally {
       setLoadingAuth(false);
     }
@@ -419,7 +435,7 @@ export default function App() {
       setView("home");
       hasAutoLoadedGpsAqiRef.current = false;
     } catch (error) {
-      setAuthError(error instanceof Error ? error.message : "Register failed.");
+      setAuthError(error instanceof Error ? error.message : "Đăng ký thất bại.");
     } finally {
       setLoadingAuth(false);
     }
@@ -694,7 +710,7 @@ export default function App() {
       const response = await fetchLocationReviews(locationId);
       setSelectedLocationReviews(response.reviews);
     } catch (error) {
-      setSelectedLocationReviewsError(error instanceof Error ? error.message : "Unable to load reviews.");
+      setSelectedLocationReviewsError(error instanceof Error ? error.message : "Không thể tải nhận xét.");
     } finally {
       setSelectedLocationReviewsLoading(false);
     }

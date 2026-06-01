@@ -88,10 +88,10 @@ export function ProfileViewDemo({
   };
 
   const getThresholdLabel = (value: number) => {
-    if (value <= 50) return "Good";
-    if (value <= 100) return "Moderate";
-    if (value <= 150) return "Sensitive";
-    return "Unhealthy";
+    if (value <= 50) return "Tốt";
+    if (value <= 100) return "Trung bình";
+    if (value <= 150) return "Kém cho nhóm nhạy cảm";
+    return "Không lành mạnh";
   };
 
   if (!user) {
@@ -99,7 +99,7 @@ export function ProfileViewDemo({
       <div className="profile-container">
         <div className="empty-state">
           <AlertCircle size={48} className="empty-icon" />
-          <p>No user profile loaded</p>
+          <p>Chưa có hồ sơ người dùng</p>
         </div>
       </div>
     );
@@ -113,20 +113,20 @@ export function ProfileViewDemo({
           <div className="main-avatar-img" style={getAvatarSelectionStyle(avatarSelection)}>
             <img
               src={selectedAvatarPreset.src}
-              alt="Avatar local"
+              alt="Ảnh đại diện"
               onError={(event) => {
                 event.currentTarget.src = selectedAvatarPreset.fallbackSrc;
               }}
             />
           </div>
-          <button className="edit-avatar-badge" title="Change avatar" onClick={() => setAvatarModalOpen(true)} type="button">
+          <button className="edit-avatar-badge" title="Thay avatar" onClick={() => setAvatarModalOpen(true)} type="button">
             📷
           </button>
         </div>
         <div className="user-primary-info">
           <h2 className="user-full-name">{user.name}</h2>
           <span className="user-join-date">
-            {user.joinDate ? `Member since ${user.joinDate}` : "Member"}
+            {user.joinDate ? `Thành viên từ ${user.joinDate}` : "Thành viên"}
           </span>
         </div>
       </div>
@@ -138,7 +138,7 @@ export function ProfileViewDemo({
               <div>
                 <h3 id="avatar-modal-title">Chọn avatar</h3>
               </div>
-              <button className="avatar-modal-close" type="button" onClick={() => setAvatarModalOpen(false)} aria-label="Close avatar picker">
+              <button className="avatar-modal-close" type="button" onClick={() => setAvatarModalOpen(false)} aria-label="Đóng bộ chọn avatar">
                 <X size={16} />
               </button>
             </div>
@@ -204,7 +204,7 @@ export function ProfileViewDemo({
 
       {/* Personal Info Section */}
       <div className="settings-section">
-        <h3 className="section-title-small">Personal Information</h3>
+        <h3 className="section-title-small">Thông tin cá nhân</h3>
         <div className="settings-card">
           {/* Name */}
           <div className="info-row">
@@ -220,7 +220,7 @@ export function ProfileViewDemo({
                 />
               ) : (
                 <>
-                  <span className="info-label">Name</span>
+                  <span className="info-label">Họ và tên</span>
                   <span className="info-value">{user.name}</span>
                 </>
               )}
@@ -294,8 +294,8 @@ export function ProfileViewDemo({
                 />
               ) : (
                 <>
-                  <span className="info-label">Phone</span>
-                  <span className="info-value">{user.phone || "Not set"}</span>
+                  <span className="info-label">Điện thoại</span>
+                  <span className="info-value">{user.phone || "Chưa có"}</span>
                 </>
               )}
             </div>
@@ -321,14 +321,14 @@ export function ProfileViewDemo({
 
       {/* App Settings Section */}
       <div className="settings-section">
-        <h3 className="section-title-small">App Settings</h3>
+        <h3 className="section-title-small">Cài đặt ứng dụng</h3>
         <div className="settings-card">
           {/* AQI Threshold Slider */}
           <div className="slider-row">
             <div className="slider-header">
               <span className="setting-item-title">
                 <AlertCircle size={16} className="inline-icon" />
-                AQI Alert Threshold
+                Ngưỡng cảnh báo AQI
               </span>
               <span className="slider-val-display">{aqiThreshold}</span>
             </div>
@@ -341,9 +341,9 @@ export function ProfileViewDemo({
               className="custom-range-slider"
             />
             <div className="slider-labels">
-              <span>Good (0-50)</span>
-              <span>Moderate (51-100)</span>
-              <span>Bad (200+)</span>
+              <span>Tốt (0-50)</span>
+              <span>Trung bình (51-100)</span>
+              <span>Không lành mạnh (200+)</span>
             </div>
             <div className="threshold-badge">{getThresholdLabel(aqiThreshold)}</div>
           </div>
@@ -354,7 +354,7 @@ export function ProfileViewDemo({
           <div className="toggle-row">
             <span className="setting-item-title">
               <Bell size={16} className="inline-icon" />
-              Push Notifications
+              Thông báo đẩy
             </span>
             <label className="switch">
               <input
@@ -372,7 +372,7 @@ export function ProfileViewDemo({
       {/* Logout Button */}
       <button className="btn-logout" onClick={onLogout} disabled={isLoading}>
         <LogOut size={16} />
-        Logout
+        Đăng xuất
       </button>
     </div>
   );

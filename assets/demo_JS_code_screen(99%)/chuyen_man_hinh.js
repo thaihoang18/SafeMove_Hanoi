@@ -55,11 +55,11 @@ function handleLoginSuccess(userRole) {
     AppContext.currentRole = userRole;
     
     if (userRole === 1) {
-        // ロール1ログイン成功 -> ホームページ (Role 1 -> Trang chủ)
+        // Role 1 đăng nhập thành công -> Trang chủ
         console.log("[Router] Login Role 1. Chuyển về Home.");
         window.location.href = Routes.HOME;
     } else if (userRole === 2) {
-        // ロール2ログイン成功 -> システム管理ダッシュボード (Role 2 -> Admin Dashboard)
+        // Role 2 đăng nhập thành công -> Bảng điều khiển quản trị
         console.log("[Router] Login Role 2. Chuyển về Dashboard.");
         window.location.href = Routes.ADMIN_DASHBOARD;
     }

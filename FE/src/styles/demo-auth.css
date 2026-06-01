@@ -344,12 +344,4 @@
   }
 }
 
-/* Login Page Specific */
-.login-page {
-  /* Can add login-specific styles here */
-}
-
-/* Register Page Specific */
-.register-page {
-  /* Can add register-specific styles here */
-}
+/* Login/Register specific classes are defined via page wrappers; no extra rules needed */

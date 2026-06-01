@@ -30,34 +30,34 @@ export function RegisterScreenDemo({
     setFormError(null);
 
     if (!name.trim()) {
-      setFormError("Please enter name");
+      setFormError("Vui lòng nhập họ và tên");
       return;
     }
 
     if (!email.trim()) {
-      setFormError("Please enter email");
+      setFormError("Vui lòng nhập email");
       return;
     }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setFormError("Please enter valid email");
+      setFormError("Vui lòng nhập email hợp lệ");
       return;
     }
 
     if (!validatePassword(password)) {
-      setFormError("Password must be 8-16 characters");
+      setFormError("Mật khẩu phải từ 8-16 ký tự");
       return;
     }
 
     if (password !== confirmPassword) {
-      setFormError("Passwords do not match");
+      setFormError("Mật khẩu không khớp");
       return;
     }
 
     try {
       await onRegister(name, email, password);
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : "Registration failed");
+      setFormError(err instanceof Error ? err.message : "Đăng ký thất bại");
     }
   };
 
@@ -66,34 +66,34 @@ export function RegisterScreenDemo({
       {/* Header */}
       <div className="auth-header">
         <div className="logo-area-auth">
-          <span className="logo-icon-auth">🌬️</span>
-          <span className="logo-text-auth">SafeMove HaNoi</span>
-        </div>
+            <span className="logo-icon-auth">🌬️</span>
+            <span className="logo-text-auth">SafeMove Hà Nội</span>
+          </div>
       </div>
 
       {/* Main Content */}
       <main className="auth-scrollable-content">
         {/* Welcome Section */}
         <div className="welcome-section">
-          <h1 className="main-greeting">Create Account</h1>
-          <p className="sub-greeting">Start your health journey today</p>
+          <h1 className="main-greeting">Tạo tài khoản</h1>
+          <p className="sub-greeting">Bắt đầu hành trình sức khỏe của bạn ngay hôm nay</p>
         </div>
 
         {/* Auth Card */}
         <div className="auth-card">
-          <h2 className="form-title">Sign Up</h2>
+          <h2 className="form-title">Đăng ký</h2>
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="auth-form">
             {/* Name Input */}
             <div className="input-group-auth">
-              <label className="input-label-auth">Full Name</label>
+              <label className="input-label-auth">Họ và tên</label>
               <div className="input-icon-wrapper-auth">
                 <User size={16} className="input-icon-auth" />
                 <input
                   type="text"
                   className="auth-input"
-                  placeholder="Your full name"
+                  placeholder="Họ và tên của bạn"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   disabled={isLoading}
@@ -103,13 +103,13 @@ export function RegisterScreenDemo({
 
             {/* Email Input */}
             <div className="input-group-auth">
-              <label className="input-label-auth">Email Address</label>
+              <label className="input-label-auth">Email</label>
               <div className="input-icon-wrapper-auth">
                 <Mail size={16} className="input-icon-auth" />
                 <input
                   type="email"
                   className="auth-input"
-                  placeholder="your@email.com"
+                  placeholder="email của bạn"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={isLoading}
@@ -119,7 +119,7 @@ export function RegisterScreenDemo({
 
             {/* Password Input */}
             <div className="input-group-auth">
-              <label className="input-label-auth">Password (8-16 chars)</label>
+              <label className="input-label-auth">Mật khẩu (8-16 ký tự)</label>
               <div className="input-icon-wrapper-auth">
                 <Lock size={16} className="input-icon-auth" />
                 <input
@@ -135,7 +135,7 @@ export function RegisterScreenDemo({
 
             {/* Confirm Password Input */}
             <div className="input-group-auth">
-              <label className="input-label-auth">Confirm Password</label>
+              <label className="input-label-auth">Xác nhận mật khẩu</label>
               <div className="input-icon-wrapper-auth">
                 <Lock size={16} className="input-icon-auth" />
                 <input
@@ -158,20 +158,20 @@ export function RegisterScreenDemo({
               className="btn-primary-auth"
               disabled={isLoading}
             >
-              {isLoading ? "Creating account..." : "Create Account"}
+              {isLoading ? "Đang tạo tài khoản..." : "Tạo tài khoản"}
               <ArrowRight size={16} className="btn-icon-auth" />
             </button>
           </form>
 
           {/* Login Prompt */}
           <div className="register-prompt">
-            <span className="prompt-text">Already have an account?</span>
+            <span className="prompt-text">Đã có tài khoản?</span>
             <button
               onClick={onLoginClick}
               className="register-link-btn"
               type="button"
             >
-              Login
+              Đăng nhập
             </button>
           </div>
         </div>

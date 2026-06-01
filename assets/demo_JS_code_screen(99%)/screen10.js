@@ -8,22 +8,22 @@ const ModerationState = {
         {
             id: 1001,
             locationId: 'bachthao',
-            locationName: 'バックタオ公園',
+            locationName: 'Công viên Bách Thảo',
             image: 'park1.jpg',
             userId: 'A9283',
             violationCount: 3,
-            content: 'ここでのランニングは道が狭すぎて、歩行者が邪魔です。どいてほしい。',
+            content: 'Chạy ở đây đường quá hẹp, người đi bộ cản trở. Mong họ tránh sang một bên.',
             timestamp: '2024/05/20 14:30',
             status: 'unprocessed' 
         },
         {
             id: 1002,
             locationId: 'hoankiem',
-            locationName: 'ホアンキエム湖',
+            locationName: 'Hồ Hoàn Kiếm',
             image: 'lake1.jpg',
             userId: 'K7731',
             violationCount: 1,
-            content: 'ゴミが多すぎます。掃除してください。(スパム報告: 重複投稿)',
+            content: 'Rác nhiều quá. Xin hãy dọn dẹp. (Báo cáo spam: bài đăng trùng lặp)',
             timestamp: '2024/05/19 10:20',
             status: 'unprocessed'
         }
@@ -98,7 +98,7 @@ function renderComments() {
     });
 
     if (filtered.length === 0) {
-        DOM.commentsContainer.innerHTML = '<p style="text-align:center; color:#999; font-size:12px;">条件に一致するコメントはありません。</p>';
+        DOM.commentsContainer.innerHTML = '<p style="text-align:center; color:#999; font-size:12px;">Không có bình luận phù hợp với điều kiện.</p>';
         return;
     }
 
@@ -133,12 +133,12 @@ function renderComments() {
                 <div class="comment-card-body">
                     <div class="user-meta-row">
                         <div class="mod-avatar" data-id="13">👤</div>
-                        <span class="mod-user-id" data-id="14">ユーザーID: ${c.userId}</span>
-                        <span class="violation-badge" data-id="15">違反回数: ${c.violationCount}回</span>
+                        <span class="mod-user-id" data-id="14">ID người dùng: ${c.userId}</span>
+                        <span class="violation-badge" data-id="15">Số lần vi phạm: ${c.violationCount}</span>
                     </div>
 
                     <p class="comment-text-content" data-id="16" style="${isDeleted ? 'text-decoration: line-through; opacity: 0.6;' : ''}">
-                        「${c.content}」
+                        "${c.content}"
                     </p>
 
                     <div class="comment-time-loc">
@@ -147,8 +147,8 @@ function renderComments() {
                     </div>
 
                     <div class="card-actions-row">
-                        <button class="btn-del-comment" data-id="19" onclick="deleteComment(${c.id})" ${isDeleted ? 'disabled' : ''}>削除</button>
-                        <button class="btn-restore-comment" data-id="20" onclick="restoreComment(${c.id})" ${!isDeleted ? 'disabled' : ''}>復元</button>
+                        <button class="btn-del-comment" data-id="19" onclick="deleteComment(${c.id})" ${isDeleted ? 'disabled' : ''}>Xóa</button>
+                        <button class="btn-restore-comment" data-id="20" onclick="restoreComment(${c.id})" ${!isDeleted ? 'disabled' : ''}>Phục hồi</button>
                     </div>
                 </div>
             `;

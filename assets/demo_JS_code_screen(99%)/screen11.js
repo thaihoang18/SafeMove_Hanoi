@@ -27,9 +27,9 @@ function navigateTo(screenName) {
 function handleForgotPassword() {
     const email = DOM.emailInput.value.trim();
     if (email) {
-        alert(`パスワード再設定用リンクを「${email}」に送信しました。\n(Đã gửi liên kết đặt lại mật khẩu đến email của bạn).`);
+        alert(`Đã gửi liên kết đặt lại mật khẩu đến "${email}".`);
     } else {
-        alert("メールアドレスを入力してください。\n(Vui lòng nhập địa chỉ email trước khi yêu cầu đặt lại mật khẩu).");
+        alert("Vui lòng nhập địa chỉ email trước khi yêu cầu đặt lại mật khẩu.");
     }
 }
 
@@ -51,13 +51,13 @@ function handleLogin() {
 
     // Kiểm tra Mục 6: Rỗng hoặc sai định dạng Email
     if (!email || !validateEmail(email)) {
-        DOM.emailError.innerText = "有効なメールアドレスを入力してください"; // Vui lòng nhập địa chỉ email hợp lệ
+        DOM.emailError.innerText = "Vui lòng nhập địa chỉ email hợp lệ";
         isValid = false;
     }
 
     // Kiểm tra Mục 9: Độ dài mật khẩu (8-16 ký tự)
     if (!password || password.length < 8 || password.length > 16) {
-        DOM.passwordError.innerText = "パスワードは8~16文字で入力してください"; // Mật khẩu phải từ 8 đến 16 ký tự
+        DOM.passwordError.innerText = "Mật khẩu phải từ 8 đến 16 ký tự";
         isValid = false;
     }
 

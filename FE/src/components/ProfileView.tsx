@@ -68,7 +68,7 @@ export function ProfileView({
           </div>
           <div>
             <h3>Hồ sơ sức khỏe</h3>
-            <div className="text-sm text-slate-500">Cá nhân hóa advice và route decisions.</div>
+            <div className="text-sm text-slate-500">Cá nhân hóa gợi ý và quyết định lộ trình.</div>
           </div>
         </div>
 
@@ -89,7 +89,7 @@ export function ProfileView({
               onChange={(event) => setPrimaryActivityId(event.target.value)}
               className="w-full rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none ring-1 ring-slate-200"
             >
-              <option value="">Chọn activity</option>
+              <option value="">Chọn hoạt động</option>
               {availableActivities.map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.name}
@@ -139,7 +139,7 @@ export function ProfileView({
           />
           <SliderCard
             icon={<Activity className="h-4 w-4 text-emerald-500" />}
-            label="Max route ratio"
+            label="Tỷ lệ tối đa lộ trình"
             value={maxRatio}
             min={1}
             max={2}

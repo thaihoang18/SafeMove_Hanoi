@@ -43,7 +43,7 @@ export function HomeView({
               <div className="mt-2 flex items-end gap-3">
                 <span className="text-5xl tracking-tight text-slate-900">{aqi ?? "--"}</span>
                 <span className="mb-2 rounded-full bg-emerald-50 px-3 py-1 text-sm text-emerald-700 ring-1 ring-emerald-200">
-                  {aqi === null ? "No data" : classifyAqi(aqi)}
+                  {aqi === null ? "Chưa có dữ liệu" : classifyAqi(aqi)}
                 </span>
               </div>
               <div className="mt-3 flex items-center gap-2 text-sm text-slate-500">
@@ -79,15 +79,15 @@ export function HomeView({
           </div>
 
           <div className="mt-6 grid gap-3 sm:grid-cols-3">
-            <StatCard icon={Bell} label="Unread alerts" value={String(dashboard?.unreadNotifications ?? 0)} />
+            <StatCard icon={Bell} label="Thông báo chưa đọc" value={String(dashboard?.unreadNotifications ?? 0)} />
             <StatCard
               icon={Clock3}
-              label="Recent routes"
+              label="Yêu cầu lộ trình gần đây"
               value={String(dashboard?.recentRouteRequests.length ?? 0)}
             />
             <StatCard
               icon={Leaf}
-              label="Alert threshold"
+              label="Ngưỡng cảnh báo"
               value={String(dashboard?.summary.alert_threshold ?? 140)}
             />
           </div>
@@ -138,7 +138,7 @@ export function HomeView({
         <section className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200/70">
           <div className="mb-4 flex items-center gap-2">
             <Leaf className="h-5 w-5 text-emerald-600" />
-            <h3>Advice events</h3>
+            <h3>Sự kiện khuyến cáo</h3>
           </div>
           <div className="space-y-3">
             {dashboard?.recentAdviceEvents.length ? (
@@ -147,7 +147,7 @@ export function HomeView({
                   <div className="flex items-center justify-between gap-3">
                     <div className="text-sm text-slate-900">{item.title}</div>
                     <span className={`rounded-full px-2 py-1 text-xs ${severityClass(item.severity)}`}>
-                      {item.severity}
+                      {translateSeverity(item.severity)}
                     </span>
                   </div>
                   <div className="mt-1 text-xs leading-5 text-slate-500">{item.body}</div>
@@ -186,14 +186,20 @@ function EmptyBlock({ text }: { text: string }) {
 }
 
 function classifyAqi(aqi: number) {
-  if (aqi <= 50) return "Good";
-  if (aqi <= 100) return "Moderate";
-  if (aqi <= 150) return "Sensitive";
-  return "Unhealthy";
+  if (aqi <= 50) return "Tốt";
+  if (aqi <= 100) return "Trung bình";
+  if (aqi <= 150) return "Kém cho nhóm nhạy cảm";
+  return "Không lành mạnh";
 }
 
 function severityClass(value: string) {
   if (value === "critical") return "bg-rose-100 text-rose-700";
   if (value === "warn") return "bg-amber-100 text-amber-700";
   return "bg-blue-100 text-blue-700";
+}
+
+function translateSeverity(value: string) {
+  if (value === "critical") return "Nguy hiểm";
+  if (value === "warn") return "Cảnh báo";
+  return "Thông tin";
 }
