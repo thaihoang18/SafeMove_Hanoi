@@ -434,8 +434,9 @@ export default function App() {
     hasAutoLoadedGpsAqiRef.current = false;
     demoAlertStepRef.current = 0;
     lastThresholdAlertStateRef.current = null;
-    setAqiAlerts([buildDemoWelcomeAlert(guestUser.full_name ?? "bạn")]);
-    setAqiUnreadCount(1);
+    // Guests should not receive demo notifications or unread counts
+    setAqiAlerts([]);
+    setAqiUnreadCount(0);
   }
 
   async function handleMarkRead(notificationId: string) {
@@ -820,6 +821,12 @@ export default function App() {
         setGlobalError("Vui lòng đăng nhập để mở chức năng này.");
         setView("home");
       }}
+      onShowLogin={() => {
+        // Navigate to login screen by clearing current user (will render LoginScreenDemo)
+        setUser(null);
+        setGlobalError(null);
+        setView("home");
+      }}
       aqiAlerts={aqiAlerts}
       aqiUnreadCount={aqiUnreadCount}
       onAqiBellClick={handleAqiBellClick}
@@ -866,10 +873,7 @@ export default function App() {
           locations={mergedLocations}
           onBack={() => setView("home")}
           onOpenRoute={() => {
-            if (role === "guest") {
-              setGlobalError("Vui lòng đăng nhập để tìm lộ trình.");
-              return;
-            }
+            // allow previewing route screen even for guests (actions that require auth still guarded at action time)
             setView("route");
           }}
         />
@@ -900,14 +904,14 @@ export default function App() {
           onRequireLogin={() => {
             setGlobalError("Vui lòng đăng nhập để viết đánh giá hoặc xem chi tiết.");
           }}
+            onShowLogin={() => {
+              setUser(null);
+              setGlobalError(null);
+              setView("home");
+            }}
           onOpenReviews={() => setView("reviews")}
-          onOpenRoute={() => {
-            if (role === "guest") {
-              setGlobalError("Vui lòng đăng nhập để tìm lộ trình.");
-              return;
-            }
-            setView("route");
-          }}
+          onOpenRoute={() => setView("route")}
+          onBack={() => setView("search")}
           onSubmitReview={handleSubmitLocationReview}
         />
       )}
@@ -942,6 +946,7 @@ export default function App() {
           onSubmit={handleCreateRoute}
           routeHistory={routeHistory}
           loading={routeSubmitting}
+          onBack={() => setView(selectedLocation ? "spot-detail" : "home")}
         />
       )}
 

@@ -11,7 +11,7 @@ type Props = {
   error?: string;
 };
 
-type LoginMode = "user" | "admin" | "guest";
+type LoginMode = "user" | "admin";
 
 export function LoginScreenDemo({
   onUserLogin,
@@ -27,7 +27,6 @@ export function LoginScreenDemo({
   const [securityCode, setSecurityCode] = useState("");
   const [formError, setFormError] = useState<string | null>(error || null);
 
-  const isGuestMode = mode === "guest";
   const isAdminMode = mode === "admin";
 
   function switchMode(nextMode: LoginMode) {
@@ -38,11 +37,6 @@ export function LoginScreenDemo({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
-
-    if (mode === "guest") {
-      onGuestContinue();
-      return;
-    }
 
     if (!email.trim()) {
       setFormError("Please enter email or username");
@@ -115,82 +109,65 @@ export function LoginScreenDemo({
             >
               Admin
             </button>
-            <button
-              type="button"
-              className="auth-mode-btn"
-              onClick={() => switchMode("guest")}
-            >
-              Guest
-            </button>
           </div>
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="auth-form">
-            {!isGuestMode && (
-              <>
-                {/* Email / Username Input */}
-                <div className="input-group-auth">
-                  <label className="input-label-auth">Email / Username</label>
-                  <div className="input-icon-wrapper-auth">
-                    <Mail size={16} className="input-icon-auth" />
-                    <input
-                      type="text"
-                      className="auth-input"
-                      placeholder={isAdminMode ? "admin or your@email.com" : "your@email.com"}
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      disabled={isLoading}
-                    />
-                  </div>
+            <>
+              {/* Email / Username Input */}
+              <div className="input-group-auth">
+                <label className="input-label-auth">Email / Username</label>
+                <div className="input-icon-wrapper-auth">
+                  <Mail size={16} className="input-icon-auth" />
+                  <input
+                    type="text"
+                    className="auth-input"
+                    placeholder={isAdminMode ? "admin or your@email.com" : "your@email.com"}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={isLoading}
+                  />
                 </div>
+              </div>
 
-                {/* Password Input */}
+              {/* Password Input */}
+              <div className="input-group-auth">
+                <div className="label-row-auth">
+                  <label className="input-label-auth">Password</label>
+                  <a href="#" className="forgot-pwd-link">
+                    Forgot?
+                  </a>
+                </div>
+                <div className="input-icon-wrapper-auth">
+                  <Lock size={16} className="input-icon-auth" />
+                  <input
+                    type="password"
+                    className="auth-input"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
+
+              {isAdminMode && (
                 <div className="input-group-auth">
-                  <div className="label-row-auth">
-                    <label className="input-label-auth">Password</label>
-                    <a href="#" className="forgot-pwd-link">
-                      Forgot?
-                    </a>
-                  </div>
+                  <label className="input-label-auth">Security code</label>
                   <div className="input-icon-wrapper-auth">
                     <Lock size={16} className="input-icon-auth" />
                     <input
                       type="password"
                       className="auth-input"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Admin security code"
+                      value={securityCode}
+                      onChange={(e) => setSecurityCode(e.target.value)}
                       disabled={isLoading}
                     />
                   </div>
                 </div>
-
-                {isAdminMode && (
-                  <div className="input-group-auth">
-                    <label className="input-label-auth">Security code</label>
-                    <div className="input-icon-wrapper-auth">
-                      <Lock size={16} className="input-icon-auth" />
-                      <input
-                        type="password"
-                        className="auth-input"
-                        placeholder="Admin security code"
-                        value={securityCode}
-                        onChange={(e) => setSecurityCode(e.target.value)}
-                        disabled={isLoading}
-                      />
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-
-            {isGuestMode && (
-              <div className="guest-mode-panel">
-                <p className="guest-mode-text">
-                  Continue without an account. You can browse the app as a guest.
-                </p>
-              </div>
-            )}
+              )}
+            </>
 
             {/* Error Message */}
             {formError && <div className="error-text-auth">{formError}</div>}
@@ -201,7 +178,7 @@ export function LoginScreenDemo({
               className="btn-primary-auth"
               disabled={isLoading}
             >
-              {isLoading ? "Logging in..." : isGuestMode ? "Continue as guest" : `Login as ${mode}`}
+              {isLoading ? "Logging in..." : `Login as ${mode}`}
               <ArrowRight size={16} className="btn-icon-auth" />
             </button>
           </form>

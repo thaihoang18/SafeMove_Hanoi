@@ -179,8 +179,8 @@
 
 /* Buttons */
 .auth-mode-switcher {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  display: flex;
+  justify-content: center;
   gap: 8px;
   margin-bottom: 16px;
 }

@@ -41,9 +41,10 @@ type Props = {
   }) => Promise<void>;
   routeHistory: Array<Record<string, unknown>>;
   loading: boolean;
+  onBack?: () => void;
 };
 
-export function RoutePlannerView({ locations, origin, destination, maxRatio, setMaxRatio, onSubmit, routeHistory, loading }: Props) {
+export function RoutePlannerView({ locations, origin, destination, maxRatio, setMaxRatio, onSubmit, routeHistory, loading, onBack }: Props) {
   const selectedRouteKind = "green";
   const [submitting, setSubmitting] = useState(false);
   const [planResult, setPlanResult] = useState<PlannedRoutesResponse | null>(null);
@@ -338,6 +339,22 @@ export function RoutePlannerView({ locations, origin, destination, maxRatio, set
 
   const routeStatus = navigationStarted ? "Đang dẫn đường" : "Xem trước lộ trình";
   function handleBackToPreview() {
+    if (!navigationStarted) {
+      // In preview mode: call onBack to exit the route view
+      if (onBack) {
+        onBack();
+        return;
+      }
+      setNavigationStarted(false);
+      setTrackingError(null);
+      setRerouteMessage(null);
+      if (originPosition) {
+        setCurrentPosition(originPosition);
+      }
+      return;
+    }
+
+    // When navigation is active, stop navigation and keep in route view
     setNavigationStarted(false);
     setTrackingError(null);
     setRerouteMessage(null);
