@@ -29,11 +29,11 @@ export function HomeViewDemo({
   const coordinates = gpsCoords ? `(${gpsCoords.lat.toFixed(3)}, ${gpsCoords.lng.toFixed(3)})` : "";
 
   const getAqiLabel = (value: number | null) => {
-    if (value === null) return "N/A";
-    if (value <= 50) return "Good";
-    if (value <= 100) return "Moderate";
-    if (value <= 150) return "Sensitive";
-    return "Unhealthy";
+    if (value === null) return "Chưa có dữ liệu";
+    if (value <= 50) return "Tốt";
+    if (value <= 100) return "Trung bình";
+    if (value <= 150) return "Kém cho nhóm nhạy cảm";
+    return "Không lành mạnh";
   };
 
   const getAqiAdvice = (value: number | null) => {
@@ -78,7 +78,7 @@ export function HomeViewDemo({
     };
   };
 
-  const adviceContent = aqi === null ? { title: advice?.title ?? "Health Advice", body: advice?.body ?? "Keep profile updated for better recommendations" } : getAqiAdvice(aqi);
+  const adviceContent = aqi === null ? { title: advice?.title ?? "Gợi ý sức khỏe", body: advice?.body ?? "Cập nhật hồ sơ để nhận gợi ý phù hợp hơn" } : getAqiAdvice(aqi);
 
   const weather = {
     temp: (gpsAqi as GpsAqiMeasurement | null)?.temperature ?? "-",
@@ -99,19 +99,19 @@ export function HomeViewDemo({
       {/* Source Selector */}
       <div className="source-container">
         <button className="source-btn active" onClick={() => onRefreshGpsAqi()}>
-          <span className="dot green"></span> Main source: IQAir
+          <span className="dot green"></span> Nguồn chính: IQAir
         </button>
         <button className="source-btn disabled">
-          <span className="dot"></span> Backup source: Đang cập nhật
+          <span className="dot"></span> Nguồn dự phòng: Đang cập nhật
         </button>
       </div>
 
       {/* Air Quality Status */}
       <div className="status-box">
         <div className="status-headline">
-          <h2>{getAqiLabel(aqi)} Air Quality</h2>
+          <h2>{getAqiLabel(aqi)} - Chất lượng không khí</h2>
         </div>
-        <p>{aqi === null ? "Unable to determine air quality" : aqi <= 50 ? "Ideal for outdoor activities" : "Consider limiting outdoor activities"}</p>
+        <p>{aqi === null ? "Không thể xác định chất lượng không khí" : aqi <= 50 ? "Thích hợp cho hoạt động ngoài trời" : "Nên cân nhắc hạn chế hoạt động ngoài trời"}</p>
       </div>
 
 {/* Advice Card */}
@@ -131,7 +131,7 @@ export function HomeViewDemo({
             <span className="weather-icon">☀️</span>
             <div className="weather-text">
               <span className="temp">{weather.temp}°C</span>
-              <span className="humidity">Humidity {weather.humidity}%</span>
+              <span className="humidity">Độ ẩm {weather.humidity}%</span>
             </div>
           </div>
           <button className="refresh-btn" onClick={onRefreshGpsAqi} disabled={gpsLoading}>

@@ -46,12 +46,12 @@ export function LocationDetailView({
 
   const handleSubmitReview = async () => {
     if (!reviewText.trim()) {
-      alert("Please enter a review");
+      alert("Vui lòng nhập nhận xét");
       return;
     }
 
     if (userRating < 1) {
-      alert("Please choose a star rating");
+      alert("Vui lòng chọn số sao");
       return;
     }
 
@@ -67,7 +67,7 @@ export function LocationDetailView({
       setReviewText("");
       setUserRating(0);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Could not submit review.";
+      const message = error instanceof Error ? error.message : "Không thể gửi nhận xét.";
       alert(message);
     } finally {
       setSubmittingReview(false);
@@ -121,7 +121,7 @@ export function LocationDetailView({
       <div className="demo-detail-container">
         <div className="empty-state">
           <MapPin size={48} className="empty-icon" />
-          <p>No location selected</p>
+          <p>Chưa có địa điểm được chọn</p>
         </div>
       </div>
     );
@@ -131,7 +131,7 @@ export function LocationDetailView({
   const apiAqi = aqiMeasurement?.aqi ?? null;
   const apiPm25 = apiAqi != null ? (apiAqi * 0.4).toFixed(1) : null;
   const smallCircleValue = apiAqi ?? Math.round(safetyScore);
-  const smallCircleLabel = apiAqi != null ? "AQI" : "Safety";
+  const smallCircleLabel = apiAqi != null ? "AQI" : "An toàn";
   const pm25Value = apiPm25 ?? (location.aqi_level ? (location.aqi_level * 0.4).toFixed(1) : "15.5");
 
   return (
@@ -142,18 +142,29 @@ export function LocationDetailView({
           type="button"
           onClick={() => onBack?.()}
           className="inline-flex h-10 w-10 items-center justify-center rounded-3xl bg-slate-100/90 text-slate-900 ring-1 ring-white/10 transition hover:bg-slate-100"
-          aria-label="Back"
+          aria-label="Quay lại"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
         <div className="detail-header-main">
-          <span className="green-sub-badge">📍 Safe Spot</span>
+          <span className="green-sub-badge">📍 Điểm an toàn</span>
           <h2 className="detail-title">{location.name}</h2>
           <p className="detail-location">
             <MapPin size={14} className="inline" />
-            {location.address || "Hanoi, Vietnam"}
+            {location.address || "Hà Nội, Việt Nam"}
           </p>
         </div>
+        {!isGuest && (
+          <div className="detail-actions">
+            <button
+              type="button"
+              className="btn-directions"
+              onClick={() => onOpenRoute?.()}
+            >
+              Chỉ đường
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Stats Grid */}
@@ -164,15 +175,15 @@ export function LocationDetailView({
             <div className="circle-label">{smallCircleLabel}</div>
           </div>
           <span className="stat-desc">
-            {apiAqi != null ? "Real-time AQI from IQAir" : "Safe Score"}
+            {apiAqi != null ? "AQI thời gian thực từ IQAir" : "Điểm an toàn"}
             <br />
-            <small className="green-text">{apiAqi != null ? "Updated from API" : "Estimated"}</small>
+            <small className="green-text">{apiAqi != null ? "Đã cập nhật từ API" : "Ước tính"}</small>
           </span>
         </div>
         <div className="stat-pm25-box">
           <span className="pm25-title">🍃 PM2.5</span>
           <span className="pm25-value">{pm25Value} µg/m³</span>
-          <p className="pm25-desc">Within WHO standards</p>
+          <p className="pm25-desc">Trong ngưỡng khuyến nghị của WHO</p>
         </div>
       </div>
 
@@ -186,7 +197,7 @@ export function LocationDetailView({
       {/* Amenities */}
       {Array.isArray(location.amenities) && location.amenities.length > 0 && (
         <div className="amenities-section">
-          <h4>Facilities</h4>
+          <h4>Tiện ích</h4>
           <div className="amenities-tags">
             {location.amenities.map((amenity, idx) => (
               <span key={idx} className="amenity-tag">
@@ -199,20 +210,20 @@ export function LocationDetailView({
 
       {/* Introduction Card */}
       <div className="card intro-card">
-        <h4>About</h4>
+        <h4>Giới thiệu</h4>
         <p>
           {location.description ||
-            "Beautiful and safe outdoor space. Perfect for exercise and recreation with excellent air quality."}
+            "Khu vực ngoài trời đẹp và an toàn. Thích hợp cho tập luyện và giải trí với chất lượng không khí tốt."}
         </p>
       </div>
 
       {/* Reviews Section */}
       <div className="reviews-section">
         <div className="reviews-header-row">
-          <h4>Reviews ({reviews.length})</h4>
+          <h4>Đánh giá ({reviews.length})</h4>
           {onOpenReviews && (
             <button className="view-all-link" onClick={onOpenReviews}>
-              View All
+              Xem tất cả
             </button>
           )}
         </div>
@@ -222,7 +233,7 @@ export function LocationDetailView({
           <div className="input-review-box">
             <textarea
               className="review-textarea"
-              placeholder="Share your experience..."
+              placeholder="Chia sẻ trải nghiệm của bạn..."
               value={reviewText}
               onChange={(e) => setReviewText(e.target.value)}
             />
@@ -239,7 +250,7 @@ export function LocationDetailView({
                 ))}
               </div>
               <button className="btn-submit-review" onClick={handleSubmitReview} disabled={submittingReview}>
-                {submittingReview ? "Sending..." : "Send"}
+                {submittingReview ? "Đang gửi..." : "Gửi"}
               </button>
             </div>
           </div>
@@ -247,7 +258,7 @@ export function LocationDetailView({
 
         {isGuest && (
           <div className="login-prompt">
-            <p>Please login to write a review</p>
+            <p>Vui lòng đăng nhập để viết nhận xét</p>
             <button
               className="btn-login"
               onClick={() => {
@@ -258,7 +269,7 @@ export function LocationDetailView({
                 }
               }}
             >
-              Login
+              Đăng nhập
             </button>
           </div>
         )}
@@ -267,7 +278,7 @@ export function LocationDetailView({
         <div className="reviews-list">
           {reviewsError && <p className="no-reviews">{reviewsError}</p>}
           {reviewsLoading ? (
-            <p className="no-reviews">Loading reviews...</p>
+            <p className="no-reviews">Đang tải nhận xét...</p>
           ) : reviews.length > 0 ? (
             reviews.map((review) => (
               <div key={review.id} className="review-card">
@@ -301,13 +312,13 @@ export function LocationDetailView({
               </div>
             ))
           ) : (
-            <p className="no-reviews">No reviews yet. Be the first to review!</p>
+            <p className="no-reviews">Chưa có đánh giá. Hãy là người đầu tiên!</p>
           )}
         </div>
       </div>
 
       {/* Floating Route Button */}
-      <button className="floating-route-btn" onClick={onOpenRoute} title="Find routes to this location">
+      <button className="floating-route-btn" onClick={onOpenRoute} title="Tìm chỉ đường đến địa điểm này">
         <Activity size={20} />
       </button>
     </div>
@@ -317,18 +328,18 @@ export function LocationDetailView({
 function formatRelativeTime(value: string) {
   const timestamp = new Date(value).getTime();
   if (Number.isNaN(timestamp)) {
-    return "Just now";
+    return "Vừa xong";
   }
 
   const diffSeconds = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
-  if (diffSeconds < 60) return "Just now";
+  if (diffSeconds < 60) return "Vừa xong";
 
   const diffMinutes = Math.floor(diffSeconds / 60);
-  if (diffMinutes < 60) return `${diffMinutes}m ago`;
+  if (diffMinutes < 60) return `${diffMinutes} phút trước`;
 
   const diffHours = Math.floor(diffMinutes / 60);
-  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffHours < 24) return `${diffHours} giờ trước`;
 
   const diffDays = Math.floor(diffHours / 24);
-  return `${diffDays}d ago`;
+  return `${diffDays} ngày trước`;
 }

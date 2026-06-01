@@ -24,10 +24,46 @@ export function LoginScreen({ onLogin, onRegister, onGuestContinue, error, loadi
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [formError, setFormError] = useState<string | null>(null);
 
   async function handleSubmit() {
+    setFormError(null);
+
     if (mode === "login") {
+      if (!email.trim()) {
+        setFormError("Vui lòng nhập email hoặc tên đăng nhập");
+        return;
+      }
+
+      if (!password.trim()) {
+        setFormError("Vui lòng nhập mật khẩu");
+        return;
+      }
+
+      const identifier = email.trim();
+      const looksLikeEmail = identifier.includes("@");
+      if (looksLikeEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier)) {
+        setFormError("Vui lòng nhập email hoặc tên đăng nhập hợp lệ");
+        return;
+      }
+
       await onLogin(email, password);
+      return;
+    }
+
+    // Signup validations
+    if (!fullName.trim()) {
+      setFormError("Vui lòng nhập họ và tên");
+      return;
+    }
+
+    if (!email.trim()) {
+      setFormError("Vui lòng nhập email");
+      return;
+    }
+
+    if (!password.trim()) {
+      setFormError("Vui lòng nhập mật khẩu");
       return;
     }
 
@@ -43,7 +79,7 @@ export function LoginScreen({ onLogin, onRegister, onGuestContinue, error, loadi
           </div>
           <div>
             <div className="text-sm font-medium text-emerald-700">SafeMove HaNoi</div>
-            <div className="text-xs text-slate-500">AQI route and health companion</div>
+            <div className="text-xs text-slate-500">Ứng dụng chỉ đường AQI và trợ lý sức khỏe</div>
           </div>
         </div>
 
@@ -86,7 +122,10 @@ export function LoginScreen({ onLogin, onRegister, onGuestContinue, error, loadi
               <Field label="Họ và tên">
                 <input
                   value={fullName}
-                  onChange={(event) => setFullName(event.target.value)}
+                  onChange={(event) => {
+                    setFullName(event.target.value);
+                    setFormError(null);
+                  }}
                   placeholder="Nguyen Van A"
                   className="w-full bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400"
                 />
@@ -97,7 +136,10 @@ export function LoginScreen({ onLogin, onRegister, onGuestContinue, error, loadi
               <input
                 type="email"
                 value={email}
-                onChange={(event) => setEmail(event.target.value)}
+                onChange={(event) => {
+                  setEmail(event.target.value);
+                  setFormError(null);
+                }}
                 placeholder="email@example.com"
                 className="w-full bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400"
               />
@@ -107,7 +149,10 @@ export function LoginScreen({ onLogin, onRegister, onGuestContinue, error, loadi
               <input
                 type={showPassword ? "text" : "password"}
                 value={password}
-                onChange={(event) => setPassword(event.target.value)}
+                onChange={(event) => {
+                  setPassword(event.target.value);
+                  setFormError(null);
+                }}
                 placeholder="••••••••"
                 className="w-full bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400"
               />
@@ -123,7 +168,9 @@ export function LoginScreen({ onLogin, onRegister, onGuestContinue, error, loadi
             {mode === "login" ? <button className="text-xs text-emerald-700">Quên mật khẩu?</button> : null}
           </div>
 
-          {error ? <div className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
+          {(formError || error) ? (
+            <div className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{formError || error}</div>
+          ) : null}
 
           <button
             onClick={handleSubmit}

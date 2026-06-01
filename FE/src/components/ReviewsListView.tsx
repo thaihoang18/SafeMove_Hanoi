@@ -76,7 +76,7 @@ export function ReviewsListView({
                 <Star key={i + 5} size={18} color="#ddd" />
               ))}
           </div>
-          <div className="total-reviews-count">Total {reviews.length} reviews</div>
+          <div className="total-reviews-count">Tổng {reviews.length} đánh giá</div>
         </div>
 
         {/* Distribution Graph */}
@@ -97,15 +97,15 @@ export function ReviewsListView({
 
         {/* List Header with Sort */}
         <div className="list-header-row">
-          <span className="list-title">Reviews</span>
+          <span className="list-title">Đánh giá</span>
           <select
             className="sort-dropdown-btn"
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as "recent" | "rating-high" | "rating-low")}
           >
-            <option value="recent">📅 Recent</option>
-            <option value="rating-high">⭐ Highest</option>
-            <option value="rating-low">⭐ Lowest</option>
+            <option value="recent">📅 Mới nhất</option>
+            <option value="rating-high">⭐ Cao nhất</option>
+            <option value="rating-low">⭐ Thấp nhất</option>
           </select>
         </div>
 
@@ -114,7 +114,7 @@ export function ReviewsListView({
           {reviewsError && <div className="no-reviews-message"><p>{reviewsError}</p></div>}
           {reviewsLoading ? (
             <div className="no-reviews-message">
-              <p>Loading reviews...</p>
+              <p>Đang tải nhận xét...</p>
             </div>
           ) : sortedReviews.length > 0 ? (
             sortedReviews.map((review) => (
@@ -153,15 +153,15 @@ export function ReviewsListView({
                 <p className="review-body">"{review.content}"</p>
                 {review.helpful_count > 0 && (
                   <div className="review-footer">
-                    <button className="helpful-btn">👍 Helpful ({review.helpful_count})</button>
+                    <button className="helpful-btn">👍 Hữu ích ({review.helpful_count})</button>
                   </div>
                 )}
               </div>
             ))
           ) : (
             <div className="no-reviews-message">
-              <p>No reviews yet</p>
-              <small>Be the first to share your experience!</small>
+              <p>Chưa có đánh giá</p>
+              <small>Hãy là người đầu tiên chia sẻ trải nghiệm!</small>
             </div>
           )}
         </div>
@@ -173,18 +173,18 @@ export function ReviewsListView({
 function formatRelativeTime(value: string) {
   const timestamp = new Date(value).getTime();
   if (Number.isNaN(timestamp)) {
-    return "Just now";
+    return "Vừa xong";
   }
 
   const diffSeconds = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
-  if (diffSeconds < 60) return "Just now";
+  if (diffSeconds < 60) return "Vừa xong";
 
   const diffMinutes = Math.floor(diffSeconds / 60);
-  if (diffMinutes < 60) return `${diffMinutes}m ago`;
+  if (diffMinutes < 60) return `${diffMinutes} phút trước`;
 
   const diffHours = Math.floor(diffMinutes / 60);
-  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffHours < 24) return `${diffHours} giờ trước`;
 
   const diffDays = Math.floor(diffHours / 24);
-  return `${diffDays}d ago`;
+  return `${diffDays} ngày trước`;
 }

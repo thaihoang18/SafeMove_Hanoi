@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -25,8 +25,8 @@
     <!-- Main Content -->
     <main>
         <!-- Page Titles -->
-        <h1 class="page-title">施設管理</h1>
-        <p class="page-desc">空気質モニタリングポイントと安全な休憩所のステータスを追跡し、更新します。</p>
+        <h1 class="page-title">Quản lý địa điểm</h1>
+        <p class="page-desc">Theo dõi và cập nhật trạng thái các điểm giám sát chất lượng không khí và khu vực nghỉ ngơi an toàn.</p>
 
         <!-- Stats Card -->
         <div class="stats-card">
@@ -35,15 +35,15 @@
             </div>
             <div class="stats-info">
                 <div class="stats-number">12</div>
-                <div class="stats-label">稼働中</div>
+                <div class="stats-label">Đang hoạt động</div>
             </div>
         </div>
 
         <!-- List Header -->
         <div class="list-header">
-            <h2 class="list-title">場所リスト</h2>
+            <h2 class="list-title">Danh sách địa điểm</h2>
             <button class="btn-add" id="btnAddFacility">
-                <i class="fa-solid fa-plus"></i> 新規追加
+                <i class="fa-solid fa-plus"></i> Thêm mới
             </button>
         </div>
 
@@ -57,15 +57,15 @@
                 </div>
                 <div class="item-content">
                     <div class="item-header">
-                        <div class="item-name">ホアンキエム駅A</div>
+                        <div class="item-name">Trạm Hoàn Kiếm A</div>
                         <div class="item-actions">
-                            <span class="tag-japan">日本対応</span>
-                            <button class="btn-delete" title="削除"><i class="fa-regular fa-trash-can"></i></button>
+                            <span class="tag-japan">Hỗ trợ tiếng Nhật</span>
+                            <button class="btn-delete" title="Xóa"><i class="fa-regular fa-trash-can"></i></button>
                         </div>
                     </div>
                     <div class="item-address">Ly Thai To, Hoan Kiem</div>
                     <div class="item-meta">
-                        <span><i class="fa-regular fa-clock"></i> 更新: 22分前</span>
+                        <span><i class="fa-regular fa-clock"></i> Cập nhật: 22 phút trước</span>
                         <span class="battery-status"><i class="fa-solid fa-battery-full"></i> 98%</span>
                     </div>
                 </div>
@@ -78,15 +78,15 @@
                 </div>
                 <div class="item-content">
                     <div class="item-header">
-                        <div class="item-name">タイホー駅 - ウォーターマーク</div>
+                        <div class="item-name">Trạm Tây Hồ - Watermark</div>
                         <div class="item-actions">
-                            <span class="tag-japan">日本対応</span>
-                            <button class="btn-delete" title="削除"><i class="fa-regular fa-trash-can"></i></button>
-                        </div>
+                                <span class="tag-japan">Hỗ trợ tiếng Nhật</span>
+                                <button class="btn-delete" title="Xóa"><i class="fa-regular fa-trash-can"></i></button>
+                            </div>
                     </div>
                     <div class="item-address">Lạc Long Quân, Tây Hồ</div>
                     <div class="item-meta">
-                        <span><i class="fa-regular fa-clock"></i> 更新: 1時間前</span>
+                        <span><i class="fa-regular fa-clock"></i> Cập nhật: 1 giờ trước</span>
                         <span class="battery-status warning"><i class="fa-solid fa-battery-quarter"></i> 22%</span>
                     </div>
                 </div>
@@ -99,15 +99,15 @@
                 </div>
                 <div class="item-content">
                     <div class="item-header">
-                        <div class="item-name">バディン - スポーツセンター</div>
+                        <div class="item-name">Ba Đình - Trung tâm thể thao</div>
                         <div class="item-actions">
                             <!-- No Japan-friendly tag here -->
-                            <button class="btn-delete" title="削除"><i class="fa-regular fa-trash-can"></i></button>
+                            <button class="btn-delete" title="Xóa"><i class="fa-regular fa-trash-can"></i></button>
                         </div>
                     </div>
                     <div class="item-address">Quán Thánh, Ba Đình</div>
                     <div class="item-meta">
-                        <span><i class="fa-regular fa-clock"></i> 更新: 5分前</span>
+                        <span><i class="fa-regular fa-clock"></i> Cập nhật: 5 phút trước</span>
                         <span class="battery-status"><i class="fa-solid fa-battery-three-quarters"></i> 75%</span>
                     </div>
                 </div>
@@ -118,17 +118,17 @@
 
     <!-- Bottom Navigation -->
     <nav class="bottom-nav">
-        <a class="nav-item" id="tabDashboard">
+            <a class="nav-item" id="tabDashboard">
             <i class="fa-solid fa-house"></i>
-            <span>ダッシュボード</span>
+            <span>Bảng điều khiển</span>
         </a>
         <a class="nav-item active" id="tabFacility">
             <i class="fa-solid fa-briefcase"></i>
-            <span>施設</span>
+            <span>Địa điểm</span>
         </a>
         <a class="nav-item" id="tabProfile">
             <i class="fa-regular fa-user"></i>
-            <span>プロフィール</span>
+            <span>Hồ sơ</span>
         </a>
     </nav>
 </div>

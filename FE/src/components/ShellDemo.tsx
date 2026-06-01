@@ -49,22 +49,21 @@ type Props = {
 };
 
 const guestNavItems: NavItem[] = [
-  { id: "home", label: "Home", icon: <Home size={18} /> },
-  { id: "search", label: "Search", icon: <Search size={18} /> },
+  { id: "home", label: "Trang chủ", icon: <Home size={18} /> },
+  { id: "search", label: "Tìm kiếm", icon: <Search size={18} /> },
 ];
 
 const userNavItems: NavItem[] = [
-  { id: "home", label: "Home", icon: <Home size={18} /> },
-  { id: "search", label: "Search", icon: <Search size={18} /> },
-  { id: "route", label: "Route", icon: <Map size={18} /> },
-  { id: "profile", label: "Profile", icon: <User size={18} /> },
+  { id: "home", label: "Trang chủ", icon: <Home size={18} /> },
+  { id: "search", label: "Tìm kiếm", icon: <Search size={18} /> },
+  { id: "profile", label: "Hồ sơ", icon: <User size={18} /> },
 ];
 
 const adminNavItems: NavItem[] = [
-  { id: "dashboard", label: "Dashboard", icon: <Shield size={18} /> },
-  { id: "facilities", label: "Facilities", icon: <Map size={18} /> },
-  { id: "moderation", label: "Moderation", icon: <LogOut size={18} /> },
-  { id: "profile", label: "Profile", icon: <User size={18} /> },
+  { id: "dashboard", label: "Bảng điều khiển", icon: <Shield size={18} /> },
+  { id: "facilities", label: "Cơ sở", icon: <Map size={18} /> },
+  { id: "moderation", label: "Kiểm duyệt", icon: <LogOut size={18} /> },
+  { id: "profile", label: "Hồ sơ", icon: <User size={18} /> },
 ];
 
 export function ShellDemo({
@@ -121,11 +120,11 @@ export function ShellDemo({
       <header className="app-header-demo">
         <div className="logo-area-demo" onClick={logoClick}>
           <Wind className="logo-icon" />
-          <span className="logo-text">SafeMove HaNoi</span>
+          <span className="logo-text">SafeMove Hà Nội</span>
         </div>
         <div className="header-actions-demo">
           {role !== "guest" && (
-            <button className="aqi-bell-btn-demo" onClick={handleBellClick} aria-label="AQI notifications">
+            <button className="aqi-bell-btn-demo" onClick={handleBellClick} aria-label="Thông báo AQI">
               <Bell size={18} />
               {aqiUnreadCount > 0 && <span className="aqi-badge-demo">{aqiUnreadCount > 9 ? "9+" : aqiUnreadCount}</span>}
             </button>
