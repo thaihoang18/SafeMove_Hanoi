@@ -30,6 +30,7 @@ type Props = {
   setView: (view: View) => void;
   userName: string;
   onRequireLogin: () => void;
+  onShowLogin?: () => void;
   aqiAlerts: Array<{
     id: string;
     title: string;
@@ -50,8 +51,6 @@ type Props = {
 const guestNavItems: NavItem[] = [
   { id: "home", label: "Home", icon: <Home size={18} /> },
   { id: "search", label: "Search", icon: <Search size={18} /> },
-  { id: "route", label: "Route", icon: <Map size={18} /> },
-  { id: "profile", label: "Profile", icon: <User size={18} /> },
 ];
 
 const userNavItems: NavItem[] = [
@@ -74,6 +73,7 @@ export function ShellDemo({
   setView,
   userName,
   onRequireLogin,
+  onShowLogin,
   aqiAlerts,
   aqiUnreadCount,
   onAqiBellClick,
@@ -85,7 +85,7 @@ export function ShellDemo({
   const navItems = role === "admin" ? adminNavItems : role === "user" ? userNavItems : guestNavItems;
 
   function handleNavigate(nextView: View) {
-    // Auth-required views
+    // Auth-required views for guests
     if (role === "guest" && ["route", "profile", "alert"].includes(nextView)) {
       onRequireLogin();
       return;
@@ -99,6 +99,11 @@ export function ShellDemo({
 
   const avatarClick = () => {
     if (role === "guest") {
+      // If parent provided a direct show-login handler, use it to navigate to the login screen
+      if (onShowLogin) {
+        onShowLogin();
+        return;
+      }
       onRequireLogin();
     } else {
       setView("profile");
@@ -119,17 +124,19 @@ export function ShellDemo({
           <span className="logo-text">SafeMove HaNoi</span>
         </div>
         <div className="header-actions-demo">
-          <button className="aqi-bell-btn-demo" onClick={handleBellClick} aria-label="AQI notifications">
-            <Bell size={18} />
-            {aqiUnreadCount > 0 && <span className="aqi-badge-demo">{aqiUnreadCount > 9 ? "9+" : aqiUnreadCount}</span>}
-          </button>
+          {role !== "guest" && (
+            <button className="aqi-bell-btn-demo" onClick={handleBellClick} aria-label="AQI notifications">
+              <Bell size={18} />
+              {aqiUnreadCount > 0 && <span className="aqi-badge-demo">{aqiUnreadCount > 9 ? "9+" : aqiUnreadCount}</span>}
+            </button>
+          )}
           <button className="avatar-btn-demo" onClick={avatarClick} title={userName}>
             {role === "guest" ? <User size={18} /> : <span className="avatar-letter">{userName.charAt(0).toUpperCase()}</span>}
           </button>
         </div>
       </header>
 
-      {showAqiPopover && (
+      {showAqiPopover && role !== "guest" && (
         <div className="aqi-popover-layer-demo" onClick={() => setShowAqiPopover(false)}>
           <div className="aqi-popover-demo" onClick={(event) => event.stopPropagation()}>
             <div className="aqi-popover-header-demo">

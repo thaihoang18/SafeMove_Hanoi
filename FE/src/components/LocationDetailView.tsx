@@ -1,4 +1,4 @@
-import { MapPin, Star, Activity } from "lucide-react";
+import { MapPin, Star, Activity, ArrowLeft } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { PlaceCatalogItem } from "@/lib/guest-exercise-places";
 import { fetchIqAirAqiByCoordinates } from "@/lib/api";
@@ -10,8 +10,10 @@ type Props = {
   location: PlaceCatalogItem | null;
   onOpenRoute: () => void;
   onOpenReviews?: () => void;
+  onBack?: () => void;
   isGuest: boolean;
   onRequireLogin?: () => void;
+  onShowLogin?: () => void;
   reviews: LocationReview[];
   reviewsLoading?: boolean;
   reviewsError?: string | null;
@@ -24,8 +26,10 @@ export function LocationDetailView({
   location,
   onOpenRoute,
   onOpenReviews,
+  onBack,
   isGuest,
   onRequireLogin,
+  onShowLogin,
   reviews,
   reviewsLoading = false,
   reviewsError,
@@ -134,12 +138,22 @@ export function LocationDetailView({
     <div className="demo-detail-container">
       {/* Header - Location Title */}
       <div className="detail-header">
-        <span className="green-sub-badge">📍 Safe Spot</span>
-        <h2 className="detail-title">{location.name}</h2>
-        <p className="detail-location">
-          <MapPin size={14} className="inline" />
-          {location.address || "Hanoi, Vietnam"}
-        </p>
+        <button
+          type="button"
+          onClick={() => onBack?.()}
+          className="inline-flex h-10 w-10 items-center justify-center rounded-3xl bg-slate-100/90 text-slate-900 ring-1 ring-white/10 transition hover:bg-slate-100"
+          aria-label="Back"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </button>
+        <div className="detail-header-main">
+          <span className="green-sub-badge">📍 Safe Spot</span>
+          <h2 className="detail-title">{location.name}</h2>
+          <p className="detail-location">
+            <MapPin size={14} className="inline" />
+            {location.address || "Hanoi, Vietnam"}
+          </p>
+        </div>
       </div>
 
       {/* Stats Grid */}
@@ -234,7 +248,16 @@ export function LocationDetailView({
         {isGuest && (
           <div className="login-prompt">
             <p>Please login to write a review</p>
-            <button className="btn-login" onClick={onRequireLogin}>
+            <button
+              className="btn-login"
+              onClick={() => {
+                if (onShowLogin) {
+                  onShowLogin();
+                } else {
+                  onRequireLogin?.();
+                }
+              }}
+            >
               Login
             </button>
           </div>
