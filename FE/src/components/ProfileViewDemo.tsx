@@ -24,6 +24,10 @@ type Props = {
   onUpdateAvatarSelection: (selection: AvatarSelection) => Promise<void> | void;
   onLogout: () => void;
   isLoading?: boolean;
+  pushEnabled?: boolean;
+  emailEnabled?: boolean;
+  onUpdatePushNotification?: (enabled: boolean) => Promise<void> | void;
+  onUpdateEmailNotification?: (enabled: boolean) => Promise<void> | void;
 };
 
 export function ProfileViewDemo({
@@ -34,11 +38,14 @@ export function ProfileViewDemo({
   onUpdateAvatarSelection,
   onLogout,
   isLoading = false,
+  pushEnabled = true,
+  emailEnabled = false,
+  onUpdatePushNotification,
+  onUpdateEmailNotification,
 }: Props) {
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
   const [aqiThreshold, setAqiThreshold] = useState(currentAqiThreshold);
-  const [pushNotifications, setPushNotifications] = useState(true);
   const [avatarModalOpen, setAvatarModalOpen] = useState(false);
   const [pendingAvatarSelection, setPendingAvatarSelection] = useState<AvatarSelection>(avatarSelection);
   const selectedAvatarPreset = avatarPresets.find((preset) => preset.id === avatarSelection.avatarId) ?? avatarPresets[0];
@@ -58,7 +65,7 @@ export function ProfileViewDemo({
 
     const timer = window.setTimeout(() => {
       void onUpdateProfile("alertThreshold", String(aqiThreshold));
-    }, 300);
+    }, 2000);
 
     return () => window.clearTimeout(timer);
   }, [aqiThreshold, currentAqiThreshold, onUpdateProfile]);
@@ -359,8 +366,34 @@ export function ProfileViewDemo({
             <label className="switch">
               <input
                 type="checkbox"
-                checked={pushNotifications}
-                onChange={(e) => setPushNotifications(e.target.checked)}
+                checked={pushEnabled}
+                onChange={(e) => {
+                  if (onUpdatePushNotification) {
+                    void onUpdatePushNotification(e.target.checked);
+                  }
+                }}
+                disabled={isLoading}
+              />
+              <span className="slider round"></span>
+            </label>
+          </div>
+
+          {/* Email Notifications */}
+          <div className="toggle-row">
+            <span className="setting-item-title">
+              <span className="inline-icon" style={{ fontSize: "16px" }}>✉️</span>
+              Cập nhật qua email
+            </span>
+            <label className="switch">
+              <input
+                type="checkbox"
+                checked={emailEnabled}
+                onChange={(e) => {
+                  if (onUpdateEmailNotification) {
+                    void onUpdateEmailNotification(e.target.checked);
+                  }
+                }}
+                disabled={isLoading}
               />
               <span className="slider round"></span>
             </label>

@@ -1,7 +1,7 @@
-import { MapPin, Star, Activity, ArrowLeft } from "lucide-react";
+import { MapPin, Star, Activity, ArrowLeft, Languages } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { PlaceCatalogItem } from "@/lib/guest-exercise-places";
-import { fetchIqAirAqiByCoordinates } from "@/lib/api";
+import { fetchIqAirAqiByCoordinates, translateReviewContent } from "@/lib/api";
 import type { GpsAqiMeasurement, LocationReview } from "@/lib/types";
 import { getAvatarPreset, getAvatarSelectionStyle, type AvatarSelection } from "@/lib/avatar-presets";
 import "../styles/demo-detail.css";
@@ -43,6 +43,33 @@ export function LocationDetailView({
   const [aqiMeasurement, setAqiMeasurement] = useState<GpsAqiMeasurement | null>(null);
   const [aqiLoading, setAqiLoading] = useState(false);
   const [aqiError, setAqiError] = useState<string | null>(null);
+  // Translate state: reviewId -> { translated, loading, shown }
+  const [translateMap, setTranslateMap] = useState<Record<string, { text: string; loading: boolean; shown: boolean }>>({});
+
+  async function handleTranslateReview(review: LocationReview) {
+    const existing = translateMap[review.id];
+    // Toggle off if already shown
+    if (existing?.shown) {
+      setTranslateMap((prev) => ({ ...prev, [review.id]: { ...existing, shown: false } }));
+      return;
+    }
+    // If already fetched, just show it
+    if (existing?.text) {
+      setTranslateMap((prev) => ({ ...prev, [review.id]: { ...existing, shown: true } }));
+      return;
+    }
+    // Fetch translation
+    setTranslateMap((prev) => ({ ...prev, [review.id]: { text: "", loading: true, shown: false } }));
+    try {
+      const result = await translateReviewContent(review.content, "JA");
+      setTranslateMap((prev) => ({
+        ...prev,
+        [review.id]: { text: result.translated, loading: false, shown: true },
+      }));
+    } catch {
+      setTranslateMap((prev) => ({ ...prev, [review.id]: { text: "", loading: false, shown: false } }));
+    }
+  }
 
   const handleSubmitReview = async () => {
     if (!reviewText.trim()) {
@@ -309,6 +336,25 @@ export function LocationDetailView({
                   <span className="rev-date">{formatRelativeTime(review.created_at)}</span>
                 </div>
                 <p className="rev-text">"{review.content}"</p>
+                {/* Translate button */}
+                <div className="rev-translate-row">
+                  <button
+                    type="button"
+                    className="rev-translate-btn"
+                    onClick={() => handleTranslateReview(review)}
+                    disabled={translateMap[review.id]?.loading}
+                  >
+                    <Languages size={13} />
+                    {translateMap[review.id]?.loading
+                      ? "Đang dịch..."
+                      : translateMap[review.id]?.shown
+                      ? "Ẩn bản dịch"
+                      : "Dịch"}
+                  </button>
+                </div>
+                {translateMap[review.id]?.shown && translateMap[review.id]?.text && (
+                  <p className="rev-translated-text">🌐 {translateMap[review.id].text}</p>
+                )}
               </div>
             ))
           ) : (

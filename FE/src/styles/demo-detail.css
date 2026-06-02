@@ -525,3 +525,67 @@
     height: 46px;
   }
 }
+
+/* Translate button row */
+.rev-translate-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.rev-translate-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: 1px solid #d1fae5;
+  color: #059669;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.rev-translate-btn:hover:not(:disabled) {
+  background: #f0fdf4;
+  border-color: #6ee7b7;
+}
+
+.rev-translate-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Translated text block */
+.rev-translated-text {
+  font-size: 12px;
+  color: #374151;
+  margin: 6px 0 0 0;
+  padding: 8px 10px;
+  background: #f0fdf4;
+  border-left: 3px solid #10b981;
+  border-radius: 4px;
+  line-height: 1.5;
+  font-style: italic;
+}
+
+/* AQI source note */
+.aqi-loading-note {
+  font-size: 11px;
+  color: #64748b;
+  text-align: center;
+  padding: 4px 16px;
+}
+
+.aqi-error-message {
+  font-size: 11px;
+  color: #dc2626;
+  text-align: center;
+  padding: 4px 16px;
+  background: #fef2f2;
+  border-radius: 6px;
+  margin: 0 16px;
+}

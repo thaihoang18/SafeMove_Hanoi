@@ -51,6 +51,7 @@ type Props = {
 const guestNavItems: NavItem[] = [
   { id: "home", label: "Trang chủ", icon: <Home size={18} /> },
   { id: "search", label: "Tìm kiếm", icon: <Search size={18} /> },
+  { id: "route", label: "Lộ trình", icon: <Map size={18} /> },
 ];
 
 const userNavItems: NavItem[] = [
@@ -84,8 +85,8 @@ export function ShellDemo({
   const navItems = role === "admin" ? adminNavItems : role === "user" ? userNavItems : guestNavItems;
 
   function handleNavigate(nextView: View) {
-    // Auth-required views for guests
-    if (role === "guest" && ["route", "profile", "alert"].includes(nextView)) {
+    // Auth-required views for guests — route is allowed (shows guest preview)
+    if (role === "guest" && ["profile", "alert"].includes(nextView)) {
       onRequireLogin();
       return;
     }

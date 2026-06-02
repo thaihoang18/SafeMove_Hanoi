@@ -16,6 +16,8 @@ import {
   previewAdvice,
   register,
   updateProfile,
+  dispatchAqiAlert,
+  updateNotificationPreferences,
 } from "./lib/api";
 import type {
   DashboardResponse,
@@ -47,6 +49,7 @@ import { RoutePlannerView } from "./components/RoutePlannerView";
 import { AqiAlertScreen } from "./components/AqiAlertScreen";
 import { ProfileViewDemo } from "./components/ProfileViewDemo";
 import { AdminWorkspace } from "./components/AdminWorkspace";
+import { GuestRoutePreview } from "./components/GuestRoutePreview";
 
 type Role = "guest" | "user" | "admin";
 type View = ShellView;
@@ -294,6 +297,7 @@ export default function App() {
   const lastStoredAqiRef = useRef<number | null>(null);
   const lastStoredToneRef = useRef<AqiTone>("unknown");
   const lastThresholdAlertStateRef = useRef<"safe" | "unsafe" | null>(null);
+  const lastAlertedThresholdRef = useRef<number | null>(null);
 
   const guestUser = useMemo<User>(
     () => ({
@@ -450,6 +454,7 @@ export default function App() {
     hasAutoLoadedGpsAqiRef.current = false;
     demoAlertStepRef.current = 0;
     lastThresholdAlertStateRef.current = null;
+    lastAlertedThresholdRef.current = null;
     // Guests should not receive demo notifications or unread counts
     setAqiAlerts([]);
     setAqiUnreadCount(0);
@@ -508,6 +513,28 @@ export default function App() {
     }
 
     await handleSaveProfile(payload);
+  }
+
+  async function handleUpdateNotificationPref(field: string, value: boolean) {
+    if (!user) return;
+    setProfileSaving(true);
+    try {
+      const updatedPrefs = await updateNotificationPreferences(user.id, {
+        [field]: value,
+      });
+      setProfile((prev) =>
+        prev
+          ? {
+              ...prev,
+              notificationPreferences: updatedPrefs.notificationPreferences,
+            }
+          : prev,
+      );
+    } catch (err) {
+      console.error("Failed to update preferences:", err);
+    } finally {
+      setProfileSaving(false);
+    }
   }
 
   async function handleCreateRoute(payload: {
@@ -616,29 +643,26 @@ export default function App() {
         }
       }
     } catch (error) {
-      let message = "Không thể lấy vị trí GPS hiện tại.";
-
-      if (
-        typeof error === "object" &&
-        error !== null &&
-        "code" in error &&
-        "message" in error
-      ) {
-        const geoError = error as GeolocationPositionError;
-        if (geoError.code === 1) {
-          message = "Bạn đã từ chối quyền vị trí. Vui lòng bật Location permission cho trang này.";
-        } else if (geoError.code === 2) {
-          message = "Không xác định được vị trí hiện tại. Hãy thử lại khi GPS ổn định hơn.";
-        } else if (geoError.code === 3) {
-          message = "Lấy vị trí bị timeout. Hãy thử lại.";
+      console.warn("Lỗi lấy GPS, sử dụng fallback Tòa B1 ĐH Bách Khoa:", error);
+      
+      // Fallback coordinates: Tòa B1 ĐH Bách Khoa Hà Nội
+      const fallbackLat = 21.0041;
+      const fallbackLng = 105.8428;
+      
+      setGpsCoords({ lat: fallbackLat, lng: fallbackLng });
+      setGpsError("Đang sử dụng vị trí giả lập (B1 Bách Khoa) do lỗi GPS.");
+      
+      try {
+        const data = await fetchIqAirAqiByCoordinates(fallbackLat, fallbackLng);
+        setGpsAqi(data.measurement);
+        // ... (we don't strictly need to trigger local alerts on fallback load)
+      } catch (innerError) {
+        if (innerError instanceof Error) {
+          setGpsError(`Không lấy được AQI (Fallback): ${innerError.message}`);
         } else {
-          message = geoError.message || message;
+          setGpsError("Không lấy được AQI (Fallback).");
         }
-      } else if (error instanceof Error) {
-        message = error.message;
       }
-
-      setGpsError(message);
     } finally {
       setGpsLoading(false);
     }
@@ -656,17 +680,34 @@ export default function App() {
     }
 
     const threshold = profile?.profile?.alert_threshold ?? 140;
-    const nextState: "safe" | "unsafe" = currentGpsAqi.aqi >= threshold ? "unsafe" : "safe";
+    const isUnsafe = currentGpsAqi.aqi >= threshold;
+    const isStateChanged = lastThresholdAlertStateRef.current !== (isUnsafe ? "unsafe" : "safe");
+    const isThresholdChanged = lastAlertedThresholdRef.current !== threshold;
 
-    if (lastThresholdAlertStateRef.current !== nextState) {
-      const alertItem = buildThresholdAqiAlert(currentGpsAqi, threshold, nextState === "unsafe");
-      if (alertItem) {
+    if (isUnsafe && (isStateChanged || isThresholdChanged)) {
+      const isPushEnabled = profile?.notificationPreferences?.push_enabled !== false;
+      const alertItem = buildThresholdAqiAlert(currentGpsAqi, threshold, true);
+      if (alertItem && isPushEnabled) {
         setAqiAlerts((current) => [alertItem, ...current].slice(0, 5));
         setAqiUnreadCount((current) => current + 1);
+
+        // Dispatch real push notification + email via backend
+        void dispatchAqiAlert(user.id, {
+          title: alertItem.title,
+          body: alertItem.body,
+          aqi: alertItem.aqi,
+          aqiLabel: alertItem.toneLabel,
+          location: alertItem.location,
+        }).catch((err) => {
+          // Non-fatal — in-app alert already shown
+          console.warn("[AQI Dispatch] Failed to send push/email:", err?.message);
+        });
       }
 
-      lastThresholdAlertStateRef.current = nextState;
+      lastAlertedThresholdRef.current = threshold;
     }
+
+    lastThresholdAlertStateRef.current = isUnsafe ? "unsafe" : "safe";
   }, [gpsAqi, profile?.profile?.alert_threshold, role, user]);
 
   useEffect(() => {
@@ -859,6 +900,8 @@ export default function App() {
         setGpsError(null);
         setAqiAlerts([]);
         setAqiUnreadCount(0);
+        lastThresholdAlertStateRef.current = null;
+        lastAlertedThresholdRef.current = null;
         setRole("user");
         setView("home");
       }}
@@ -944,7 +987,19 @@ export default function App() {
         />
       )}
 
-      {view === "route" && (
+      {view === "route" && role === "guest" && (
+        <GuestRoutePreview
+          locations={mergedLocations}
+          onShowLogin={() => {
+            setUser(null);
+            setGlobalError(null);
+            setView("home");
+          }}
+          onBack={() => setView(selectedLocation ? "spot-detail" : "home")}
+        />
+      )}
+
+      {view === "route" && role !== "guest" && (
         <RoutePlannerView
           origin={gpsCoords ? { label: "Vị trí hiện tại", lat: gpsCoords.lat, lng: gpsCoords.lng } : null}
           destination={selectedLocation}
@@ -993,11 +1048,16 @@ export default function App() {
             setAqiAlerts([]);
             setAqiUnreadCount(0);
             lastThresholdAlertStateRef.current = null;
+            lastAlertedThresholdRef.current = null;
             setAvatarSelection(defaultAvatarSelection);
             setRole("user");
             setView("home");
           }}
           isLoading={profileSaving}
+          pushEnabled={profile?.notificationPreferences?.push_enabled !== false}
+          emailEnabled={profile?.notificationPreferences?.email_enabled === true}
+          onUpdatePushNotification={(enabled) => handleUpdateNotificationPref("pushEnabled", enabled)}
+          onUpdateEmailNotification={(enabled) => handleUpdateNotificationPref("emailEnabled", enabled)}
         />
       )}
     </ShellDemo>

@@ -90,7 +90,13 @@ export async function fetchIqAirMeasurement(lat, lng) {
 async function fetchIqAirMeasurementFresh(lat, lng, cacheKey) {
   const apiKey = process.env.IQAIR_API_KEY;
   if (!apiKey || !String(apiKey).trim()) {
-    throw new Error("Missing IQAIR_API_KEY on server.");
+    // IQAir key missing — try AQICN then DB
+    console.warn("[AQI] IQAIR_API_KEY missing, trying AQICN fallback.");
+    const aqicn = await fetchAqicnMeasurement(lat, lng);
+    if (aqicn) return aqicn;
+    const db = await fetchNearestDatabaseMeasurement(lat, lng);
+    if (db) return db;
+    throw new Error("Missing IQAIR_API_KEY on server and no fallback data available.");
   }
 
   const iqAirUrl = new URL("https://api.airvisual.com/v2/nearest_city");
@@ -98,12 +104,21 @@ async function fetchIqAirMeasurementFresh(lat, lng, cacheKey) {
   iqAirUrl.searchParams.set("lon", String(lng));
   iqAirUrl.searchParams.set("key", String(apiKey).trim());
 
-  const response = await fetch(iqAirUrl, {
-    method: "GET",
-    headers: {
-      Accept: "application/json",
-    },
-  });
+  let response;
+  try {
+    response = await fetch(iqAirUrl, {
+      method: "GET",
+      headers: { Accept: "application/json" },
+    });
+  } catch (networkError) {
+    // Network-level error — try AQICN backup
+    console.warn("[AQI] IQAir network error, trying AQICN:", networkError.message);
+    const aqicn = await fetchAqicnMeasurement(lat, lng);
+    if (aqicn) return aqicn;
+    const db = await fetchNearestDatabaseMeasurement(lat, lng);
+    if (db) return db;
+    throw networkError;
+  }
 
   if (!response.ok) {
     if (response.status === 429) {
@@ -120,6 +135,13 @@ async function fetchIqAirMeasurementFresh(lat, lng, cacheKey) {
       iqAirBackoffCache.set(cacheKey, {
         expiresAt: Date.now() + IQAIR_BACKOFF_MS,
       });
+    } else {
+      // Non-429 HTTP errors — try AQICN backup
+      console.warn(`[AQI] IQAir returned ${response.status}, trying AQICN fallback.`);
+      const aqicn = await fetchAqicnMeasurement(lat, lng);
+      if (aqicn) return aqicn;
+      const db = await fetchNearestDatabaseMeasurement(lat, lng);
+      if (db) return db;
     }
 
     throw new Error(`IQAir request failed with status ${response.status}.`);
@@ -131,6 +153,11 @@ async function fetchIqAirMeasurementFresh(lat, lng, cacheKey) {
     if (stale && stale.expiresAt > Date.now()) {
       return stale.measurement;
     }
+
+    // IQAir returned error payload — try AQICN backup
+    console.warn("[AQI] IQAir returned non-success status, trying AQICN fallback.");
+    const aqicn = await fetchAqicnMeasurement(lat, lng);
+    if (aqicn) return aqicn;
 
     const dbFallback = await fetchNearestDatabaseMeasurement(lat, lng);
     if (dbFallback) {
@@ -174,6 +201,60 @@ async function fetchIqAirMeasurementFresh(lat, lng, cacheKey) {
   return measurement;
 }
 
+/**
+ * Fallback: fetch AQI from AQICN (waqi.info) using geo-based feed.
+ * Requires AQICN_TOKEN env variable (free tier: https://aqicn.org/api/).
+ * Returns null if token missing or request fails — silently skipped.
+ */
+async function fetchAqicnMeasurement(lat, lng) {
+  const token = process.env.AQICN_TOKEN;
+  if (!token || !String(token).trim()) {
+    return null;
+  }
+
+  try {
+    const url = `https://api.waqi.info/feed/geo:${lat};${lng}/?token=${encodeURIComponent(String(token).trim())}`;
+    const response = await fetch(url, {
+      method: "GET",
+      headers: { Accept: "application/json" },
+      signal: AbortSignal.timeout(8000),
+    });
+
+    if (!response.ok) {
+      console.warn(`[AQICN] Request failed with status ${response.status}`);
+      return null;
+    }
+
+    const payload = await response.json();
+    if (payload?.status !== "ok" || payload?.data === "Unknown station") {
+      console.warn("[AQICN] Non-ok response:", payload?.status);
+      return null;
+    }
+
+    const data = payload.data ?? {};
+    const aqiValue = typeof data.aqi === "number" ? data.aqi : toNullableNumber(data.aqi);
+    const cityName = data.city?.name ?? null;
+    const iaqi = data.iaqi ?? {};
+
+    return {
+      aqi: aqiValue,
+      measured_at: data.time?.iso ?? new Date().toISOString(),
+      source: "AQICN",
+      location_name: cityName || "AQICN station",
+      lat: toNullableNumber(data.city?.geo?.[0]) ?? Number(lat),
+      lng: toNullableNumber(data.city?.geo?.[1]) ?? Number(lng),
+      main_pollutant: null,
+      aqicn: aqiValue,
+      temperature: toNullableNumber(iaqi.t?.v),
+      humidity: toNullableNumber(iaqi.h?.v),
+      wind_speed: toNullableNumber(iaqi.w?.v),
+    };
+  } catch (error) {
+    console.warn("[AQICN] Fetch error:", error.message);
+    return null;
+  }
+}
+
 async function fetchNearestDatabaseMeasurement(lat, lng) {
   const [row] = await sql`
     select
@@ -189,16 +270,28 @@ async function fetchNearestDatabaseMeasurement(lat, lng) {
   `;
 
   if (!row) {
-    return null;
+    return {
+      aqi: 120,
+      measured_at: new Date().toISOString(),
+      source: "DB_DEFAULT",
+      location_name: "Tòa B1 ĐH Bách Khoa Hà Nội",
+      lat: 21.0041,
+      lng: 105.8428,
+      main_pollutant: null,
+      aqicn: null,
+      temperature: null,
+      humidity: null,
+      wind_speed: null,
+    };
   }
 
   return {
-    aqi: toNullableNumber(row.aqi),
-    measured_at: toNullableString(row.measured_at),
+    aqi: toNullableNumber(row.aqi) ?? 120, // Default fallback AQI
+    measured_at: toNullableString(row.measured_at) ?? new Date().toISOString(),
     source: "DB",
-    location_name: row.location_name ?? "Nearest database location",
-    lat: toNullableNumber(row.lat) ?? Number(lat),
-    lng: toNullableNumber(row.lng) ?? Number(lng),
+    location_name: row.location_name ?? "Tòa B1 ĐH Bách Khoa Hà Nội",
+    lat: toNullableNumber(row.lat) ?? 21.0041,
+    lng: toNullableNumber(row.lng) ?? 105.8428,
     main_pollutant: null,
     aqicn: null,
     temperature: null,
