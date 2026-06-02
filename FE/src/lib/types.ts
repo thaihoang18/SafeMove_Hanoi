@@ -35,6 +35,7 @@ export type ProfileResponse = {
     primary_activity_id: string | null;
     primary_activity_name?: string | null;
     mask_preference: string | null;
+    phone?: string | null;
   } | null;
   conditions: Array<{
     id: string;

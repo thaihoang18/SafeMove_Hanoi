@@ -15,6 +15,7 @@ export async function getUserProfileController(userId) {
         p.default_max_route_ratio,
         p.primary_activity_id,
         p.mask_preference,
+        p.phone,
         a.name as primary_activity_name
       from airpath.user_profiles p
       left join airpath.activities a on a.id = p.primary_activity_id
@@ -69,6 +70,7 @@ export async function getUserProfileController(userId) {
 
 export async function updateUserProfileController(userId, body) {
   const fullName = toNullableString(body.fullName);
+  const email = toNullableString(body.email);
   const birthYear = toNullableNumber(body.birthYear);
   const homeLat = toNullableNumber(body.homeLat);
   const homeLng = toNullableNumber(body.homeLng);
@@ -77,10 +79,12 @@ export async function updateUserProfileController(userId, body) {
     body.defaultMaxRouteRatio === undefined ? 1.5 : Number(body.defaultMaxRouteRatio);
   const primaryActivityId = toNullableString(body.primaryActivityId);
   const maskPreference = toNullableString(body.maskPreference);
+  const phone = toNullableString(body.phone);
 
   await sql`
     update airpath.users
     set
+      email = coalesce(${email}, email),
       full_name = coalesce(${fullName}, full_name),
       birth_year = coalesce(${birthYear}, birth_year),
       home_lat = ${homeLat},
@@ -94,20 +98,23 @@ export async function updateUserProfileController(userId, body) {
       alert_threshold,
       default_max_route_ratio,
       primary_activity_id,
-      mask_preference
+      mask_preference,
+      phone
     ) values (
       ${userId},
       ${alertThreshold},
       ${defaultMaxRouteRatio},
       ${primaryActivityId},
-      ${maskPreference}
+      ${maskPreference},
+      ${phone}
     )
     on conflict (user_id) do update
     set
       alert_threshold = excluded.alert_threshold,
       default_max_route_ratio = excluded.default_max_route_ratio,
       primary_activity_id = excluded.primary_activity_id,
-      mask_preference = excluded.mask_preference
+      mask_preference = excluded.mask_preference,
+      phone = excluded.phone
   `;
 
   const conditions = sanitizeArray(body.conditions);

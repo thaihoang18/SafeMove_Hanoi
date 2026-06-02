@@ -500,7 +500,7 @@ export default function App() {
     const payload: Record<string, unknown> = {};
 
     if (field === "name") {
-      payload.full_name = value;
+      payload.fullName = value;
     } else if (field === "phone") {
       payload.phone = value;
     } else {

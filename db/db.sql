@@ -94,6 +94,7 @@ CREATE TABLE IF NOT EXISTS user_profiles (
   default_max_route_ratio numeric(3,2) NOT NULL DEFAULT 1.50 CHECK (default_max_route_ratio BETWEEN 1.00 AND 2.00),
   primary_activity_id uuid,
   mask_preference text,
+  phone text,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
