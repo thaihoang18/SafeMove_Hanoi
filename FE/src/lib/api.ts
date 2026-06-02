@@ -13,7 +13,8 @@ import type {
   User,
 } from "./types";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
 const iqAirAqiCache = new Map<
   string,
@@ -46,26 +47,42 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 export async function fetchBootstrapData() {
-  return request<{ ok: true; activities: LookupItem[]; healthConditions: LookupItem[] }>(
-    "/api/bootstrap",
-  );
+  return request<{
+    ok: true;
+    activities: LookupItem[];
+    healthConditions: LookupItem[];
+  }>("/api/bootstrap");
 }
 
 export async function login(email: string, password: string) {
-  return request<{ ok: true; user: User & { role?: "user" | "admin" } }>("/api/auth/login", {
-    method: "POST",
-    body: JSON.stringify({ email, password }),
-  });
+  return request<{ ok: true; user: User & { role?: "user" | "admin" } }>(
+    "/api/auth/login",
+    {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    },
+  );
 }
 
-export async function loginAdmin(email: string, password: string, securityCode: string) {
-  return request<{ ok: true; user: User & { role?: "user" | "admin" } }>("/api/auth/login", {
-    method: "POST",
-    body: JSON.stringify({ email, password, securityCode }),
-  });
+export async function loginAdmin(
+  email: string,
+  password: string,
+  securityCode: string,
+) {
+  return request<{ ok: true; user: User & { role?: "user" | "admin" } }>(
+    "/api/auth/login",
+    {
+      method: "POST",
+      body: JSON.stringify({ email, password, securityCode }),
+    },
+  );
 }
 
-export async function register(fullName: string, email: string, password: string) {
+export async function register(
+  fullName: string,
+  email: string,
+  password: string,
+) {
   return request<{ ok: true; user: User }>("/api/users/register", {
     method: "POST",
     body: JSON.stringify({ fullName, email, password }),
@@ -73,7 +90,9 @@ export async function register(fullName: string, email: string, password: string
 }
 
 export async function fetchDashboard(userId: string) {
-  return request<{ ok: true } & DashboardResponse>(`/api/users/${userId}/dashboard`);
+  return request<{ ok: true } & DashboardResponse>(
+    `/api/users/${userId}/dashboard`,
+  );
 }
 
 export async function fetchAdminDashboard() {
@@ -89,19 +108,40 @@ export async function fetchAdminDashboard() {
 }
 
 export async function fetchProfile(userId: string) {
-  return request<{ ok: true } & ProfileResponse>(`/api/users/${userId}/profile`);
+  return request<{ ok: true } & ProfileResponse>(
+    `/api/users/${userId}/profile`,
+  );
 }
 
-export async function updateProfile(userId: string, payload: Record<string, unknown>) {
-  return request<{ ok: true } & ProfileResponse>(`/api/users/${userId}/profile`, {
-    method: "PUT",
-    body: JSON.stringify(payload),
-  });
+export async function updateProfile(
+  userId: string,
+  payload: Record<string, unknown>,
+) {
+  return request<{ ok: true } & ProfileResponse>(
+    `/api/users/${userId}/profile`,
+    {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    },
+  );
 }
 
 export async function fetchNotifications(userId: string) {
   return request<{ ok: true; notifications: NotificationItem[] }>(
     `/api/users/${userId}/notifications`,
+  );
+}
+
+export async function updateNotificationPreferences(
+  userId: string,
+  payload: Record<string, unknown>,
+) {
+  return request<{ ok: true; notificationPreferences: Record<string, unknown> }>(
+    `/api/users/${userId}/notification-preferences`,
+    {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    },
   );
 }
 
@@ -148,10 +188,13 @@ export async function createLocation(payload: {
   lat: number;
   lng: number;
 }) {
-  return request<{ ok: true; location: Record<string, unknown> }>("/api/locations", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
+  return request<{ ok: true; location: Record<string, unknown> }>(
+    "/api/locations",
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
 }
 
 export async function updateLocation(
@@ -166,41 +209,63 @@ export async function updateLocation(
     lng: number;
   },
 ) {
-  return request<{ ok: true; location: Record<string, unknown> }>(`/api/locations/${locationId}`, {
-    method: "PUT",
-    body: JSON.stringify(payload),
-  });
+  return request<{ ok: true; location: Record<string, unknown> }>(
+    `/api/locations/${locationId}`,
+    {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    },
+  );
 }
 
 export async function deleteLocation(locationId: string) {
-  return request<{ ok: true; location: Record<string, unknown> }>(`/api/locations/${locationId}`, {
-    method: "DELETE",
-  });
+  return request<{ ok: true; location: Record<string, unknown> }>(
+    `/api/locations/${locationId}`,
+    {
+      method: "DELETE",
+    },
+  );
 }
 
 export async function fetchLocationReviews(locationId: string) {
-  return request<{ ok: true; reviews: LocationReview[] }>(`/api/locations/${locationId}/reviews`);
+  return request<{ ok: true; reviews: LocationReview[] }>(
+    `/api/locations/${locationId}/reviews`,
+  );
 }
 
 export async function createLocationReview(
   locationId: string,
-  payload: { userId: string; rating: number; content: string; metadata?: Record<string, unknown> },
+  payload: {
+    userId: string;
+    rating: number;
+    content: string;
+    metadata?: Record<string, unknown>;
+  },
 ) {
-  return request<{ ok: true; review: LocationReview }>(`/api/locations/${locationId}/reviews`, {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
+  return request<{ ok: true; review: LocationReview }>(
+    `/api/locations/${locationId}/reviews`,
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
 }
 
 export async function fetchAdminHiddenReviews() {
   return request<{ ok: true; reviews: LocationReview[] }>(`/api/admin/reviews`);
 }
 
-export async function updateReview(reviewId: string, payload: { is_hidden?: boolean }) {
-  return request<{ ok: true; review: LocationReview }>(`/api/reviews/${reviewId}`, {
-    method: "PATCH",
-    body: JSON.stringify(payload),
-  });
+export async function updateReview(
+  reviewId: string,
+  payload: { is_hidden?: boolean },
+) {
+  return request<{ ok: true; review: LocationReview }>(
+    `/api/reviews/${reviewId}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    },
+  );
 }
 
 export async function createRouteRequest(payload: {
@@ -241,7 +306,9 @@ export async function fetchIqAirAqiByCoordinates(
 
   const cached = iqAirAqiCache.get(cacheKey);
   if (cached && cached.expiresAt > Date.now()) {
-    return options?.signal ? raceWithAbortSignal(cached.promise, options.signal) : cached.promise;
+    return options?.signal
+      ? raceWithAbortSignal(cached.promise, options.signal)
+      : cached.promise;
   }
 
   const params = new URLSearchParams({
@@ -266,12 +333,16 @@ export async function fetchIqAirAqiByCoordinates(
     }
   });
 
-  return options?.signal ? raceWithAbortSignal(basePromise, options.signal) : basePromise;
+  return options?.signal
+    ? raceWithAbortSignal(basePromise, options.signal)
+    : basePromise;
 }
 
 function raceWithAbortSignal<T>(promise: Promise<T>, signal: AbortSignal) {
   if (signal.aborted) {
-    return Promise.reject(new DOMException("The operation was aborted.", "AbortError"));
+    return Promise.reject(
+      new DOMException("The operation was aborted.", "AbortError"),
+    );
   }
 
   return new Promise<T>((resolve, reject) => {
@@ -301,7 +372,9 @@ export async function searchPlaces(query: string, limit = 6) {
     limit: String(limit),
   });
 
-  return request<{ ok: true; places: PlaceSuggestion[] }>(`/api/maps/search?${params.toString()}`);
+  return request<{ ok: true; places: PlaceSuggestion[] }>(
+    `/api/maps/search?${params.toString()}`,
+  );
 }
 
 export async function planRoutes(payload: {
@@ -317,15 +390,20 @@ export async function planRoutes(payload: {
   };
   maxRatio: number;
 }) {
-  return request<{ ok: true } & PlannedRoutesResponse>("/api/maps/plan-routes", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
+  return request<{ ok: true } & PlannedRoutesResponse>(
+    "/api/maps/plan-routes",
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
 }
 
 export async function fetchChatSessions(userId: string) {
   const params = new URLSearchParams({ userId });
-  return request<{ ok: true; sessions: ChatSession[] }>(`/api/chat/sessions?${params.toString()}`);
+  return request<{ ok: true; sessions: ChatSession[] }>(
+    `/api/chat/sessions?${params.toString()}`,
+  );
 }
 
 export async function fetchChatMessages(sessionId: string) {
@@ -354,4 +432,73 @@ export async function sendChatMessage(payload: {
     method: "POST",
     body: JSON.stringify(payload),
   });
+}
+
+export async function translateReviewContent(
+  text: string,
+  targetLang: "JA",
+): Promise<{
+  translated: string;
+  sourceLang: string | null;
+  cached: boolean;
+  error: string | null;
+}> {
+  return request<{
+    ok: true;
+    translated: string;
+    sourceLang: string | null;
+    cached: boolean;
+    error: string | null;
+  }>("/api/translate", {
+    method: "POST",
+    body: JSON.stringify({ text, targetLang }),
+  });
+}
+
+export async function dispatchAqiAlert(
+  userId: string,
+  alert: {
+    title: string;
+    body: string;
+    aqi?: number | null;
+    aqiLabel?: string;
+    location?: string;
+  },
+): Promise<{
+  ok: true;
+  dbSaved: boolean;
+  pushSent: boolean;
+  emailSent: boolean;
+}> {
+  return request<{
+    ok: true;
+    dbSaved: boolean;
+    pushSent: boolean;
+    emailSent: boolean;
+  }>(`/api/users/${userId}/aqi-alert`, {
+    method: "POST",
+    body: JSON.stringify(alert),
+  });
+}
+
+export async function savePushSubscription(
+  userId: string,
+  subscription: PushSubscriptionJSON,
+): Promise<{ ok: true; saved: boolean; error?: string }> {
+  return request<{ ok: true; saved: boolean; error?: string }>(
+    `/api/users/${userId}/push-subscription`,
+    {
+      method: "POST",
+      body: JSON.stringify({ subscription }),
+    },
+  );
+}
+
+export async function fetchVapidPublicKey(): Promise<{
+  ok: true;
+  publicKey: string | null;
+}> {
+  return request<{ ok: true; publicKey: string | null }>(
+    "/api/push/vapid-public-key",
+  );
 }

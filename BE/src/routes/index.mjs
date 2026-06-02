@@ -10,6 +10,7 @@ import { handleRouteRequestRoutes } from "./route-request-routes.mjs";
 import { handleSystemRoutes } from "./system-routes.mjs";
 import { handleAdminRoutes } from "./admin-routes.mjs";
 import { handleUserRoutes } from "./user-routes.mjs";
+import { handleTranslateRoutes } from "./translate-routes.mjs";
 import { notFound, sendJson } from "../utils/http.mjs";
 
 const routeHandlers = [
@@ -25,6 +26,7 @@ const routeHandlers = [
   handleRouteRequestRoutes,
   handleAdviceRoutes,
   handleAdminRoutes,
+  handleTranslateRoutes,
 ];
 
 export async function handleRoute(req, res, url) {
