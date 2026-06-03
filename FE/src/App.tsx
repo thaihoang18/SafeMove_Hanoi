@@ -38,7 +38,7 @@ import { HomeViewDemo } from "./components/HomeViewDemo";
 import { SearchLocationsView } from "./components/SearchLocationsView";
 import { LocationDetailView } from "./components/LocationDetailView";
 import { ReviewsListView } from "./components/ReviewsListView";
-import { containsBlockedKeyword } from "./lib/comment-blocklist";
+import { getBlockedCommentLanguages } from "./lib/comment-blocklist";
 import {
   defaultAvatarSelection,
   loadAvatarSelection,
@@ -779,13 +779,15 @@ export default function App() {
         throw new Error("Missing selected location or user.");
       }
 
-      const isFlagged = containsBlockedKeyword(content);
+      const blockedLanguages = getBlockedCommentLanguages(content);
+      const isFlagged = blockedLanguages.length > 0;
 
       const response = await createLocationReview(selectedBackendLocation.id, {
         userId: user.id,
         rating,
         content,
         is_hidden: isFlagged,
+        metadata: isFlagged ? { moderation: { blocked_languages: blockedLanguages } } : undefined,
       } as any);
 
       // If flagged, don't show it in public review list. Instead refresh notifications and moderation.

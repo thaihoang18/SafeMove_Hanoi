@@ -16,6 +16,7 @@ import {
 import "../styles/demo-profile.css";
 import { createLocation, deleteLocation, fetchLocations, updateLocation } from "@/lib/api";
 import type { GpsAqiMeasurement, LocationRecord } from "@/lib/types";
+import { getBlockedCommentLanguages, type BlockedCommentLanguage } from "@/lib/comment-blocklist";
 import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from "react-leaflet";
 
 type Props = {
@@ -58,6 +59,7 @@ type ModerationItem = {
   violationCount: number;
   content: string;
   timestamp: string;
+  blockedLanguages: BlockedCommentLanguage[];
   status: ModerationStatus;
 };
 
@@ -109,6 +111,19 @@ function latLngToMapPoint(lat: number, lng: number) {
     x: Math.min(100, Math.max(0, x)),
     y: Math.min(100, Math.max(0, y)),
   };
+}
+
+function extractBlockedCommentLanguages(review: any) {
+  const metadataLanguages = review?.metadata?.moderation?.blocked_languages;
+
+  if (Array.isArray(metadataLanguages)) {
+    const allowedLanguages = metadataLanguages.filter((language): language is BlockedCommentLanguage => language === "vi" || language === "ja");
+    if (allowedLanguages.length) {
+      return allowedLanguages;
+    }
+  }
+
+  return getBlockedCommentLanguages(String(review?.content ?? ""));
 }
 
 function HanoiFacilityPickerMap({
@@ -226,6 +241,8 @@ export function AdminWorkspace({ userId, userName, onLogout }: Props) {
   const [showAllModerationComments, setShowAllModerationComments] = useState(true);
   const [showUnprocessed, setShowUnprocessed] = useState(true);
   const [showDeleted, setShowDeleted] = useState(false);
+  const [showVietnameseViolations, setShowVietnameseViolations] = useState(true);
+  const [showJapaneseViolations, setShowJapaneseViolations] = useState(true);
   const [moderationStatusById, setModerationStatusById] = useState<Record<string, ModerationStatus>>({});
   const [moderationItemsList, setModerationItemsList] = useState<ModerationItem[]>([]);
   const [moderationUpdatingById, setModerationUpdatingById] = useState<Record<string, boolean>>({});
@@ -242,6 +259,7 @@ export function AdminWorkspace({ userId, userName, onLogout }: Props) {
         violationCount: 1,
         content: String(r.content || ""),
         timestamp: r.created_at ? new Date(r.created_at).toLocaleString() : "",
+        blockedLanguages: extractBlockedCommentLanguages(r),
         status: r.metadata && r.metadata.moderation && r.metadata.moderation.status === "deleted" ? "deleted" : "unprocessed",
       }));
       setModerationItemsList(items);
@@ -363,10 +381,22 @@ export function AdminWorkspace({ userId, userName, onLogout }: Props) {
       const locationMatch = moderationLocation === "all" ? true : item.locationId === moderationLocation;
       const statusMatch =
         showAllModerationComments || (status === "unprocessed" && showUnprocessed) || (status === "deleted" && showDeleted);
+      const languageMatch =
+        (showVietnameseViolations && item.blockedLanguages.includes("vi")) ||
+        (showJapaneseViolations && item.blockedLanguages.includes("ja"));
 
-      return locationMatch && statusMatch;
+      return locationMatch && statusMatch && languageMatch;
     });
-  }, [moderationLocation, moderationStatusById, showAllModerationComments, showDeleted, showUnprocessed, moderationItemsList]);
+  }, [
+    moderationLocation,
+    moderationStatusById,
+    showAllModerationComments,
+    showDeleted,
+    showJapaneseViolations,
+    showUnprocessed,
+    showVietnameseViolations,
+    moderationItemsList,
+  ]);
 
   const moderationLocationLabels = useMemo<Record<string, string>>(() => {
     return Object.fromEntries(
@@ -969,6 +999,8 @@ export function AdminWorkspace({ userId, userName, onLogout }: Props) {
                       if (checked) {
                         setShowUnprocessed(true);
                         setShowDeleted(true);
+                        setShowVietnameseViolations(true);
+                        setShowJapaneseViolations(true);
                       } else {
                         setShowUnprocessed(true);
                         setShowDeleted(false);
@@ -1003,6 +1035,27 @@ export function AdminWorkspace({ userId, userName, onLogout }: Props) {
                     className="accent-emerald-600 disabled:cursor-not-allowed disabled:opacity-60"
                   />
                   Đã xóa
+                </label>
+              </div>
+
+              <div className="mt-3 flex flex-wrap gap-4 text-xs text-slate-600">
+                <label className="inline-flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={showVietnameseViolations}
+                    onChange={(event) => setShowVietnameseViolations(event.target.checked)}
+                    className="accent-emerald-600"
+                  />
+                  Tiếng Việt
+                </label>
+                <label className="inline-flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={showJapaneseViolations}
+                    onChange={(event) => setShowJapaneseViolations(event.target.checked)}
+                    className="accent-emerald-600"
+                  />
+                  Tiếng Nhật
                 </label>
               </div>
             </div>
@@ -1040,6 +1093,19 @@ export function AdminWorkspace({ userId, userName, onLogout }: Props) {
                         <p className="mt-3 rounded-[0.9rem] border-l-4 border-slate-200 bg-slate-50 px-3 py-2 text-sm leading-6 text-slate-700">
                           {item.content}
                         </p>
+
+                        <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-semibold">
+                          {item.blockedLanguages.includes("vi") && (
+                            <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-700 ring-1 ring-emerald-200">
+                              Tiếng Việt
+                            </span>
+                          )}
+                          {item.blockedLanguages.includes("ja") && (
+                            <span className="rounded-full bg-amber-50 px-2.5 py-1 text-amber-700 ring-1 ring-amber-200">
+                              Tiếng Nhật
+                            </span>
+                          )}
+                        </div>
 
                         <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-slate-500">
                           <span className="rounded-full bg-slate-50 px-3 py-1 ring-1 ring-slate-200">{moderationLocationLabels[item.locationId] ?? item.locationId}</span>

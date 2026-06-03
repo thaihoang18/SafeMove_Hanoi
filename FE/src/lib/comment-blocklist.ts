@@ -1,4 +1,6 @@
-export const COMMENT_BLOCKLIST = [
+export type BlockedCommentLanguage = "vi" | "ja";
+
+export const COMMENT_BLOCKLIST_VI = [
   "dit",
   "dcm",
   "dmm",
@@ -28,6 +30,23 @@ export const COMMENT_BLOCKLIST = [
   "xxx",
 ] as const;
 
+export const COMMENT_BLOCKLIST_JA = [
+  "ばか",
+  "バカ",
+  "あほ",
+  "アホ",
+  "くそ",
+  "クソ",
+  "しね",
+  "シネ",
+  "死ね",
+  "くたばれ",
+  "変態",
+  "エロ",
+  "ポルノ",
+  "セックス",
+] as const;
+
 const LEET_MAP: Record<string, string> = {
   "0": "o",
   "1": "i",
@@ -51,7 +70,36 @@ const LEET_MAP: Record<string, string> = {
   "*": "",
 };
 
-const BLOCKED_PATTERNS = COMMENT_BLOCKLIST.map((keyword) => [keyword, buildBlockedPattern(keyword)] as const);
+const BLOCKED_PATTERNS_VI = COMMENT_BLOCKLIST_VI.map((keyword) => [keyword, buildBlockedPattern(keyword)] as const);
+
+function normalizeJapaneseCommentText(value: string) {
+  return value.normalize("NFKC").replace(/[\u200B-\u200D\uFEFF]/g, "").replace(/[\p{P}\p{S}\s]+/gu, "").toLowerCase();
+}
+
+function matchesVietnameseBlocklist(comment: string) {
+  const normalizedComment = normalizeCommentText(comment);
+  const flattened = normalizedComment.replace(/[^a-z0-9]/g, "");
+
+  for (const kw of COMMENT_BLOCKLIST_VI) {
+    const nk = normalizeCommentText(kw).replace(/[^a-z0-9]/g, "");
+    if (nk && flattened.includes(nk)) return true;
+  }
+
+  return BLOCKED_PATTERNS_VI.some(([, pattern]) => pattern.test(normalizedComment));
+}
+
+function matchesJapaneseBlocklist(comment: string) {
+  const normalizedComment = normalizeJapaneseCommentText(comment);
+
+  for (const keyword of COMMENT_BLOCKLIST_JA) {
+    const normalizedKeyword = normalizeJapaneseCommentText(keyword);
+    if (normalizedKeyword && normalizedComment.includes(normalizedKeyword)) {
+      return true;
+    }
+  }
+
+  return false;
+}
 
 export function normalizeCommentText(value: string) {
   const normalized = value.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[đĐ]/g, "d");
@@ -63,19 +111,21 @@ export function normalizeCommentText(value: string) {
 }
 
 export function containsBlockedKeyword(comment: string) {
-  const normalizedComment = normalizeCommentText(comment);
+  return matchesVietnameseBlocklist(comment) || matchesJapaneseBlocklist(comment);
+}
 
-  // flattened removes any non-alphanumeric characters so obfuscated spaced or punctuated
-  // variants like "d c m" or "d.c.m" become "dcm" which helps catch substrings.
-  const flattened = normalizedComment.replace(/[^a-z0-9]/g, "");
+export function getBlockedCommentLanguages(comment: string): BlockedCommentLanguage[] {
+  const languages: BlockedCommentLanguage[] = [];
 
-  // quick substring check on flattened form
-  for (const kw of COMMENT_BLOCKLIST) {
-    const nk = normalizeCommentText(kw).replace(/[^a-z0-9]/g, "");
-    if (nk && flattened.includes(nk)) return true;
+  if (matchesVietnameseBlocklist(comment)) {
+    languages.push("vi");
   }
 
-  return BLOCKED_PATTERNS.some(([, pattern]) => pattern.test(normalizedComment));
+  if (matchesJapaneseBlocklist(comment)) {
+    languages.push("ja");
+  }
+
+  return languages;
 }
 
 function buildBlockedPattern(keyword: string) {
