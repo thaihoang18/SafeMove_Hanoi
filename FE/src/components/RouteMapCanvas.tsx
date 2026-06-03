@@ -80,7 +80,7 @@ export function RouteMapCanvas({
   if (!planResult) {
     return (
       <div className={`flex items-center justify-center bg-[#eef4ea] px-6 text-sm text-slate-500 ${heightClassName}`}>
-        Bản đồ sẽ hiện khi có kết quả định tuyến.
+        ルート結果が出ると地図が表示されます。
       </div>
     );
   }

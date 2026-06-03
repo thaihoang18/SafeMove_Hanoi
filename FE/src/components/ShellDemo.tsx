@@ -49,22 +49,22 @@ type Props = {
 };
 
 const guestNavItems: NavItem[] = [
-  { id: "home", label: "Trang chủ", icon: <Home size={18} /> },
-  { id: "search", label: "Tìm kiếm", icon: <Search size={18} /> },
-  { id: "route", label: "Lộ trình", icon: <Map size={18} /> },
+  { id: "home", label: "ホーム", icon: <Home size={18} /> },
+  { id: "search", label: "検索", icon: <Search size={18} /> },
+  { id: "route", label: "ルート", icon: <Map size={18} /> },
 ];
 
 const userNavItems: NavItem[] = [
-  { id: "home", label: "Trang chủ", icon: <Home size={18} /> },
-  { id: "search", label: "Tìm kiếm", icon: <Search size={18} /> },
-  { id: "profile", label: "Hồ sơ", icon: <User size={18} /> },
+  { id: "home", label: "ホーム", icon: <Home size={18} /> },
+  { id: "search", label: "検索", icon: <Search size={18} /> },
+  { id: "profile", label: "プロフィール", icon: <User size={18} /> },
 ];
 
 const adminNavItems: NavItem[] = [
-  { id: "dashboard", label: "Bảng điều khiển", icon: <Shield size={18} /> },
-  { id: "facilities", label: "Cơ sở", icon: <Map size={18} /> },
-  { id: "moderation", label: "Kiểm duyệt", icon: <LogOut size={18} /> },
-  { id: "profile", label: "Hồ sơ", icon: <User size={18} /> },
+  { id: "dashboard", label: "ダッシュボード", icon: <Shield size={18} /> },
+  { id: "facilities", label: "施設", icon: <Map size={18} /> },
+  { id: "moderation", label: "モデレーション", icon: <LogOut size={18} /> },
+  { id: "profile", label: "プロフィール", icon: <User size={18} /> },
 ];
 
 export function ShellDemo({
@@ -121,11 +121,11 @@ export function ShellDemo({
       <header className="app-header-demo">
         <div className="logo-area-demo" onClick={logoClick}>
           <Wind className="logo-icon" />
-          <span className="logo-text">SafeMove Hà Nội</span>
+          <span className="logo-text">SafeMove ハノイ</span>
         </div>
         <div className="header-actions-demo">
           {role !== "guest" && (
-            <button className="aqi-bell-btn-demo" onClick={handleBellClick} aria-label="Thông báo AQI">
+            <button className="aqi-bell-btn-demo" onClick={handleBellClick} aria-label="AQI通知">
               <Bell size={18} />
               {aqiUnreadCount > 0 && <span className="aqi-badge-demo">{aqiUnreadCount > 9 ? "9+" : aqiUnreadCount}</span>}
             </button>
@@ -141,17 +141,17 @@ export function ShellDemo({
           <div className="aqi-popover-demo" onClick={(event) => event.stopPropagation()}>
             <div className="aqi-popover-header-demo">
               <div>
-                <div className="aqi-popover-title-demo">Thông báo</div>
+                <div className="aqi-popover-title-demo">通知</div>
                 <div className="aqi-popover-subtitle-demo"></div>
               </div>
               <button className="aqi-popover-close-demo" onClick={() => setShowAqiPopover(false)}>
-                ×
+                閉じる
               </button>
             </div>
 
             <div className="aqi-popover-feed-demo">
               {aqiAlerts.length === 0 ? (
-                <div className="aqi-popover-empty-demo">Chưa có cảnh báo mới từ AQI.</div>
+                <div className="aqi-popover-empty-demo">AQIの新しい警告はありません。</div>
               ) : (
                 aqiAlerts.map((alert) => (
                   <article key={alert.id} className={`aqi-alert-item-demo tone-${alert.tone}`}>

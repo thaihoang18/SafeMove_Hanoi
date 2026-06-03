@@ -19,13 +19,13 @@ export function GuestRoutePreview({ locations, onShowLogin, onBack }: Props) {
           type="button"
           onClick={onBack}
           className="grp-back-btn"
-          aria-label="Quay lại"
+          aria-label="戻る"
         >
           <ArrowLeft size={18} />
         </button>
         <div>
-          <div className="grp-label">Lộ trình xanh</div>
-          <h2 className="grp-title">Tìm đường thông minh</h2>
+          <div className="grp-label">グリーンルート</div>
+          <h2 className="grp-title">スマートにルート検索</h2>
         </div>
       </div>
 
@@ -35,20 +35,19 @@ export function GuestRoutePreview({ locations, onShowLogin, onBack }: Props) {
           <Navigation size={32} />
         </div>
         <h3 className="grp-hero-heading">
-          Lộ trình theo AQI dành cho thành viên
+          AQI に基づく会員向けルート
         </h3>
         <p className="grp-hero-body">
-          Đăng nhập để nhận lộ trình xanh cá nhân hóa — chọn tuyến đường ít ô
-          nhiễm nhất đến địa điểm tập luyện bạn yêu thích.
+          ログインすると、運動先までの最適なグリーンルートを取得できます。汚染の少ない経路を選びましょう。
         </p>
         <button type="button" className="grp-cta-btn" onClick={onShowLogin}>
           <Lock size={15} />
-          Đăng nhập để bắt đầu
+          ログインして開始
         </button>
       </div>
 
       {/* Featured destinations preview */}
-      <div className="grp-section-label">Điểm đến phổ biến</div>
+      <div className="grp-section-label">人気スポット</div>
       <div className="grp-cards">
         {featured.map((place, idx) => (
           <div key={place.id} className="grp-card">
@@ -58,7 +57,7 @@ export function GuestRoutePreview({ locations, onShowLogin, onBack }: Props) {
             <div className="grp-card-info">
               <div className="grp-card-name">{place.name}</div>
               <div className="grp-card-address">
-                {place.address ?? place.district ?? "Hà Nội"}
+                {place.address ?? place.district ?? "ハノイ"}
               </div>
               <div className="grp-card-meta">
                 <span className={`grp-aqi-badge ${idx % 2 === 0 ? "good" : "moderate"}`}>
@@ -75,7 +74,7 @@ export function GuestRoutePreview({ locations, onShowLogin, onBack }: Props) {
               type="button"
               className="grp-card-action"
               onClick={onShowLogin}
-              aria-label={`Lấy lộ trình đến ${place.name}`}
+              aria-label={`${place.name} までのルートを取得`}
             >
               <Navigation size={14} />
             </button>
@@ -85,7 +84,7 @@ export function GuestRoutePreview({ locations, onShowLogin, onBack }: Props) {
 
       {/* Bottom reminder */}
       <div className="grp-footer-note">
-        Đăng nhập miễn phí — không cần tài khoản trả phí
+        無料でログイン — 有料アカウントは不要です
       </div>
     </div>
   );

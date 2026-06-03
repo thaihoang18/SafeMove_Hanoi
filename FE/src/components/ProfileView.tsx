@@ -67,14 +67,14 @@ export function ProfileView({
             <Heart className="h-6 w-6" />
           </div>
           <div>
-            <h3>Hồ sơ sức khỏe</h3>
-            <div className="text-sm text-slate-500">Cá nhân hóa gợi ý và quyết định lộ trình.</div>
+            <h3>健康プロフィール</h3>
+            <div className="text-sm text-slate-500">提案とルート選択をあなた向けに最適化します。</div>
           </div>
         </div>
 
         <div className="grid gap-5 md:grid-cols-2">
           <div>
-            <label className="mb-1.5 block text-sm text-slate-600">Họ và tên</label>
+            <label className="mb-1.5 block text-sm text-slate-600">氏名</label>
             <input
               value={fullName}
               onChange={(event) => setFullName(event.target.value)}
@@ -83,13 +83,13 @@ export function ProfileView({
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm text-slate-600">Hoạt động chính</label>
+            <label className="mb-1.5 block text-sm text-slate-600">主な活動</label>
             <select
               value={primaryActivityId}
               onChange={(event) => setPrimaryActivityId(event.target.value)}
               className="w-full rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none ring-1 ring-slate-200"
             >
-              <option value="">Chọn hoạt động</option>
+              <option value="">活動を選択</option>
               {availableActivities.map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.name}
@@ -105,7 +105,7 @@ export function ProfileView({
         <div className="mt-6">
           <div className="mb-3 flex items-center gap-2 text-sm text-slate-700">
             <Heart className="h-4 w-4 text-rose-500" />
-            Tình trạng sức khỏe
+            健康状態
           </div>
           <div className="flex flex-wrap gap-2">
             {availableConditions.map((item) => {
@@ -130,7 +130,7 @@ export function ProfileView({
         <div className="mt-6 grid gap-5 md:grid-cols-2">
           <SliderCard
             icon={<Bell className="h-4 w-4 text-orange-500" />}
-            label="Ngưỡng cảnh báo AQI"
+            label="AQI警告しきい値"
             value={threshold}
             min={50}
             max={200}
@@ -139,7 +139,7 @@ export function ProfileView({
           />
           <SliderCard
             icon={<Activity className="h-4 w-4 text-emerald-500" />}
-            label="Tỷ lệ tối đa lộ trình"
+            label="ルート最大比率"
             value={maxRatio}
             min={1}
             max={2}
@@ -155,7 +155,7 @@ export function ProfileView({
           className="mt-6 flex items-center gap-2 rounded-2xl bg-linear-to-r from-blue-600 to-emerald-500 px-5 py-3 text-white shadow-lg shadow-blue-600/20 disabled:cursor-not-allowed disabled:opacity-70"
         >
           <Save className="h-4 w-4" />
-          {saving ? "Đang lưu..." : "Lưu hồ sơ"}
+          {saving ? "保存中..." : "プロフィールを保存"}
         </button>
       </div>
     </div>

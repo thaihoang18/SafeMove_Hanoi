@@ -27,16 +27,16 @@ type Props = {
 };
 
 const guestNavItems: Array<{ id: View; label: string; icon: typeof Home }> = [
-  { id: "home", label: "Trang chủ", icon: Home },
-  { id: "search", label: "Tìm kiếm", icon: Search },
-  { id: "route", label: "Lộ trình", icon: Map },
-  { id: "profile", label: "Hồ sơ", icon: Settings2 },
+  { id: "home", label: "ホーム", icon: Home },
+  { id: "search", label: "検索", icon: Search },
+  { id: "route", label: "ルート", icon: Map },
+  { id: "profile", label: "プロフィール", icon: Settings2 },
 ];
 
 const adminNavItems: Array<{ id: View; label: string; icon: typeof Home }> = [
-  { id: "dashboard", label: "Bảng điều khiển", icon: Home },
-  { id: "facilities", label: "Cơ sở", icon: Building2 },
-  { id: "admin-profile", label: "Hồ sơ", icon: Settings2 },
+  { id: "dashboard", label: "ダッシュボード", icon: Home },
+  { id: "facilities", label: "施設", icon: Building2 },
+  { id: "admin-profile", label: "プロフィール", icon: Settings2 },
 ];
 
 export function Shell({
@@ -69,8 +69,8 @@ export function Shell({
               <Wind className="h-5 w-5" />
             </div>
             <div>
-              <div className="text-sm font-medium text-emerald-700">SafeMove Hà Nội</div>
-              <div className="text-xs text-slate-500">Ứng dụng chỉ đường AQI và trợ lý sức khỏe</div>
+              <div className="text-sm font-medium text-emerald-700">SafeMove Hanoi</div>
+              <div className="text-xs text-slate-500">AQIルート案内と健康アシスタント</div>
             </div>
           </div>
 
@@ -78,7 +78,7 @@ export function Shell({
             <button
               onClick={() => (role === "guest" ? onRequireLogin() : setView("profile"))}
               className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-700 ring-1 ring-slate-200"
-              aria-label="Mở hồ sơ"
+              aria-label="プロフィールを開く"
             >
               {role === "guest" ? <UserCircle2 className="h-5 w-5" /> : avatarLabel}
             </button>

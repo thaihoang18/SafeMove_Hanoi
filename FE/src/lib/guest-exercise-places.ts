@@ -1,4 +1,4 @@
-import rawPlaces from "../../../assets/address/phòng-gym-ở-hà-nội-20-9945353-105-843831-14z-overview.json";
+import rawPlaces from "../../../assets/address/hanoi-gym-overview.json";
 
 type AssetPlaceRecord = {
   place_id: string;

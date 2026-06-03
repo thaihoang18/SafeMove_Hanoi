@@ -102,7 +102,7 @@ function matchesJapaneseBlocklist(comment: string) {
 }
 
 export function normalizeCommentText(value: string) {
-  const normalized = value.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[đĐ]/g, "d");
+  const normalized = value.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[\u0111\u0110]/g, "d");
 
   return normalized
     .replace(/[0-9@!$+|]/g, (character) => LEET_MAP[character] ?? character)

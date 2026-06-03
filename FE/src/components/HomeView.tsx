@@ -30,7 +30,7 @@ export function HomeView({
   onRefreshGpsAqi,
 }: Props) {
   const aqi = gpsAqi?.aqi ?? dashboard?.nearestAqi?.aqi ?? null;
-  const locationName = gpsAqi?.location_name ?? dashboard?.nearestAqi?.location_name ?? "Chưa có dữ liệu";
+  const locationName = gpsAqi?.location_name ?? dashboard?.nearestAqi?.location_name ?? "データなし";
   const measuredAt = gpsAqi?.measured_at ?? dashboard?.nearestAqi?.measured_at ?? null;
 
   return (
@@ -39,11 +39,11 @@ export function HomeView({
         <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200/70 lg:col-span-2">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <div className="text-sm text-slate-500">AQI gần bạn</div>
+              <div className="text-sm text-slate-500">近くの AQI</div>
               <div className="mt-2 flex items-end gap-3">
                 <span className="text-5xl tracking-tight text-slate-900">{aqi ?? "--"}</span>
                 <span className="mb-2 rounded-full bg-emerald-50 px-3 py-1 text-sm text-emerald-700 ring-1 ring-emerald-200">
-                  {aqi === null ? "Chưa có dữ liệu" : classifyAqi(aqi)}
+                  {aqi === null ? "データなし" : classifyAqi(aqi)}
                 </span>
               </div>
               <div className="mt-3 flex items-center gap-2 text-sm text-slate-500">
@@ -56,15 +56,15 @@ export function HomeView({
                   disabled={gpsLoading}
                   className="rounded-full bg-slate-100 px-3 py-1 ring-1 ring-slate-200 transition-colors hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-70"
                 >
-                  {gpsLoading ? "Đang lấy GPS..." : "Dùng GPS hiện tại (IQAir)"}
+                  {gpsLoading ? "GPS を取得中..." : "現在の GPS を使用（IQAir）"}
                 </button>
-                <span>{gpsAqi ? "Nguồn: IQAir" : "Nguồn: dữ liệu hệ thống"}</span>
+                <span>{gpsAqi ? "出典: IQAir" : "出典: システムデータ"}</span>
                 {gpsCoords ? (
                   <span>
                     GPS: {gpsCoords.lat.toFixed(5)}, {gpsCoords.lng.toFixed(5)}
                   </span>
                 ) : (
-                  <span>GPS: chưa có</span>
+                  <span>GPS: 未取得</span>
                 )}
                 {measuredAt ? <span>· {new Date(measuredAt).toLocaleString()}</span> : null}
               </div>
@@ -74,20 +74,20 @@ export function HomeView({
               onClick={onOpenRoute}
               className="rounded-2xl bg-linear-to-r from-blue-600 to-emerald-500 px-4 py-3 text-sm text-white shadow-lg shadow-blue-600/20"
             >
-              Tìm lộ trình xanh
+              グリーンルートを検索
             </button>
           </div>
 
           <div className="mt-6 grid gap-3 sm:grid-cols-3">
-            <StatCard icon={Bell} label="Thông báo chưa đọc" value={String(dashboard?.unreadNotifications ?? 0)} />
+            <StatCard icon={Bell} label="未読通知" value={String(dashboard?.unreadNotifications ?? 0)} />
             <StatCard
               icon={Clock3}
-              label="Yêu cầu lộ trình gần đây"
+              label="最近のルート依頼"
               value={String(dashboard?.recentRouteRequests.length ?? 0)}
             />
             <StatCard
               icon={Leaf}
-              label="Ngưỡng cảnh báo"
+              label="警告しきい値"
               value={String(dashboard?.summary.alert_threshold ?? 140)}
             />
           </div>
@@ -97,16 +97,16 @@ export function HomeView({
           <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/15">
             <AlertTriangle className="h-5 w-5" />
           </div>
-          <div className="mt-4 text-xl">{advice?.title ?? "Chưa có gợi ý"}</div>
+          <div className="mt-4 text-xl">{advice?.title ?? "提案はまだありません"}</div>
           <p className="mt-2 text-sm leading-6 text-white/85">
             {advice?.body ??
-              "Hãy cập nhật hồ sơ sức khỏe và vị trí gần nhà để hệ thống đưa ra lời khuyên tốt hơn."}
+              "健康プロフィールと自宅付近の位置情報を更新すると、より適切なアドバイスを表示できます。"}
           </p>
           <button
             onClick={onOpenProfile}
             className="mt-6 rounded-2xl bg-white/15 px-4 py-3 text-sm ring-1 ring-white/30"
           >
-            Cập nhật hồ sơ
+            プロフィールを更新
           </button>
         </div>
       </div>
@@ -115,7 +115,7 @@ export function HomeView({
         <section className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200/70">
           <div className="mb-4 flex items-center gap-2">
             <Route className="h-5 w-5 text-blue-600" />
-            <h3>Lộ trình gần đây</h3>
+            <h3>最近のルート</h3>
           </div>
           <div className="space-y-3">
             {dashboard?.recentRouteRequests.length ? (
@@ -130,7 +130,7 @@ export function HomeView({
                 </div>
               ))
             ) : (
-              <EmptyBlock text="Chưa có route request nào." />
+              <EmptyBlock text="ルート依頼はまだありません。" />
             )}
           </div>
         </section>
@@ -138,7 +138,7 @@ export function HomeView({
         <section className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200/70">
           <div className="mb-4 flex items-center gap-2">
             <Leaf className="h-5 w-5 text-emerald-600" />
-            <h3>Sự kiện khuyến cáo</h3>
+            <h3>推奨イベント</h3>
           </div>
           <div className="space-y-3">
             {dashboard?.recentAdviceEvents.length ? (
@@ -154,7 +154,7 @@ export function HomeView({
                 </div>
               ))
             ) : (
-              <EmptyBlock text="Chưa có advice event nào." />
+              <EmptyBlock text="アドバイスイベントはまだありません。" />
             )}
           </div>
         </section>
@@ -186,10 +186,10 @@ function EmptyBlock({ text }: { text: string }) {
 }
 
 function classifyAqi(aqi: number) {
-  if (aqi <= 50) return "Tốt";
-  if (aqi <= 100) return "Trung bình";
-  if (aqi <= 150) return "Kém cho nhóm nhạy cảm";
-  return "Không lành mạnh";
+  if (aqi <= 50) return "良好";
+  if (aqi <= 100) return "普通";
+  if (aqi <= 150) return "敏感な人には不向き";
+  return "健康に良くない";
 }
 
 function severityClass(value: string) {
@@ -199,7 +199,7 @@ function severityClass(value: string) {
 }
 
 function translateSeverity(value: string) {
-  if (value === "critical") return "Nguy hiểm";
-  if (value === "warn") return "Cảnh báo";
-  return "Thông tin";
+  if (value === "critical") return "危険";
+  if (value === "warn") return "警告";
+  return "情報";
 }

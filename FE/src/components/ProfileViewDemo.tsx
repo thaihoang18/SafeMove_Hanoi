@@ -107,10 +107,10 @@ export function ProfileViewDemo({
   };
 
   const getThresholdLabel = (value: number) => {
-    if (value <= 50) return "Tốt";
-    if (value <= 100) return "Trung bình";
-    if (value <= 150) return "Kém cho nhóm nhạy cảm";
-    return "Không lành mạnh";
+    if (value <= 50) return "良好";
+    if (value <= 100) return "普通";
+    if (value <= 150) return "敏感な人には不向き";
+    return "健康に良くない";
   };
 
   const formatJoinDate = (value?: string) => {
@@ -124,7 +124,7 @@ export function ProfileViewDemo({
       return null;
     }
 
-    return date.toLocaleDateString("vi-VN", { month: "2-digit", year: "numeric" });
+    return date.toLocaleDateString("ja-JP", { month: "2-digit", year: "numeric" });
   };
 
   const joinDateLabel = formatJoinDate(user.joinDate);
@@ -134,7 +134,7 @@ export function ProfileViewDemo({
       <div className="profile-container">
         <div className="empty-state">
           <AlertCircle size={48} className="empty-icon" />
-          <p>Chưa có hồ sơ người dùng</p>
+          <p>ユーザープロフィールがありません</p>
         </div>
       </div>
     );
@@ -148,20 +148,20 @@ export function ProfileViewDemo({
           <div className="main-avatar-img" style={getAvatarSelectionStyle(avatarSelection)}>
             <img
               src={selectedAvatarPreset.src}
-              alt="Ảnh đại diện"
+              alt="アバター画像"
               onError={(event) => {
                 event.currentTarget.src = selectedAvatarPreset.fallbackSrc;
               }}
             />
           </div>
-          <button className="edit-avatar-badge" title="Thay avatar" onClick={() => setAvatarModalOpen(true)} type="button">
+          <button className="edit-avatar-badge" title="アバターを変更" onClick={() => setAvatarModalOpen(true)} type="button">
             📷
           </button>
         </div>
         <div className="user-primary-info">
           <h2 className="user-full-name">{user.name}</h2>
           <span className="user-join-date">
-            {joinDateLabel ? `Thành viên từ ${joinDateLabel}` : "Thành viên"}
+            {joinDateLabel ? `${joinDateLabel} からのメンバー` : "メンバー"}
           </span>
         </div>
       </div>
@@ -171,15 +171,15 @@ export function ProfileViewDemo({
           <div className="avatar-modal-card" role="dialog" aria-modal="true" aria-labelledby="avatar-modal-title" onClick={(event) => event.stopPropagation()}>
             <div className="avatar-modal-header">
               <div>
-                <h3 id="avatar-modal-title">Chọn avatar</h3>
+                <h3 id="avatar-modal-title">アバターを選択</h3>
               </div>
-              <button className="avatar-modal-close" type="button" onClick={() => setAvatarModalOpen(false)} aria-label="Đóng bộ chọn avatar">
+              <button className="avatar-modal-close" type="button" onClick={() => setAvatarModalOpen(false)} aria-label="アバター選択を閉じる">
                 <X size={16} />
               </button>
             </div>
 
             <div className="avatar-modal-section">
-              <div className="avatar-section-title">Khung</div>
+              <div className="avatar-section-title">フレーム</div>
               <div className="avatar-choice-grid">
                 {avatarFrames.map((frame) => (
                   <button
@@ -197,7 +197,7 @@ export function ProfileViewDemo({
             </div>
 
             <div className="avatar-modal-section">
-              <div className="avatar-section-title">Avatar</div>
+              <div className="avatar-section-title">アバター</div>
               <div className="avatar-preset-grid">
                 {avatarPresets.map((preset) => {
                   const isSelected = pendingAvatarSelection.avatarId === preset.id;
@@ -227,10 +227,10 @@ export function ProfileViewDemo({
 
             <div className="avatar-modal-actions">
               <button type="button" className="avatar-modal-secondary" onClick={() => setAvatarModalOpen(false)}>
-                Hủy
+                キャンセル
               </button>
               <button type="button" className="avatar-modal-primary" onClick={() => void handleAvatarSave()} disabled={isLoading}>
-                Lưu avatar
+                アバターを保存
               </button>
             </div>
           </div>
@@ -239,7 +239,7 @@ export function ProfileViewDemo({
 
       {/* Personal Info Section */}
       <div className="settings-section">
-        <h3 className="section-title-small">Thông tin cá nhân</h3>
+        <h3 className="section-title-small">個人情報</h3>
         <div className="settings-card">
           {/* Name */}
           <div className="info-row">
@@ -255,7 +255,7 @@ export function ProfileViewDemo({
                 />
               ) : (
                 <>
-                  <span className="info-label">Họ và tên</span>
+                  <span className="info-label">氏名</span>
                   <span className="info-value">{user.name}</span>
                 </>
               )}
@@ -294,7 +294,7 @@ export function ProfileViewDemo({
                 />
               ) : (
                 <>
-                  <span className="info-label">Email</span>
+                  <span className="info-label">メールアドレス</span>
                   <span className="info-value">{user.email}</span>
                 </>
               )}
@@ -337,15 +337,15 @@ export function ProfileViewDemo({
                     className="btn-toggle-inline"
                     onClick={() => setShowPassword((current) => !current)}
                     disabled={isLoading}
-                    aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-                    title={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                    aria-label={showPassword ? "パスワードを非表示" : "パスワードを表示"}
+                    title={showPassword ? "パスワードを非表示" : "パスワードを表示"}
                   >
                     {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
                   </button>
                 </div>
               ) : (
                 <>
-                  <span className="info-label">Mật khẩu</span>
+                  <span className="info-label">パスワード</span>
                   <span className="info-value">••••••••</span>
                 </>
               )}
@@ -374,14 +374,14 @@ export function ProfileViewDemo({
 
       {/* App Settings Section */}
       <div className="settings-section">
-        <h3 className="section-title-small">Cài đặt ứng dụng</h3>
+        <h3 className="section-title-small">アプリ設定</h3>
         <div className="settings-card">
           {/* AQI Threshold Slider */}
           <div className="slider-row">
             <div className="slider-header">
               <span className="setting-item-title">
                 <AlertCircle size={16} className="inline-icon" />
-                Ngưỡng cảnh báo AQI
+                AQI 警告しきい値
               </span>
               <span className="slider-val-display">{aqiThreshold}</span>
             </div>
@@ -394,9 +394,9 @@ export function ProfileViewDemo({
               className="custom-range-slider"
             />
             <div className="slider-labels">
-              <span>Tốt (0-50)</span>
-              <span>Trung bình (51-100)</span>
-              <span>Không lành mạnh (200+)</span>
+              <span>良好 (0-50)</span>
+              <span>普通 (51-100)</span>
+              <span>健康に良くない (200+)</span>
             </div>
             <div className="threshold-badge">{getThresholdLabel(aqiThreshold)}</div>
           </div>
@@ -407,7 +407,7 @@ export function ProfileViewDemo({
           <div className="toggle-row">
             <span className="setting-item-title">
               <Bell size={16} className="inline-icon" />
-              Thông báo đẩy
+              プッシュ通知
             </span>
             <label className="switch">
               <input
@@ -432,7 +432,7 @@ export function ProfileViewDemo({
       {/* Logout Button */}
       <button className="btn-logout" onClick={onLogout} disabled={isLoading}>
         <LogOut size={16} />
-        Đăng xuất
+        ログアウト
       </button>
     </div>
   );

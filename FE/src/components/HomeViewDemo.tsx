@@ -24,61 +24,61 @@ export function HomeViewDemo({
   onRefreshGpsAqi,
 }: Props) {
   const aqi = gpsAqi?.aqi ?? dashboard?.nearestAqi?.aqi ?? null;
-  const locationName = gpsAqi?.location_name ?? dashboard?.nearestAqi?.location_name ?? "Chưa có dữ liệu";
+  const locationName = gpsAqi?.location_name ?? dashboard?.nearestAqi?.location_name ?? "データなし";
   const source = gpsAqi?.source ?? "system";
   const coordinates = gpsCoords ? `(${gpsCoords.lat.toFixed(3)}, ${gpsCoords.lng.toFixed(3)})` : "";
 
   const getAqiLabel = (value: number | null) => {
-    if (value === null) return "Chưa có dữ liệu";
-    if (value <= 50) return "Tốt";
-    if (value <= 100) return "Trung bình";
-    if (value <= 150) return "Kém cho nhóm nhạy cảm";
-    return "Không lành mạnh";
+    if (value === null) return "データなし";
+    if (value <= 50) return "良好";
+    if (value <= 100) return "普通";
+    if (value <= 150) return "敏感な人には不向き";
+    return "健康に良くない";
   };
 
   const getAqiAdvice = (value: number | null) => {
     if (value === null) {
       return {
-        title: "Chưa có AQI",
-        body: advice?.body ?? "Hãy làm mới dữ liệu để nhận lời khuyên theo chất lượng không khí hiện tại.",
+        title: "AQIは未取得です",
+        body: advice?.body ?? "データを更新すると、現在の空気品質に合わせたアドバイスを表示できます。",
       };
     }
 
     if (value <= 50) {
       return {
-        title: "AQI tốt",
-        body: "Có thể hoạt động ngoài trời bình thường. Nếu tập luyện, vẫn nên khởi động và uống đủ nước.",
+        title: "AQIは良好です",
+        body: "屋外で通常どおり活動できます。運動する場合も、準備運動と十分な水分補給を忘れないでください。",
       };
     }
 
     if (value <= 100) {
       return {
-        title: "AQI trung bình",
-        body: "Bạn có thể ra ngoài, nhưng nên giảm cường độ hoạt động dài hơn bình thường và theo dõi triệu chứng hô hấp.",
+        title: "AQIは普通です",
+        body: "外出は可能ですが、強度の高い長時間の活動は控えめにし、呼吸器症状に注意してください。",
       };
     }
 
     if (value <= 150) {
       return {
-        title: "AQI kém cho nhóm nhạy cảm",
-        body: "Người lớn tuổi, trẻ nhỏ và người có bệnh hô hấp nên hạn chế ra ngoài. Nếu cần đi lại, hãy chọn lộ trình ngắn hơn.",
+        title: "敏感な人には不向きです",
+        body: "高齢者、子ども、呼吸器疾患のある方は外出を控えめにしてください。移動が必要な場合は、短いルートを選びましょう。",
       };
     }
 
     if (value <= 200) {
       return {
-        title: "AQI xấu",
-        body: "Nên hạn chế hoạt động ngoài trời, ưu tiên ở trong nhà và dùng khẩu trang lọc bụi nếu bắt buộc phải di chuyển.",
+        title: "AQIが悪化しています",
+        body: "屋外活動は控え、屋内を優先してください。移動が必要な場合は、粒子ろ過マスクの使用をおすすめします。",
       };
     }
 
     return {
-      title: "AQI rất xấu",
-      body: "Tốt nhất ở trong nhà, đóng cửa sổ và chỉ ra ngoài khi thật sự cần thiết. Nếu phải đi, hãy giảm thời gian tiếp xúc tối đa.",
+      title: "AQIが非常に悪いです",
+      body: "できるだけ屋内に留まり、窓を閉め、必要な場合のみ外出してください。移動時は暴露時間を最小限にしましょう。",
     };
   };
 
-  const adviceContent = aqi === null ? { title: advice?.title ?? "Gợi ý sức khỏe", body: advice?.body ?? "Cập nhật hồ sơ để nhận gợi ý phù hợp hơn" } : getAqiAdvice(aqi);
+  const adviceContent = aqi === null ? { title: advice?.title ?? "健康アドバイス", body: advice?.body ?? "プロフィールを更新すると、より適切なアドバイスを受け取れます。" } : getAqiAdvice(aqi);
 
   const weather = {
     temp: (gpsAqi as GpsAqiMeasurement | null)?.temperature ?? "-",
@@ -92,26 +92,26 @@ export function HomeViewDemo({
       <div className="aqi-section">
         <div className="aqi-circle-border" onClick={onOpenAqiAlert}>
           <div className="aqi-value">{aqi ?? "--"}</div>
-          <div className="aqi-label">AQI • {getAqiLabel(aqi)}</div>
+          <div className="aqi-label">AQI・{getAqiLabel(aqi)}</div>
         </div>
       </div>
 
       {/* Source Selector */}
       <div className="source-container">
         <button className="source-btn active" onClick={() => onRefreshGpsAqi()}>
-          <span className="dot green"></span> Nguồn chính: IQAir
+          <span className="dot green"></span> 主な情報源: IQAir
         </button>
         <button className="source-btn disabled">
-          <span className="dot"></span> Nguồn dự phòng: Đang cập nhật
+          <span className="dot"></span> 代替情報源: 更新中
         </button>
       </div>
 
       {/* Air Quality Status */}
       <div className="status-box">
         <div className="status-headline">
-          <h2>{getAqiLabel(aqi)} - Chất lượng không khí</h2>
+          <h2>{getAqiLabel(aqi)} - 空気品質</h2>
         </div>
-        <p>{aqi === null ? "Không thể xác định chất lượng không khí" : aqi <= 50 ? "Thích hợp cho hoạt động ngoài trời" : "Nên cân nhắc hạn chế hoạt động ngoài trời"}</p>
+        <p>{aqi === null ? "空気品質を判定できません" : aqi <= 50 ? "屋外活動に適しています" : "屋外活動は控えめにすることをおすすめします"}</p>
       </div>
 
 {/* Advice Card */}
@@ -131,7 +131,7 @@ export function HomeViewDemo({
             <span className="weather-icon">☀️</span>
             <div className="weather-text">
               <span className="temp">{weather.temp}°C</span>
-              <span className="humidity">Độ ẩm {weather.humidity}%</span>
+              <span className="humidity">湿度 {weather.humidity}%</span>
             </div>
           </div>
           <button className="refresh-btn" onClick={onRefreshGpsAqi} disabled={gpsLoading}>
@@ -147,7 +147,7 @@ export function HomeViewDemo({
           <span>{locationName}</span>
         </div>
         <div className="info-item">
-          <span className="info-label-small">Source:</span> {source} {coordinates}
+          <span className="info-label-small">情報源:</span> {source} {coordinates}
         </div>
         {gpsError && <div className="error-text">{gpsError}</div>}
       </div>

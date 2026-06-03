@@ -70,10 +70,10 @@ type AqiAlertItem = {
 };
 
 const demoLocationPrompts = [
-  "Hãy khám phá danh sách phòng gym nổi bật trong khu vực để chọn nơi phù hợp nhất cho hôm nay.",
-  "Bạn có thể mở tab tìm kiếm để xem thêm các địa điểm gần bạn đang được đề xuất.",
-  "Thử xem một địa điểm trong danh sách để so sánh rating, thời gian mở cửa và khoảng cách.",
-  "Nếu muốn đi tập ngay, hãy xem nhanh các địa điểm có rating cao trước nhé.",
+  "周辺の注目ジム一覧を見て、今日に合う場所を選びましょう。",
+  "検索タブを開くと、近くのおすすめスポットをさらに確認できます。",
+  "候補を開いて、評価・営業時間・距離を比較してみましょう。",
+  "今すぐ運動したいなら、まず高評価のスポットを確認してください。",
 ];
 
 type LocationItem = PlaceCatalogItem;
@@ -96,47 +96,47 @@ function getAqiTone(value: number | null): { tone: AqiTone; label: string; advic
   if (value === null) {
     return {
       tone: "unknown",
-      label: "Chưa có dữ liệu",
-      advice: "Chưa nhận được AQI mới. Hãy bật GPS hoặc thử lại sau để nhận cảnh báo chính xác hơn.",
+      label: "データなし",
+      advice: "最新の AQI を取得できませんでした。GPS を有効にするか、後でもう一度お試しください。",
     };
   }
 
   if (value <= 50) {
     return {
       tone: "good",
-      label: "Tốt",
-      advice: "Không khí tốt. Bạn có thể ra ngoài, tập nhẹ và giữ nhịp sinh hoạt bình thường.",
+      label: "良好",
+      advice: "空気は良好です。外出や軽い運動を通常どおり行えます。",
     };
   }
 
   if (value <= 100) {
     return {
       tone: "moderate",
-      label: "Trung bình",
-      advice: "Không khí vẫn chấp nhận được. Người nhạy cảm nên theo dõi thêm trước khi vận động dài ngoài trời.",
+      label: "普通",
+      advice: "空気は許容範囲です。敏感な方は屋外で長時間運動する前に状況を確認してください。",
     };
   }
 
   if (value <= 150) {
     return {
       tone: "sensitive",
-      label: "Kém cho nhóm nhạy cảm",
-      advice: "Hạn chế vận động mạnh ngoài trời. Nếu phải ra ngoài, hãy dùng khẩu trang lọc tốt và rút ngắn thời gian tiếp xúc.",
+      label: "敏感な人には不向き",
+      advice: "屋外での激しい運動は控えてください。外出が必要な場合は高性能マスクを使い、滞在時間を短くしましょう。",
     };
   }
 
   if (value <= 200) {
     return {
       tone: "bad",
-      label: "Xấu",
-      advice: "Nên giảm tối đa hoạt động ngoài trời, chuyển sang tập trong nhà và đóng cửa khi không cần thông gió.",
+      label: "悪い",
+      advice: "屋外活動は最小限に抑え、屋内運動へ切り替えてください。換気が不要なときは窓を閉めましょう。",
     };
   }
 
   return {
     tone: "very-bad",
-    label: "Rất xấu",
-    advice: "Không khí đang rất xấu. Tránh ra ngoài nếu không thật sự cần thiết và ưu tiên bảo vệ hô hấp trong nhà.",
+    label: "非常に悪い",
+    advice: "空気は非常に悪い状態です。不要不急の外出は避け、屋内で呼吸器を守る対策を優先してください。",
   };
 }
 
@@ -158,8 +158,8 @@ function formatAqiDelta(previousAqi: number | null, nextAqi: number | null) {
   }
 
   const delta = nextAqi - previousAqi;
-  const direction = delta > 0 ? "tăng" : "giảm";
-  return `AQI đã ${direction} ${Math.abs(delta)} điểm so với lần đo trước.`;
+  const direction = delta > 0 ? "上昇" : "低下";
+  return `AQI は前回比で ${Math.abs(delta)} ポイント ${direction} しました。`;
 }
 
 function buildAqiAlert(measurement: GpsAqiMeasurement, previousAqi: number | null): AqiAlertItem | null {
@@ -176,13 +176,13 @@ function buildAqiAlert(measurement: GpsAqiMeasurement, previousAqi: number | nul
     id: `${measurement.location_name}-${measurement.measured_at ?? Date.now()}-${aqiValue}`,
     title:
       deltaText && previousAqi !== null
-        ? `AQI vừa ${aqiValue > previousAqi ? "tăng lên" : "giảm xuống"} ${aqiValue}`
-        : `AQI hiện tại: ${aqiValue}`,
-    body: `${toneInfo.advice}${measurement.location_name ? ` Khu vực đo: ${measurement.location_name}.` : ""}`,
+      ? `AQI は ${aqiValue > previousAqi ? "上昇" : "低下"} して ${aqiValue} です`
+        : `現在の AQI: ${aqiValue}`,
+    body: `${toneInfo.advice}${measurement.location_name ? ` 測定場所: ${measurement.location_name}.` : ""}`,
     tone: toneInfo.tone,
     toneLabel: toneInfo.label,
     aqi: aqiValue,
-    location: measurement.location_name || "Khu vực hiện tại",
+    location: measurement.location_name || "現在地",
     createdAt: measurement.measured_at ?? new Date().toISOString(),
     deltaText,
   };
@@ -201,14 +201,14 @@ function buildThresholdAqiAlert(
 
   return {
     id: `threshold-${measurement.location_name}-${measurement.measured_at ?? Date.now()}-${aqiValue}-${threshold}`,
-    title: isUnsafe ? "AQI vượt ngưỡng cảnh báo" : "AQI an toàn đối với bạn",
+    title: isUnsafe ? "AQI が警告しきい値を超えています" : "あなたにとって安全な AQI です",
     body: isUnsafe
-      ? `AQI hiện là ${aqiValue}, đã cao hơn ngưỡng ${threshold} của bạn. Hãy giảm vận động ngoài trời hoặc chuyển sang không gian kín.`
-      : `AQI hiện là ${aqiValue}, thấp hơn ngưỡng ${threshold} của bạn. Điều kiện hiện tại đang an toàn để bạn tiếp tục hoạt động phù hợp.`,
+      ? `現在の AQI は ${aqiValue} で、しきい値 ${threshold} を上回っています。屋外運動を減らすか、屋内に移動してください。`
+      : `現在の AQI は ${aqiValue} で、しきい値 ${threshold} を下回っています。今の環境は安全に活動を続けられます。`,
     tone: isUnsafe ? "bad" : "good",
-    toneLabel: isUnsafe ? "Vượt ngưỡng" : "An toàn",
+    toneLabel: isUnsafe ? "しきい値超過" : "安全",
     aqi: aqiValue,
-    location: measurement.location_name || "Khu vực hiện tại",
+    location: measurement.location_name || "現在地",
     createdAt: measurement.measured_at ?? new Date().toISOString(),
     deltaText: null,
   };
@@ -217,8 +217,8 @@ function buildThresholdAqiAlert(
 function buildDemoWelcomeAlert(userName: string): AqiAlertItem {
   return {
     id: `demo-welcome-${Date.now()}`,
-    title: `Chào mừng bạn trở lại, ${userName}!`,
-    body: "Sẵn sàng tập thể dục chưa? Hãy xem các cảnh báo AQI mới nhất để lựa chọn thời điểm và địa điểm tập phù hợp nhé.",
+    title: `おかえりなさい、${userName} さん！`,
+    body: "運動の準備はできていますか。最新の AQI 警告を確認して、適切な時間と場所を選びましょう。",
     tone: "moderate",
     toneLabel: "",
     aqi: null,
@@ -233,12 +233,12 @@ function buildDemoExploreAlert(stepIndex: number): AqiAlertItem {
 
   return {
     id: `demo-explore-${stepIndex}-${Date.now()}`,
-    title: "Gợi ý khám phá địa điểm",
+    title: "スポット探索のおすすめ",
     body: prompt,
     tone: "good",
-    toneLabel: "Khám phá",
+    toneLabel: "探索",
     aqi: null,
-    location: "Danh sách địa điểm",
+    location: "スポット一覧",
     createdAt: new Date().toISOString(),
     deltaText: null,
   };
@@ -247,10 +247,10 @@ function buildDemoExploreAlert(stepIndex: number): AqiAlertItem {
 function buildFlaggedCommentAlert(userName: string, content: string): AqiAlertItem {
   return {
     id: `flagged-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-    title: "Bình luận có nguy cơ vi phạm",
-    body: `Hãy chờ admin kiểm duyệt nội dung. Nội dung bạn vừa bình luận: "${content}"`,
+    title: "規約違反の可能性があるコメント",
+    body: `管理者の確認をお待ちください。あなたが投稿したコメント: "${content}"`,
     tone: "bad",
-    toneLabel: "Kiểm duyệt nội dung",
+    toneLabel: "内容確認",
     aqi: null,
     location: userName,
     createdAt: new Date().toISOString(),
@@ -304,7 +304,7 @@ export default function App() {
     () => ({
       id: "guest-preview",
       email: "guest@safemove.local",
-      full_name: "Khách xem trước",
+      full_name: "プレビューゲスト",
       birth_year: null,
       home_lat: null,
       home_lng: null,
@@ -392,11 +392,11 @@ export default function App() {
       setView(response.user.role === "admin" ? "dashboard" : "home");
       hasAutoLoadedGpsAqiRef.current = false;
     } catch (error) {
-      let msg = error instanceof Error ? error.message : "Đăng nhập thất bại.";
+      let msg = error instanceof Error ? error.message : "ログインに失敗しました。";
       if (/invalid email or password/i.test(msg) || /invalid admin credentials/i.test(msg) || /401/.test(msg)) {
-        msg = "Tên đăng nhập hoặc mật khẩu không chính xác.";
+        msg = "ユーザー名またはパスワードが正しくありません。";
       } else if (/email is required/i.test(msg) || /password is required/i.test(msg)) {
-        msg = "Vui lòng nhập đầy đủ thông tin.";
+        msg = "必要な情報をすべて入力してください。";
       }
       setAuthError(msg);
     } finally {
@@ -414,11 +414,11 @@ export default function App() {
       setView(response.user.role === "admin" ? "dashboard" : "home");
       hasAutoLoadedGpsAqiRef.current = false;
     } catch (error) {
-      let msg = error instanceof Error ? error.message : "Đăng nhập thất bại.";
+      let msg = error instanceof Error ? error.message : "ログインに失敗しました。";
       if (/invalid admin credentials/i.test(msg) || /401/.test(msg) || /invalid email or password/i.test(msg)) {
-        msg = "Tên đăng nhập hoặc mật khẩu không chính xác.";
+        msg = "ユーザー名またはパスワードが正しくありません。";
       } else if (/email is required/i.test(msg) || /password is required/i.test(msg)) {
-        msg = "Vui lòng nhập đầy đủ thông tin.";
+        msg = "必要な情報をすべて入力してください。";
       }
       setAuthError(msg);
     } finally {
@@ -436,7 +436,7 @@ export default function App() {
       setView("home");
       hasAutoLoadedGpsAqiRef.current = false;
     } catch (error) {
-      setAuthError(error instanceof Error ? error.message : "Đăng ký thất bại.");
+      setAuthError(error instanceof Error ? error.message : "新規登録に失敗しました。");
     } finally {
       setLoadingAuth(false);
     }
@@ -581,14 +581,14 @@ export default function App() {
 
   const handleRefreshGpsAqi = useCallback(async () => {
     if (!navigator.geolocation) {
-      setGpsError("Trình duyệt không hỗ trợ định vị GPS.");
+      setGpsError("ブラウザは GPS 位置情報をサポートしていません。");
       return;
     }
 
     try {
       const permission = await navigator.permissions?.query?.({ name: "geolocation" as PermissionName });
       if (permission?.state === "denied") {
-        setGpsError("Trình duyệt đã chặn vị trí GPS. Mở cài đặt trình duyệt để cho phép.");
+        setGpsError("ブラウザが GPS 位置情報をブロックしています。ブラウザ設定で許可してください。");
         return;
       }
     } catch {
@@ -647,20 +647,20 @@ export default function App() {
         }
       } catch (innerError) {
         if (innerError instanceof Error) {
-          setGpsError(`Không lấy được AQI từ vị trí GPS: ${innerError.message}`);
+          setGpsError(`GPS 位置情報から AQI を取得できませんでした: ${innerError.message}`);
         } else {
-          setGpsError("Không lấy được AQI từ vị trí GPS.");
+          setGpsError("GPS 位置情報から AQI を取得できませんでした。");
         }
       }
     } catch (error) {
-      console.warn("Lỗi lấy GPS, sử dụng fallback Tòa B1 ĐH Bách Khoa:", error);
+      console.warn("GPS 取得エラー。B1 Building のフォールバックを使用します:", error);
       
-      // Fallback coordinates: Tòa B1 ĐH Bách Khoa Hà Nội
+      // Fallback coordinates: B1 Building, Hanoi University of Science and Technology
       const fallbackLat = 21.0041;
       const fallbackLng = 105.8428;
       
       setGpsCoords({ lat: fallbackLat, lng: fallbackLng });
-      setGpsError("Đang sử dụng vị trí giả lập (B1 Bách Khoa) do lỗi GPS.");
+      setGpsError("GPS エラーのため、模擬位置（B1 Building）を使用しています。");
       
       try {
         const data = await fetchIqAirAqiByCoordinates(fallbackLat, fallbackLng);
@@ -668,9 +668,9 @@ export default function App() {
         // ... (we don't strictly need to trigger local alerts on fallback load)
       } catch (innerError) {
         if (innerError instanceof Error) {
-          setGpsError(`Không lấy được AQI (Fallback): ${innerError.message}`);
+          setGpsError(`フォールバック AQI を取得できませんでした: ${innerError.message}`);
         } else {
-          setGpsError("Không lấy được AQI (Fallback).");
+          setGpsError("フォールバック AQI を取得できませんでした。");
         }
       }
     } finally {
@@ -761,7 +761,7 @@ export default function App() {
       const response = await fetchLocationReviews(locationId);
       setSelectedLocationReviews(response.reviews);
     } catch (error) {
-      setSelectedLocationReviewsError(error instanceof Error ? error.message : "Không thể tải nhận xét.");
+      setSelectedLocationReviewsError(error instanceof Error ? error.message : "レビューを読み込めませんでした。");
     } finally {
       setSelectedLocationReviewsLoading(false);
     }
@@ -790,7 +790,7 @@ export default function App() {
   const handleSubmitLocationReview = useCallback(
     async ({ rating, content }: { rating: number; content: string }) => {
       if (!selectedBackendLocation || !user) {
-        throw new Error("Missing selected location or user.");
+        throw new Error("選択された地点またはユーザーが見つかりません。");
       }
 
       const blockedLanguages = getBlockedCommentLanguages(content);
@@ -888,7 +888,7 @@ export default function App() {
       setView={setView}
       userName={user.full_name || user.email}
       onRequireLogin={() => {
-        setGlobalError("Vui lòng đăng nhập để mở chức năng này.");
+        setGlobalError("この機能を使うにはログインしてください。");
         setView("home");
       }}
       onShowLogin={() => {
@@ -959,7 +959,7 @@ export default function App() {
             setView("spot-detail");
           }}
           onRequireLogin={() => {
-            setGlobalError("Vui lòng đăng nhập để xem chi tiết địa điểm.");
+            setGlobalError("スポット詳細を見るにはログインしてください。");
           }}
         />
       )}
@@ -974,7 +974,7 @@ export default function App() {
           currentUserId={user.id}
           currentUserAvatarSelection={avatarSelection}
           onRequireLogin={() => {
-            setGlobalError("Vui lòng đăng nhập để viết đánh giá hoặc xem chi tiết.");
+            setGlobalError("レビューを書いたり詳細を見るにはログインしてください。");
           }}
             onShowLogin={() => {
               setUser(null);
@@ -990,7 +990,7 @@ export default function App() {
 
       {view === "reviews" && (
         <ReviewsListView
-          locationName={selectedBackendLocation?.name ?? selectedLocation?.name ?? "Địa điểm"}
+          locationName={selectedBackendLocation?.name ?? selectedLocation?.name ?? "スポット"}
           reviews={selectedLocationReviews}
           reviewsLoading={selectedLocationReviewsLoading}
           reviewsError={selectedLocationReviewsError}
@@ -1014,7 +1014,7 @@ export default function App() {
 
       {view === "route" && role !== "guest" && (
         <RoutePlannerView
-          origin={gpsCoords ? { label: "Vị trí hiện tại", lat: gpsCoords.lat, lng: gpsCoords.lng } : null}
+          origin={gpsCoords ? { label: "現在地", lat: gpsCoords.lat, lng: gpsCoords.lng } : null}
           destination={selectedLocation}
           locations={mergedLocations.map((location) => ({
             id: location.id,

@@ -16,22 +16,22 @@ export function AqiAlertScreen({ gpsAqi, gpsCoords, locations, onBack, onOpenRou
   const aqiLabel = aqiValue === null ? "--" : `${aqiValue}`;
   const aqiStatus =
     aqiValue === null
-      ? "Không xác định"
+      ? "未取得"
       : aqiValue <= 50
-      ? "Tốt"
+      ? "良好"
       : aqiValue <= 100
-      ? "Trung bình"
+      ? "普通"
       : aqiValue <= 150
-      ? "Nhạy cảm"
-      : "Nguy hiểm";
+      ? "注意"
+      : "危険";
   const alertText =
     aqiValue === null
-      ? "Không có dữ liệu AQI hiện tại. Hãy thử lại sau." 
+      ? "現在のAQIデータはありません。後でもう一度お試しください。"
       : aqiValue > 150
-      ? "Ô nhiễm đang ở mức rất cao. Hạn chế ra ngoài, ưu tiên tập trong nhà và đeo khẩu trang chuẩn." 
+      ? "汚染レベルが非常に高いです。外出を控え、屋内運動を優先し、標準的なマスクを着用してください。"
       : aqiValue > 100
-      ? "Chất lượng không khí đang kém. Giảm cường độ hoạt động ngoài trời và chọn địa điểm sạch hơn." 
-      : "Không khí đang ở mức chấp nhận được. Bạn có thể cân nhắc tới nơi tập an toàn hơn nếu cần.";
+      ? "空気の質が悪化しています。屋外活動の強度を下げ、より清潔な場所を選びましょう。"
+      : "空気の状態は許容範囲です。必要に応じて、より安全な運動場所を検討できます。";
 
   const suggestion = locations
     .filter((location) => typeof location.aqi_level === "number")
@@ -43,7 +43,7 @@ export function AqiAlertScreen({ gpsAqi, gpsCoords, locations, onBack, onOpenRou
     <div className="demo-alert-container">
       <header className="alert-header">
         <button className="back-button" onClick={onBack}>
-          <ArrowLeft size={18} /> Home
+          <ArrowLeft size={18} /> ホーム
         </button>
       </header>
 
@@ -62,31 +62,31 @@ export function AqiAlertScreen({ gpsAqi, gpsCoords, locations, onBack, onOpenRou
               : "zone-danger"
           }`}
         >
-          <span className="alert-label">⚠️ Cảnh báo sức khỏe</span>
+          <span className="alert-label">⚠️ 健康警告</span>
           <h1 className="huge-aqi-value">{aqiLabel}</h1>
           <div className="aqi-level-badge">{aqiStatus}</div>
           <p className="alert-message-text">{alertText}</p>
         </section>
 
         <div className="suggestion-header-row">
-          <h3 className="section-title-alert">Địa điểm tập an toàn</h3>
-          <span className="recommend-tag">Đề xuất</span>
+          <h3 className="section-title-alert">安全な運動スポット</h3>
+          <span className="recommend-tag">おすすめ</span>
         </div>
 
         <div className="spot-suggestion-card">
           {suggestion?.featured_image ? (
             <img src={suggestion.featured_image} alt={suggestion.name} className="spot-card-img" />
           ) : (
-            <div className="spot-card-img placeholder">Ảnh</div>
+            <div className="spot-card-img placeholder">画像</div>
           )}
 
           <div className="spot-card-body">
             <div className="spot-card-info">
-              <h4 className="spot-title">{suggestion?.name ?? "Khuyến nghị địa điểm"}</h4>
-              <p className="spot-meta">📍 khoảng {distanceText}</p>
+              <h4 className="spot-title">{suggestion?.name ?? "おすすめスポット"}</h4>
+              <p className="spot-meta">📍 約 {distanceText}</p>
               <div className="spot-amenities-badges">
-                <span className="amenity-mini">Không khí sạch</span>
-                <span className="amenity-mini">Không gian thoáng</span>
+                <span className="amenity-mini">きれいな空気</span>
+                <span className="amenity-mini">開放的な空間</span>
               </div>
             </div>
             <div className="spot-card-rating">
@@ -95,17 +95,17 @@ export function AqiAlertScreen({ gpsAqi, gpsCoords, locations, onBack, onOpenRou
           </div>
 
           <button className="btn-route-guidance" onClick={onOpenRoute}>
-            💚 Tìm lộ trình
+            💚 ルートを見る
           </button>
         </div>
 
         <div className="card expert-advice-card">
           <div className="expert-header">
             <span className="expert-icon">👨‍⚕️</span>
-            <h4>Chuyên gia khuyên</h4>
+            <h4>専門家のアドバイス</h4>
           </div>
           <p className="expert-text">
-            Nếu phải ra ngoài, hãy dùng khẩu trang N95 và chọn nơi có hệ thống lọc không khí. Tập trong nhà là lựa chọn an toàn nhất khi AQI trên 150.
+            外出が必要な場合はN95マスクを使用し、空気清浄設備のある場所を選んでください。AQIが150を超えるときは屋内運動が最も安全です。
           </p>
         </div>
       </main>

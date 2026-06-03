@@ -35,7 +35,7 @@ export function ChatWidget({ user }: Props) {
         }
       })
       .catch((nextError) => {
-        setError(nextError instanceof Error ? nextError.message : "Không tải được chat.");
+        setError(nextError instanceof Error ? nextError.message : "チャットを読み込めませんでした。");
       })
       .finally(() => setLoadingSessions(false));
   }, [open, user.id]);
@@ -47,7 +47,7 @@ export function ChatWidget({ user }: Props) {
 
   const greeting = useMemo(
     () =>
-      `Xin chào ${user.full_name || user.email}. Bạn có thể hỏi về AQI hiện tại, cảnh báo gần đây, hồ sơ sức khỏe, hoặc nên làm gì để giảm phơi nhiễm.`,
+      `こんにちは ${user.full_name || user.email} さん。現在の AQI、最近の警告、健康プロフィール、暴露を減らす方法について質問できます。`,
     [user.email, user.full_name],
   );
 
@@ -79,7 +79,7 @@ export function ChatWidget({ user }: Props) {
       const refreshedSessions = await fetchChatSessions(user.id);
       setSessions(refreshedSessions.sessions);
     } catch (nextError) {
-      setError(nextError instanceof Error ? nextError.message : "Không gửi được tin nhắn.");
+      setError(nextError instanceof Error ? nextError.message : "メッセージを送信できませんでした。");
       setMessages((current) => current.filter((item) => item.id !== optimistic.id));
     } finally {
       setLoading(false);
@@ -95,7 +95,7 @@ export function ChatWidget({ user }: Props) {
       const data = await fetchChatMessages(session.id);
       setMessages(data.messages);
     } catch (nextError) {
-      setError(nextError instanceof Error ? nextError.message : "Không tải được nội dung chat.");
+      setError(nextError instanceof Error ? nextError.message : "チャット内容を読み込めませんでした。");
     } finally {
       setLoadingSessions(false);
     }
@@ -154,14 +154,14 @@ export function ChatWidget({ user }: Props) {
                   </div>
                   <div>
                     <div className="text-sm text-slate-900">SafeMove HaNoi AI</div>
-                    <div className="text-xs text-slate-500">AQI chatbot + cảnh báo + gợi ý</div>
+                    <div className="text-xs text-slate-500">AQI チャットボット + 警告 + 提案</div>
                   </div>
                 </div>
                 <button
                   onClick={startNewChat}
                   className="rounded-xl border border-slate-200 px-3 py-1.5 text-xs text-slate-600"
                 >
-                  Chat mới
+                  新しいチャット
                 </button>
               </div>
             </div>
@@ -169,7 +169,7 @@ export function ChatWidget({ user }: Props) {
             <div ref={listRef} className="flex-1 space-y-3 overflow-auto bg-slate-50/60 px-4 py-4">
               {loadingSessions ? (
                 <div className="rounded-2xl bg-white px-4 py-3 text-sm text-slate-500 ring-1 ring-slate-200">
-                  Đang tải lịch sử chat...
+                  チャット履歴を読み込み中...
                 </div>
               ) : null}
 
@@ -181,7 +181,7 @@ export function ChatWidget({ user }: Props) {
                 <Bubble key={message.id} role={message.role} content={message.content} />
               ))}
 
-              {loading ? <Bubble role="assistant" content="Đang suy nghĩ..." pending /> : null}
+              {loading ? <Bubble role="assistant" content="考え中..." pending /> : null}
 
               {error ? (
                 <div className="rounded-2xl bg-rose-50 px-4 py-3 text-sm text-rose-700 ring-1 ring-rose-200">
@@ -202,7 +202,7 @@ export function ChatWidget({ user }: Props) {
                     }
                   }}
                   rows={2}
-                  placeholder="Hỏi về AQI, cảnh báo, hồ sơ sức khỏe, hoặc nên làm gì lúc này..."
+                  placeholder="AQI、警告、健康プロフィール、今何をすべきかを質問してください..."
                   className="min-h-[48px] flex-1 resize-none rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none ring-1 ring-slate-200"
                 />
                 <button

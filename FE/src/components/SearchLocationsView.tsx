@@ -155,7 +155,7 @@ export function SearchLocationsView({
           <input
             type="text"
             className="search-input"
-            placeholder="Tìm địa điểm..."
+          placeholder="スポットを検索..."
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
           />
@@ -166,25 +166,25 @@ export function SearchLocationsView({
             className={`filter-tag ${activeFilter === "all" ? "active" : ""}`}
             onClick={() => setActiveFilter("all")}
           >
-            Tất cả
+            すべて
           </button>
           <button
             className={`filter-tag ${activeFilter === "park" ? "active" : ""}`}
             onClick={() => setActiveFilter("park")}
           >
-            Công viên
+            公園
           </button>
           <button
             className={`filter-tag ${activeFilter === "gym" ? "active" : ""}`}
             onClick={() => setActiveFilter("gym")}
           >
-            Phòng tập
+            ジム
           </button>
           <button
             className={`filter-tag ${activeFilter === "sports" ? "active" : ""}`}
             onClick={() => setActiveFilter("sports")}
           >
-            Thể thao
+            スポーツ
           </button>
         </div>
       </div>
@@ -192,7 +192,7 @@ export function SearchLocationsView({
       {/* Main Content */}
       <div className="search-scrollable-content" ref={scrollContainerRef}>
           <h3 className="section-title">
-            Kết quả tìm kiếm {filteredLocations.length > 0 && `(${filteredLocations.length})`}
+            検索結果 {filteredLocations.length > 0 && `(${filteredLocations.length})`}
           </h3>
 
         <div className="result-list">
@@ -214,7 +214,7 @@ export function SearchLocationsView({
                         const km = haversineKm(currentPosition.lat, currentPosition.lng, location.lat, location.lng);
                         return `${km.toFixed(1)} km`;
                       }
-                      return 'Không có khoảng cách';
+                      return '距離なし';
                     })()}
                   </span>
                 </div>
@@ -240,19 +240,19 @@ export function SearchLocationsView({
           ) : (
             <div className="no-results">
               <MapPin size={32} className="no-results-icon" />
-              <p>Không tìm thấy địa điểm</p>
-              <small>Thử điều chỉnh tìm kiếm hoặc bộ lọc</small>
+              <p>スポットが見つかりません</p>
+              <small>検索条件またはフィルターを調整してください</small>
             </div>
           )}
           {filteredLocations.length > 0 && (
             <div className="pagination-footer">
               <span className="pagination-summary">
-                Hiển thị {Math.min(visibleCount, filteredLocations.length)} trong {filteredLocations.length}
-                {pageCount > 1 ? ` · Trang ${pageIndex} trên ${pageCount}` : ""}
+                {Math.min(visibleCount, filteredLocations.length)} / {filteredLocations.length} 件を表示
+                {pageCount > 1 ? ` · ${pageIndex} / ${pageCount} ページ` : ""}
               </span>
               {pageIndex < pageCount && (
                 <button className="load-more-btn" type="button" onClick={loadMorePage}>
-                  Tải thêm 5
+                  さらに 5 件表示
                 </button>
               )}
             </div>

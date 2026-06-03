@@ -11,7 +11,7 @@ export function NotificationsView({ notifications, onMarkRead }: Props) {
     <div className="mx-auto max-w-4xl space-y-4">
       <div className="flex items-center gap-2">
         <Bell className="h-5 w-5 text-blue-600" />
-        <h2>Thông báo</h2>
+        <h2>通知</h2>
       </div>
 
       {notifications.length ? (
@@ -37,11 +37,11 @@ export function NotificationsView({ notifications, onMarkRead }: Props) {
                   className="flex items-center gap-2 rounded-2xl bg-white px-4 py-2 text-sm text-slate-700 ring-1 ring-slate-200"
                 >
                   <CheckCircle2 className="h-4 w-4" />
-                  Mark read
+                  既読にする
                 </button>
               ) : (
                 <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs text-emerald-700">
-                  Read
+                  既読
                 </span>
               )}
             </div>
@@ -49,7 +49,7 @@ export function NotificationsView({ notifications, onMarkRead }: Props) {
         ))
       ) : (
         <div className="rounded-3xl bg-white p-6 text-sm text-slate-500 shadow-sm ring-1 ring-slate-200/70">
-          Chưa có thông báo nào.
+          通知はまだありません。
         </div>
       )}
     </div>

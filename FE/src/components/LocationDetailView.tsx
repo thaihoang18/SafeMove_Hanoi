@@ -73,12 +73,12 @@ export function LocationDetailView({
 
   const handleSubmitReview = async () => {
     if (!reviewText.trim()) {
-      alert("Vui lòng nhập nhận xét");
+      alert("コメントを入力してください。");
       return;
     }
 
     if (userRating < 1) {
-      alert("Vui lòng chọn số sao");
+      alert("星評価を選択してください。");
       return;
     }
 
@@ -94,7 +94,7 @@ export function LocationDetailView({
       setReviewText("");
       setUserRating(0);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Không thể gửi nhận xét.";
+      const message = error instanceof Error ? error.message : "コメントを送信できませんでした。";
       alert(message);
     } finally {
       setSubmittingReview(false);
@@ -130,7 +130,7 @@ export function LocationDetailView({
         }
 
         console.error("Failed to load IQAir AQI:", error);
-        setAqiError("Không thể tải chỉ số AQI từ IQAir.");
+        setAqiError("IQAir から AQI を取得できませんでした。");
       })
       .finally(() => {
         if (!controller.signal.aborted) {
@@ -148,7 +148,7 @@ export function LocationDetailView({
       <div className="demo-detail-container">
         <div className="empty-state">
           <MapPin size={48} className="empty-icon" />
-          <p>Chưa có địa điểm được chọn</p>
+          <p>スポットが選択されていません</p>
         </div>
       </div>
     );
@@ -158,7 +158,7 @@ export function LocationDetailView({
   const apiAqi = aqiMeasurement?.aqi ?? null;
   const apiPm25 = apiAqi != null ? (apiAqi * 0.4).toFixed(1) : null;
   const smallCircleValue = apiAqi ?? Math.round(safetyScore);
-  const smallCircleLabel = apiAqi != null ? "AQI" : "An toàn";
+  const smallCircleLabel = apiAqi != null ? "AQI" : "安全";
   const pm25Value = apiPm25 ?? (location.aqi_level ? (location.aqi_level * 0.4).toFixed(1) : "15.5");
 
   return (
@@ -169,16 +169,16 @@ export function LocationDetailView({
           type="button"
           onClick={() => onBack?.()}
           className="inline-flex h-10 w-10 items-center justify-center rounded-3xl bg-slate-100/90 text-slate-900 ring-1 ring-white/10 transition hover:bg-slate-100"
-          aria-label="Quay lại"
+          aria-label="戻る"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
         <div className="detail-header-main">
-          <span className="green-sub-badge">📍 Điểm an toàn</span>
+          <span className="green-sub-badge">📍 安全スポット</span>
           <h2 className="detail-title">{location.name}</h2>
           <p className="detail-location">
             <MapPin size={14} className="inline" />
-            {location.address || "Hà Nội, Việt Nam"}
+            {location.address || "ハノイ、ベトナム"}
           </p>
         </div>
         {!isGuest && (
@@ -188,7 +188,7 @@ export function LocationDetailView({
               className="btn-directions"
               onClick={() => onOpenRoute?.()}
             >
-              Chỉ đường
+              ルート案内
             </button>
           </div>
         )}
@@ -202,29 +202,29 @@ export function LocationDetailView({
             <div className="circle-label">{smallCircleLabel}</div>
           </div>
           <span className="stat-desc">
-            {apiAqi != null ? "AQI thời gian thực từ IQAir" : "Điểm an toàn"}
+            {apiAqi != null ? "IQAir のリアルタイム AQI" : "安全スポット"}
             <br />
-            <small className="green-text">{apiAqi != null ? "Đã cập nhật từ API" : "Ước tính"}</small>
+            <small className="green-text">{apiAqi != null ? "API から更新済み" : "推定値"}</small>
           </span>
         </div>
         <div className="stat-pm25-box">
           <span className="pm25-title">🍃 PM2.5</span>
           <span className="pm25-value">{pm25Value} µg/m³</span>
-          <p className="pm25-desc">Trong ngưỡng khuyến nghị của WHO</p>
+          <p className="pm25-desc">WHO の推奨範囲内</p>
         </div>
       </div>
 
       {aqiLoading && !apiAqi && (
-        <div className="aqi-loading-note">Đang tải chỉ số AQI...</div>
+        <div className="aqi-loading-note">AQI を読み込み中...</div>
       )}
       {aqiError && (
-        <div className="aqi-error-message">Lỗi AQI: {aqiError}</div>
+        <div className="aqi-error-message">AQI エラー: {aqiError}</div>
       )}
 
       {/* Amenities */}
       {Array.isArray(location.amenities) && location.amenities.length > 0 && (
         <div className="amenities-section">
-          <h4>Tiện ích</h4>
+          <h4>設備</h4>
           <div className="amenities-tags">
             {location.amenities.map((amenity, idx) => (
               <span key={idx} className="amenity-tag">
@@ -237,20 +237,20 @@ export function LocationDetailView({
 
       {/* Introduction Card */}
       <div className="card intro-card">
-        <h4>Giới thiệu</h4>
+        <h4>概要</h4>
         <p>
           {location.description ||
-            "Khu vực ngoài trời đẹp và an toàn. Thích hợp cho tập luyện và giải trí với chất lượng không khí tốt."}
+            "屋外環境が良く、安全に利用できます。空気の質が良好で、運動やリフレッシュに適しています。"}
         </p>
       </div>
 
       {/* Reviews Section */}
       <div className="reviews-section">
         <div className="reviews-header-row">
-          <h4>Đánh giá ({reviews.length})</h4>
+          <h4>レビュー ({reviews.length})</h4>
           {onOpenReviews && (
             <button className="view-all-link" onClick={onOpenReviews}>
-              Xem tất cả
+              すべて表示
             </button>
           )}
         </div>
@@ -260,7 +260,7 @@ export function LocationDetailView({
           <div className="input-review-box">
             <textarea
               className="review-textarea"
-              placeholder="Chia sẻ trải nghiệm của bạn..."
+              placeholder="体験を共有してください..."
               value={reviewText}
               onChange={(e) => setReviewText(e.target.value)}
             />
@@ -277,7 +277,7 @@ export function LocationDetailView({
                 ))}
               </div>
               <button className="btn-submit-review" onClick={handleSubmitReview} disabled={submittingReview}>
-                {submittingReview ? "Đang gửi..." : "Gửi"}
+                {submittingReview ? "送信中..." : "送信"}
               </button>
             </div>
           </div>
@@ -285,7 +285,7 @@ export function LocationDetailView({
 
         {isGuest && (
           <div className="login-prompt">
-            <p>Vui lòng đăng nhập để viết nhận xét</p>
+            <p>レビューを書くにはログインしてください</p>
             <button
               className="btn-login"
               onClick={() => {
@@ -296,7 +296,7 @@ export function LocationDetailView({
                 }
               }}
             >
-              Đăng nhập
+              ログイン
             </button>
           </div>
         )}
@@ -305,7 +305,7 @@ export function LocationDetailView({
         <div className="reviews-list">
           {reviewsError && <p className="no-reviews">{reviewsError}</p>}
           {reviewsLoading ? (
-            <p className="no-reviews">Đang tải nhận xét...</p>
+            <p className="no-reviews">レビューを読み込み中...</p>
           ) : reviews.length > 0 ? (
             reviews.map((review) => (
               <div key={review.id} className="review-card">
@@ -314,7 +314,7 @@ export function LocationDetailView({
                     <span className="rev-avatar rev-avatar-custom" style={getAvatarSelectionStyle(currentUserAvatarSelection)}>
                       <img
                         src={getAvatarPreset(currentUserAvatarSelection.avatarId).src}
-                        alt="Avatar của bạn"
+                        alt="あなたのアバター"
                         onError={(event) => {
                           event.currentTarget.src = getAvatarPreset(currentUserAvatarSelection.avatarId).fallbackSrc;
                         }}
@@ -346,10 +346,10 @@ export function LocationDetailView({
                   >
                     <Languages size={13} />
                     {translateMap[review.id]?.loading
-                      ? "Đang dịch..."
+                      ? "翻訳中..."
                       : translateMap[review.id]?.shown
-                      ? "Ẩn bản dịch"
-                      : "Dịch"}
+                      ? "翻訳を非表示"
+                      : "翻訳"}
                   </button>
                 </div>
                 {translateMap[review.id]?.shown && translateMap[review.id]?.text && (
@@ -358,13 +358,13 @@ export function LocationDetailView({
               </div>
             ))
           ) : (
-            <p className="no-reviews">Chưa có đánh giá. Hãy là người đầu tiên!</p>
+            <p className="no-reviews">レビューはまだありません。最初の投稿者になりましょう。</p>
           )}
         </div>
       </div>
 
       {/* Floating Route Button */}
-      <button className="floating-route-btn" onClick={onOpenRoute} title="Tìm chỉ đường đến địa điểm này">
+      <button className="floating-route-btn" onClick={onOpenRoute} title="このスポットへのルートを検索">
         <Activity size={20} />
       </button>
     </div>
@@ -374,18 +374,18 @@ export function LocationDetailView({
 function formatRelativeTime(value: string) {
   const timestamp = new Date(value).getTime();
   if (Number.isNaN(timestamp)) {
-    return "Vừa xong";
+    return "たった今";
   }
 
   const diffSeconds = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
-  if (diffSeconds < 60) return "Vừa xong";
+  if (diffSeconds < 60) return "たった今";
 
   const diffMinutes = Math.floor(diffSeconds / 60);
-  if (diffMinutes < 60) return `${diffMinutes} phút trước`;
+  if (diffMinutes < 60) return `${diffMinutes} 分前`;
 
   const diffHours = Math.floor(diffMinutes / 60);
-  if (diffHours < 24) return `${diffHours} giờ trước`;
+  if (diffHours < 24) return `${diffHours} 時間前`;
 
   const diffDays = Math.floor(diffHours / 24);
-  return `${diffDays} ngày trước`;
+  return `${diffDays} 日前`;
 }

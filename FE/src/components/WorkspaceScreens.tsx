@@ -76,25 +76,25 @@ type Props = {
 };
 
 const reviewCards = [
-  { name: "Nguyễn Linh", time: "2 giờ trước", score: 5, body: "Không khí dễ chịu, đường đi thông thoáng và có nhiều cây xanh." },
-  { name: "Marco", time: "1 ngày trước", score: 4, body: "Bãi tập rộng, AQI ổn định. Giá như có thêm nhiều ghế nghỉ hơn." },
-  { name: "Hà My", time: "3 ngày trước", score: 5, body: "Giao diện rõ ràng, dễ hiểu, phù hợp để chọn điểm luyện tập ngoài trời." },
+  { name: "リン", time: "2時間前", score: 5, body: "空気が心地よく、道も開けていて、緑が多いです。" },
+  { name: "Marco", time: "1日前", score: 4, body: "広い運動エリアで AQI も安定しています。休憩用のベンチがもう少しあると良いです。" },
+  { name: "ハ・ミー", time: "3日前", score: 5, body: "画面が見やすく、屋外の運動スポットを選ぶのに適しています。" },
 ];
 
 const violationCards = [
   {
     userId: "A9283",
-    title: "Bình luận vi phạm số 3",
-    content: "Nội dung báo cáo đang chờ xử lý để bảo vệ cộng đồng.",
-    location: "Bách Thảo Park",
+    title: "違反コメント 3",
+    content: "コミュニティを守るため、報告内容を処理待ちにしています。",
+    location: "バッハ・トア公園",
     createdAt: "2024/05/20 14:30",
     count: 3,
   },
   {
     userId: "B4410",
-    title: "Đánh giá tiêu cực lặp lại",
-    content: "Nội dung có dấu hiệu spam và cần kiểm duyệt lại.",
-    location: "Công viên Thống Nhất",
+    title: "繰り返しの低評価",
+    content: "スパムの兆候があり、再審査が必要です。",
+    location: "トンニャット公園",
     createdAt: "2024/05/18 09:15",
     count: 2,
   },
@@ -105,35 +105,35 @@ function getAqiAdvice(aqi: number, threshold: number) {
 
   if (aqi <= 50) {
     return {
-      label: "Tốt",
+      label: "良好",
       severity: "info",
-      title: crossedThreshold ? "AQI tốt nhưng đã chạm ngưỡng cá nhân" : "Không khí đang tốt",
+      title: crossedThreshold ? "AQI は良好ですが個人しきい値に達しました" : "空気は良好です",
       body: crossedThreshold
-        ? "Chỉ số chung vẫn ổn, nhưng ngưỡng cá nhân của bạn đang khá thấp. Nên giữ cường độ nhẹ."
-        : "Có thể ra ngoài vận động, ưu tiên các tuyến xanh và theo dõi thay đổi thời tiết.",
+        ? "全体の指標はまだ安定していますが、あなたの個人しきい値は低めです。軽い強度に保ちましょう。"
+        : "外で運動できます。グリーンルートを優先し、天候の変化を確認してください。",
       crossedThreshold,
     };
   }
 
   if (aqi <= 100) {
     return {
-      label: "Trung bình",
+      label: "普通",
       severity: "warn",
-      title: crossedThreshold ? "Cần giảm cường độ vận động" : "Không khí ở mức chấp nhận được",
+      title: crossedThreshold ? "運動強度を下げる必要があります" : "空気は許容範囲です",
       body: crossedThreshold
-        ? "Bạn đã tới vùng AQI cần thận trọng hơn. Hạn chế bài tập dài và ưu tiên khu vực nhiều cây xanh."
-        : "Có thể tập nhẹ ngoài trời, nhưng nên rút ngắn thời lượng và theo dõi triệu chứng.",
+        ? "より注意が必要な AQI 域に入っています。長時間の運動は避け、緑の多いエリアを優先してください。"
+        : "屋外で軽く運動できますが、時間を短くし、症状を確認してください。",
       crossedThreshold,
     };
   }
 
   return {
-    label: "Xấu",
+    label: "悪い",
     severity: "critical",
-    title: crossedThreshold ? "Nên chuyển sang hoạt động trong nhà" : "AQI đang xấu",
+    title: crossedThreshold ? "屋内活動へ切り替えるべきです" : "AQI が悪化しています",
     body: crossedThreshold
-      ? "Chỉ số đã vượt ngưỡng cá nhân. Tốt nhất hãy chuyển sang không gian kín hoặc hoãn vận động ngoài trời."
-      : "Hạn chế ra ngoài lâu. Nếu cần di chuyển, hãy chọn lộ trình ngắn và ít tiếp xúc không khí hơn.",
+      ? "指標が個人しきい値を超えています。屋内へ移るか、屋外運動を延期してください。"
+      : "長時間の外出は控えてください。移動が必要なら、短くて曝露の少ないルートを選びましょう。",
     crossedThreshold,
   };
 }
@@ -169,7 +169,7 @@ export function WorkspaceScreens({
   const [commentText, setCommentText] = useState("");
   const [commentSort, setCommentSort] = useState<"newest" | "highest">("newest");
   const [showPrompt, setShowPrompt] = useState(false);
-  const [promptMessage, setPromptMessage] = useState("Bạn cần đăng nhập để tiếp tục.");
+  const [promptMessage, setPromptMessage] = useState("続行するにはログインが必要です。");
   const [showSearchFilters, setShowSearchFilters] = useState(false);
   const [aqiThresholdInput, setAqiThresholdInput] = useState(140);
   const [pushEnabled, setPushEnabled] = useState(true);
@@ -206,7 +206,7 @@ export function WorkspaceScreens({
         spotCategory === "all"
           ? true
           : spotCategory === "park"
-            ? item.location_type.toLowerCase().includes("park") || item.name.toLowerCase().includes("công viên")
+            ? item.location_type.toLowerCase().includes("park") || item.name.toLowerCase().includes("park")
             : spotCategory === "gym"
               ? item.location_type.toLowerCase().includes("gym") || item.name.toLowerCase().includes("gym")
               : Number(item.rating ?? 0) >= 4.5;
@@ -239,7 +239,7 @@ export function WorkspaceScreens({
           category === "all"
             ? true
             : category === "park"
-              ? item.location_type.toLowerCase().includes("park") || item.name.toLowerCase().includes("công viên")
+              ? item.location_type.toLowerCase().includes("park") || item.name.toLowerCase().includes("park")
               : category === "gym"
                 ? item.location_type.toLowerCase().includes("gym") || item.name.toLowerCase().includes("gym")
                 : Number(item.rating ?? 0) >= 4.5;
@@ -252,10 +252,10 @@ export function WorkspaceScreens({
       }).length;
 
     return [
-      { id: "all" as const, label: "Tất cả", count: countMatches("all") },
-      { id: "park" as const, label: "Công viên", count: countMatches("park") },
+      { id: "all" as const, label: "すべて", count: countMatches("all") },
+      { id: "park" as const, label: "公園", count: countMatches("park") },
       { id: "gym" as const, label: "Gym", count: countMatches("gym") },
-      { id: "favorite" as const, label: "Yêu thích", count: countMatches("favorite") },
+      { id: "favorite" as const, label: "お気に入り", count: countMatches("favorite") },
     ];
   }, [locations, spotQuery]);
 
@@ -294,14 +294,14 @@ export function WorkspaceScreens({
         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
           <Shield className="h-7 w-7" />
         </div>
-        <h3 className="mt-4 text-center text-2xl text-slate-900">Cần đăng nhập</h3>
+        <h3 className="mt-4 text-center text-2xl text-slate-900">ログインが必要です</h3>
         <p className="mt-2 text-center text-sm leading-6 text-slate-500">{promptMessage}</p>
         <div className="mt-5 flex gap-3">
           <button onClick={() => setView("home")} className="flex-1 rounded-2xl bg-emerald-600 px-4 py-3 text-white">
-            Đăng nhập
+            ログイン
           </button>
           <button onClick={closePrompt} className="flex-1 rounded-2xl bg-slate-100 px-4 py-3 text-slate-600 ring-1 ring-slate-200">
-            Hủy
+            キャンセル
           </button>
         </div>
       </div>
@@ -316,9 +316,9 @@ export function WorkspaceScreens({
         <section className="rounded-4xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h2 className="mt-1 text-2xl text-emerald-600">Trang chủ</h2>
+              <h2 className="mt-1 text-2xl text-emerald-600">ホーム</h2>
             </div>
-            <Badge tone="green">{role === "admin" ? "Quản trị" : role === "guest" ? "Khách" : "Người dùng"}</Badge>
+            <Badge tone="green">{role === "admin" ? "管理者" : role === "guest" ? "ゲスト" : "ユーザー"}</Badge>
           </div>
 
           <div className="mt-5 flex flex-col items-center gap-4 rounded-[2.5rem] bg-[#f7fbf7] p-5 text-center shadow-[0_30px_60px_-45px_rgba(16,185,129,0.35)] ring-1 ring-emerald-100">
@@ -331,13 +331,13 @@ export function WorkspaceScreens({
 
             <div className="flex items-center justify-center gap-2">
               <div className="text-sm text-slate-600">
-                {gpsAqi?.location_name || "Chưa xác định vị trí"}
+                {gpsAqi?.location_name || "位置未確定"}
               </div>
               <button
                 onClick={onRefreshGpsAqi}
                 disabled={gpsLoading}
                 className={`inline-flex items-center justify-center rounded-full p-1.5 transition ${gpsLoading ? "animate-spin" : "hover:bg-emerald-100"}`}
-                title="Tải lại AQI"
+                title="AQI を再取得"
               >
                 <svg className="h-4 w-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -347,19 +347,19 @@ export function WorkspaceScreens({
 
             <div className="grid w-full grid-cols-3 gap-2">
               <div className="rounded-[1.1rem] bg-emerald-50 px-2 py-2.5 text-center ring-1 ring-emerald-200">
-                <div className="text-[10px] uppercase tracking-[0.14em] text-emerald-600">Nhiệt độ</div>
+                <div className="text-[10px] uppercase tracking-[0.14em] text-emerald-600">気温</div>
                 <div className="mt-1 text-lg font-semibold text-emerald-700">
                   {gpsAqi?.temperature ?? "-"}°
                 </div>
               </div>
               <div className="rounded-[1.1rem] bg-cyan-50 px-2 py-2.5 text-center ring-1 ring-cyan-200">
-                <div className="text-[10px] uppercase tracking-[0.14em] text-cyan-600">Độ ẩm</div>
+                <div className="text-[10px] uppercase tracking-[0.14em] text-cyan-600">湿度</div>
                 <div className="mt-1 text-lg font-semibold text-cyan-700">
                   {gpsAqi?.humidity ?? "-"}%
                 </div>
               </div>
               <div className="rounded-[1.1rem] bg-blue-50 px-2 py-2.5 text-center ring-1 ring-blue-200">
-                <div className="text-[10px] uppercase tracking-[0.14em] text-blue-600">Gió</div>
+                <div className="text-[10px] uppercase tracking-[0.14em] text-blue-600">風</div>
                 <div className="mt-1 text-lg font-semibold text-blue-700">
                   {gpsAqi?.wind_speed ?? "-"} m/s
                 </div>
@@ -376,7 +376,7 @@ export function WorkspaceScreens({
 
         <section className="grid gap-3">
           <div className="rounded-[1.8rem] bg-emerald-50 p-4 ring-1 ring-emerald-200">
-            <div className="text-sm text-emerald-700">Lời khuyên sức khỏe</div>
+            <div className="text-sm text-emerald-700">健康アドバイス</div>
             <div className="mt-1 text-lg text-slate-900">{computedAdvice.title}</div>
             <p className="mt-2 text-sm leading-6 text-slate-600">{computedAdvice.body}</p>
           </div>
@@ -384,10 +384,10 @@ export function WorkspaceScreens({
           <div className="rounded-[1.8rem] bg-white p-4 ring-1 ring-slate-200">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <div className="text-sm text-slate-500">Thông báo gần đây</div>
-                <div className="text-lg text-slate-900">Cập nhật mới</div>
+                <div className="text-sm text-slate-500">最近の通知</div>
+                <div className="text-lg text-slate-900">新しい更新</div>
               </div>
-              <button onClick={() => setView("alert")} className="text-sm text-emerald-700">Xem tất cả</button>
+              <button onClick={() => setView("alert")} className="text-sm text-emerald-700">すべて表示</button>
             </div>
             <div className="mt-4 space-y-3">
               {(dashboard?.recentAdviceEvents ?? []).slice(0, 2).map((item) => (
@@ -408,20 +408,20 @@ export function WorkspaceScreens({
         <section className="rounded-[2rem] bg-white p-4 shadow-sm ring-1 ring-slate-200/70 sm:p-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <h2 className="mt-1 text-xl text-slate-900">Tìm địa điểm</h2>
+              <h2 className="mt-1 text-xl text-slate-900">スポットを探す</h2>
             </div>
-            <Badge tone="green">{filteredSpots.length} kết quả</Badge>
+            <Badge tone="green">{filteredSpots.length} 件の結果</Badge>
           </div>
 
           <div className="mt-4 space-y-3 rounded-[1.5rem] bg-slate-50/80 p-3 ring-1 ring-slate-200 sm:p-4">
             <div>
-              <label className="text-xs uppercase tracking-[0.2em] text-slate-500">Từ khóa</label>
+              <label className="text-xs uppercase tracking-[0.2em] text-slate-500">キーワード</label>
               <div className="mt-2 flex items-center gap-3 rounded-[1.2rem] bg-white px-3 py-3 ring-1 ring-slate-200">
                 <Search className="h-4 w-4 text-slate-400" />
                 <input
                   value={spotQuery}
                   onChange={(event) => setSpotQuery(event.target.value)}
-                  placeholder="Tìm kiếm công viên, gym, khu tập ngoài trời..."
+                  placeholder="公園、ジム、屋外運動エリアを検索..."
                   className="w-full bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400"
                 />
               </div>
@@ -429,13 +429,13 @@ export function WorkspaceScreens({
 
             <div className="space-y-3">
               <div className="relative">
-                <div className="text-xs uppercase tracking-[0.2em] text-slate-500">Bộ lọc</div>
+                <div className="text-xs uppercase tracking-[0.2em] text-slate-500">フィルター</div>
                 <button
                   onClick={() => setShowSearchFilters((value) => !value)}
                   className="mt-2 flex w-full items-center justify-between rounded-[1.2rem] bg-white px-3 py-3 text-left text-sm text-slate-700 ring-1 ring-slate-200"
                 >
-                  <span>{searchFilterItems.find((item) => item.id === spotCategory)?.label ?? "Tất cả"}</span>
-                  <span className="text-xs text-slate-400">{showSearchFilters ? "Ẩn" : "Lọc"}</span>
+                  <span>{searchFilterItems.find((item) => item.id === spotCategory)?.label ?? "すべて"}</span>
+                  <span className="text-xs text-slate-400">{showSearchFilters ? "非表示" : "絞り込み"}</span>
                 </button>
 
                 {showSearchFilters ? (
@@ -452,7 +452,7 @@ export function WorkspaceScreens({
                         }`}
                       >
                         <span>{item.label}</span>
-                        <span className="text-xs text-slate-400">{item.count} kết quả</span>
+                        <span className="text-xs text-slate-400">{item.count} 件の結果</span>
                       </button>
                     ))}
 
@@ -463,7 +463,7 @@ export function WorkspaceScreens({
                           recentOnly ? "bg-emerald-100 text-emerald-700 ring-emerald-300" : "bg-white text-slate-600 ring-slate-200"
                         }`}
                       >
-                        {recentOnly ? "Gần đây" : "Tất cả thời điểm"}
+                        {recentOnly ? "最近" : "すべての期間"}
                       </button>
                     </div>
                   </div>
@@ -472,7 +472,7 @@ export function WorkspaceScreens({
 
               <div className="flex justify-start">
                 <div className="rounded-full bg-white px-3 py-1.5 text-xs text-slate-500 ring-1 ring-slate-200">
-                  {recentOnly ? "Đang lọc gần đây" : "Hiện tất cả"}
+                  {recentOnly ? "最近の条件で絞り込み中" : "すべて表示"}
                 </div>
               </div>
             </div>
@@ -482,8 +482,8 @@ export function WorkspaceScreens({
         <section className="space-y-3">
           <div className="flex items-center justify-between gap-3 px-1">
             <div>
-              <div className="text-xs uppercase tracking-[0.18em] text-slate-500">Kết quả</div>
-              <div className="text-base text-slate-900">Địa điểm phù hợp</div>
+              <div className="text-xs uppercase tracking-[0.18em] text-slate-500">結果</div>
+              <div className="text-base text-slate-900">該当スポット</div>
             </div>
             <div className="text-[11px] text-slate-500">Mobile-first</div>
           </div>
@@ -505,13 +505,13 @@ export function WorkspaceScreens({
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <div className="line-clamp-1 text-base text-slate-900">{spot.name}</div>
-                      <div className="mt-0.5 line-clamp-2 text-xs leading-5 text-slate-500">{spot.address ?? spot.district ?? "Hà Nội"}</div>
+                      <div className="mt-0.5 line-clamp-2 text-xs leading-5 text-slate-500">{spot.address ?? spot.district ?? "ハノイ"}</div>
                     </div>
                     <div className="flex shrink-0 flex-col items-end gap-1">
                       <span className={`inline-flex items-center rounded-full px-2 py-1 text-[10px] ring-1 ${index % 2 === 0 ? "bg-emerald-50 text-emerald-700 ring-emerald-200" : "bg-sky-50 text-sky-700 ring-sky-200"}`}>
                         AQI {40 + index * 7}
                       </span>
-                      {Number(spot.rating ?? 0) >= 4.5 ? <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-1 text-[10px] text-emerald-700 ring-1 ring-emerald-200">Yêu thích</span> : null}
+                      {Number(spot.rating ?? 0) >= 4.5 ? <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-1 text-[10px] text-emerald-700 ring-1 ring-emerald-200">お気に入り</span> : null}
                     </div>
                   </div>
 
@@ -523,24 +523,24 @@ export function WorkspaceScreens({
 
                   <div className="mt-3 flex items-center justify-between gap-2">
                     <div className="flex min-w-0 flex-wrap gap-1.5 text-[11px] text-slate-500">
-                      <span className="rounded-full bg-slate-100 px-2.5 py-1 ring-1 ring-slate-200">{spot.city ?? "Hà Nội"}</span>
-                      <span className="rounded-full bg-slate-100 px-2.5 py-1 ring-1 ring-slate-200">{spot.district ?? "Khu trung tâm"}</span>
+                      <span className="rounded-full bg-slate-100 px-2.5 py-1 ring-1 ring-slate-200">{spot.city ?? "ハノイ"}</span>
+                      <span className="rounded-full bg-slate-100 px-2.5 py-1 ring-1 ring-slate-200">{spot.district ?? "中心地区"}</span>
                     </div>
-                    <span className="shrink-0 text-[11px] font-medium text-emerald-700">Chi tiết</span>
+                    <span className="shrink-0 text-[11px] font-medium text-emerald-700">詳細</span>
                   </div>
                 </div>
               </div>
             </button>
           )) : (
             <div className="rounded-[1.4rem] bg-white p-4 text-sm text-slate-500 ring-1 ring-slate-200">
-              Không có địa điểm phù hợp với bộ lọc hiện tại.
+              現在のフィルターに一致するスポットはありません。
             </div>
           )}
 
           <div className="rounded-[1.4rem] bg-emerald-50 p-4 ring-1 ring-emerald-200">
-            <div className="text-xs uppercase tracking-[0.18em] text-emerald-700">Gợi ý theo AQI</div>
+            <div className="text-xs uppercase tracking-[0.18em] text-emerald-700">AQI に基づく提案</div>
             <p className="mt-1 text-xs leading-5 text-slate-600">
-              AQI hiện tại ở mức {selectedAqi}. Nên ưu tiên công viên nhiều cây xanh hoặc phòng tập kín nếu bạn muốn vận động lâu.
+              現在の AQI は {selectedAqi}. 長く運動したい場合は、木の多い公園か屋内ジムを優先してください。
             </p>
           </div>
         </section>
@@ -555,38 +555,38 @@ export function WorkspaceScreens({
           <div className="flex flex-wrap items-center justify-between gap-3">
             <button onClick={() => setView("search")} className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2 text-sm text-slate-600 ring-1 ring-slate-200">
               <ArrowLeft className="h-4 w-4" />
-              Quay lại
+              戻る
             </button>
-            <button onClick={() => guestGuard(() => setView("route"), "Lộ trình xanh cần đăng nhập.")} className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2 text-sm text-white">
+            <button onClick={() => guestGuard(() => setView("route"), "グリーンルートの利用にはログインが必要です。")} className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2 text-sm text-white">
               <Navigation className="h-4 w-4" />
-              Lộ trình
+              ルート
             </button>
           </div>
 
           <div className="mt-5 grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
             <div className="rounded-[1.8rem] bg-linear-to-br from-slate-900 to-slate-700 p-6 text-white">
-              <div className="text-sm text-white/75">Màn hình chi tiết địa điểm và đánh giá</div>
-              <h2 className="mt-2 text-3xl">{activeSpot?.name ?? "Bách Thảo Park"}</h2>
-              <p className="mt-3 max-w-xl text-sm leading-6 text-white/80">Địa điểm được mô tả theo đúng layout tài liệu: hiển thị điểm an toàn, PM2.5, giới thiệu, và nút xem tất cả bình luận.</p>
+              <div className="text-sm text-white/75">スポット詳細とレビュー画面</div>
+              <h2 className="mt-2 text-3xl">{activeSpot?.name ?? "バッハ・トア公園"}</h2>
+              <p className="mt-3 max-w-xl text-sm leading-6 text-white/80">ドキュメントのレイアウトどおりに、セーフティスコア、PM2.5、概要、全コメント表示ボタンを表示します。</p>
 
               <div className="mt-6 grid gap-3 sm:grid-cols-3">
                 <SmallStat label="Safety score" value="84" detail="0-100" dark />
-                <SmallStat label="PM2.5" value="18 µg/m³" detail="Trạng thái tốt" dark />
-                <SmallStat label="Facilities" value="4" detail="Nước · bóng râm" dark />
+                <SmallStat label="PM2.5" value="18 µg/m³" detail="良好な状態" dark />
+                <SmallStat label="設備" value="4" detail="給水 · 日陰" dark />
               </div>
             </div>
 
             <div className="space-y-3 rounded-[1.8rem] bg-slate-50 p-5 ring-1 ring-slate-200">
-              <div className="text-sm text-slate-500">Tiện ích</div>
+              <div className="text-sm text-slate-500">設備</div>
               <div className="flex flex-wrap gap-2">
-                {["Nước", "Bóng râm", "Yoga", "HEPA"].map((item) => (
+                {["給水", "日陰", "Yoga", "HEPA"].map((item) => (
                   <span key={item} className="rounded-full bg-white px-3 py-1 text-xs text-slate-600 ring-1 ring-slate-200">{item}</span>
                 ))}
               </div>
               <div className="rounded-3xl bg-white p-4 text-sm leading-6 text-slate-600 ring-1 ring-slate-200">
-                Giới thiệu ngắn về địa điểm, các điều kiện tập luyện, và lời khuyên theo AQI hiện tại.
+                スポットの概要、運動条件、現在の AQI に基づくアドバイスです。
               </div>
-              <button onClick={() => setView("comments")} className="rounded-2xl bg-emerald-600 px-4 py-3 text-sm text-white">Xem tất cả bình luận</button>
+              <button onClick={() => setView("comments")} className="rounded-2xl bg-emerald-600 px-4 py-3 text-sm text-white">すべてのコメントを表示</button>
             </div>
           </div>
         </section>
@@ -601,23 +601,23 @@ export function WorkspaceScreens({
           <div className="flex items-center justify-between gap-3">
             <button onClick={() => setView("spot-detail")} className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2 text-sm text-slate-600 ring-1 ring-slate-200">
               <ArrowLeft className="h-4 w-4" />
-              Trở về
+              戻る
             </button>
             <select
               value={commentSort}
               onChange={(event) => setCommentSort(event.target.value as "newest" | "highest")}
               className="rounded-full bg-slate-100 px-4 py-2 text-sm text-slate-600 ring-1 ring-slate-200"
             >
-              <option value="newest">Mới nhất</option>
-              <option value="highest">Đánh giá cao nhất</option>
+              <option value="newest">最新</option>
+              <option value="highest">高評価順</option>
             </select>
           </div>
 
           <div className="mt-5 grid gap-5 lg:grid-cols-[0.8fr_1.2fr]">
             <div className="rounded-[1.8rem] bg-slate-50 p-5 ring-1 ring-slate-200">
-              <div className="text-sm text-slate-500">Tổng quan</div>
+              <div className="text-sm text-slate-500">概要</div>
               <div className="mt-2 text-5xl text-slate-900">4.8</div>
-              <div className="mt-1 text-sm text-slate-500">Đánh giá từ cộng đồng</div>
+              <div className="mt-1 text-sm text-slate-500">コミュニティのレビュー</div>
               <div className="mt-4 space-y-2 text-xs text-slate-600">
                 {[5, 4, 3, 2, 1].map((star) => (
                   <div key={star} className="flex items-center gap-2">
@@ -653,15 +653,15 @@ export function WorkspaceScreens({
                   value={commentText}
                   onChange={(event) => setCommentText(event.target.value)}
                   disabled={role === "guest"}
-                  placeholder={role === "guest" ? "Hãy đăng nhập để đăng bài đánh giá" : "Hãy nhập đánh giá của bạn"}
+                  placeholder={role === "guest" ? "レビューを投稿するにはログインしてください" : "レビューを入力してください"}
                   className="min-h-28 w-full rounded-2xl bg-white p-4 text-sm outline-none ring-1 ring-slate-200 disabled:cursor-not-allowed"
                 />
                 <button
-                  onClick={() => (role === "guest" ? requireLogin("Cần đăng nhập để gửi bình luận.") : undefined)}
+                  onClick={() => (role === "guest" ? requireLogin("コメントを送信するにはログインが必要です。") : undefined)}
                   className="mt-3 rounded-2xl bg-emerald-600 px-4 py-3 text-sm text-white disabled:opacity-60"
                   disabled={role === "guest"}
                 >
-                  Gửi bình luận
+                  コメントを送信
                 </button>
               </div>
             </div>
@@ -678,21 +678,21 @@ export function WorkspaceScreens({
           <div className="flex items-center justify-between gap-3">
             <div>
               <div className="text-sm text-slate-500">Guest preview</div>
-              <h2 className="text-2xl text-slate-900">Bản đồ và tìm đường dành cho người dùng đăng nhập</h2>
+              <h2 className="text-2xl text-slate-900">ログインユーザー向けの地図とルート検索</h2>
             </div>
             <button onClick={() => setView("home")} className="rounded-full bg-slate-100 px-4 py-2 text-sm text-slate-600 ring-1 ring-slate-200">
               <ArrowLeft className="mr-2 inline h-4 w-4" />
-              Quay lại
+              戻る
             </button>
           </div>
 
           <div className="mt-5 grid gap-4 lg:grid-cols-3">
             {featuredExercisePlaces.slice(0, 3).map((place) => (
               <article key={place.id} className="rounded-[1.7rem] bg-slate-50 p-4 ring-1 ring-slate-200">
-                <div className="text-sm text-slate-500">Địa điểm tập luyện</div>
+                <div className="text-sm text-slate-500">運動スポット</div>
                 <div className="mt-1 text-lg text-slate-900">{place.name}</div>
                 <div className="mt-2 text-sm text-slate-600">{place.address}</div>
-                <div className="mt-3 text-xs text-slate-500">{place.rating?.toFixed(1) ?? "-"}★ · {place.workday_timing ?? "Mở cửa"}</div>
+                <div className="mt-3 text-xs text-slate-500">{place.rating?.toFixed(1) ?? "-"}★ · {place.workday_timing ?? "営業中"}</div>
               </article>
             ))}
           </div>
@@ -729,12 +729,12 @@ export function WorkspaceScreens({
               <div className="text-sm text-white/80">AQI</div>
               <div className="mt-2 text-6xl font-semibold">{selectedAqi}</div>
               <div className="mt-2 text-lg">{aqiLabel}</div>
-              <div className="mt-3 text-sm leading-6 text-white/85">Cảnh báo sức khỏe hiện tại dựa trên chỉ số AQI và điều kiện thời tiết.</div>
+              <div className="mt-3 text-sm leading-6 text-white/85">現在の健康警告は AQI と天候条件に基づいています。</div>
             </div>
             <div className="rounded-[1.8rem] bg-white p-5 text-slate-900 ring-1 ring-white/20">
-              <div className="text-sm text-slate-500">Phản hồi chuyên gia</div>
-              <div className="mt-2 text-2xl">{advice?.title ?? "Hạn chế vận động cường độ cao"}</div>
-              <p className="mt-3 text-sm leading-6 text-slate-600">{advice?.body ?? "Ưu tiên tuyến đường xanh và cân nhắc không gian trong nhà nếu cảm thấy khó chịu."}</p>
+              <div className="text-sm text-slate-500">専門家の見解</div>
+              <div className="mt-2 text-2xl">{advice?.title ?? "高強度運動は控えてください"}</div>
+              <p className="mt-3 text-sm leading-6 text-slate-600">{advice?.body ?? "グリーンルートを優先し、違和感がある場合は屋内も検討してください。"}</p>
             </div>
           </div>
         </section>
@@ -752,7 +752,7 @@ export function WorkspaceScreens({
               <div className="mt-4 text-4xl text-slate-900">AQI {Math.max(30, 120 - (spot.rating ?? 0) * 15)}</div>
               <div className="mt-2 text-sm text-slate-500">{spot.address}</div>
               <button onClick={() => setView("spot-detail")} className="mt-4 inline-flex items-center gap-2 text-sm text-emerald-700">
-                Chi tiết <ArrowRight className="h-4 w-4" />
+                詳細 <ArrowRight className="h-4 w-4" />
               </button>
             </article>
           ))}
@@ -767,7 +767,7 @@ export function WorkspaceScreens({
         <section className="rounded-[2rem] bg-white p-4 shadow-sm ring-1 ring-slate-200/70 sm:p-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <h2 className="text-xl text-slate-900">Hồ sơ và cài đặt</h2>
+              <h2 className="text-xl text-slate-900">プロフィールと設定</h2>
             </div>
             <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs text-emerald-700 ring-1 ring-emerald-200">Role 1</span>
           </div>
@@ -781,9 +781,9 @@ export function WorkspaceScreens({
                   </div>
                 </div>
                 <div className="min-w-0 text-center sm:text-left">
-                  <div className="text-lg">{profile?.user.full_name ?? user.full_name ?? "Người dùng"}</div>
+                  <div className="text-lg">{profile?.user.full_name ?? user.full_name ?? "ユーザー"}</div>
                   <div className="mt-1 truncate text-xs text-white/80">{profile?.user.email ?? user.email}</div>
-                  <div className="mt-1 text-[11px] uppercase tracking-[0.18em] text-white/70">Thành viên SafeMove</div>
+                  <div className="mt-1 text-[11px] uppercase tracking-[0.18em] text-white/70">SafeMove メンバー</div>
                 </div>
               </div>
 
@@ -804,26 +804,26 @@ export function WorkspaceScreens({
             </div>
 
             <div className="rounded-[1.4rem] bg-emerald-50 p-4 ring-1 ring-emerald-200">
-              <div className="text-xs uppercase tracking-[0.18em] text-emerald-700">Tình trạng sức khỏe</div>
+              <div className="text-xs uppercase tracking-[0.18em] text-emerald-700">健康状態</div>
               <div className="mt-2 flex flex-wrap gap-2">
                 {(profile?.conditions ?? []).length ? (
                   (profile?.conditions ?? []).map((item) => (
                     <Badge key={item.id} tone="green">{item.name}</Badge>
                   ))
                 ) : (
-                  <span className="text-xs text-slate-500">Chưa có dữ liệu tình trạng sức khỏe.</span>
+                  <span className="text-xs text-slate-500">健康データはまだありません。</span>
                 )}
               </div>
             </div>
 
             <div className="space-y-3">
               <div className="rounded-[1.4rem] bg-slate-50 p-4 ring-1 ring-slate-200">
-                <div className="text-xs uppercase tracking-[0.18em] text-slate-500">Thông tin cá nhân</div>
+                <div className="text-xs uppercase tracking-[0.18em] text-slate-500">個人情報</div>
                 <div className="mt-3 grid gap-3">
-                  <ProfileField label="Họ và tên" value={editFullName} onChange={setEditFullName} />
+                  <ProfileField label="氏名" value={editFullName} onChange={setEditFullName} />
                   <div className="grid gap-3 md:grid-cols-2">
                     <ProfileField label="Email" value={profile?.user.email ?? user.email} />
-                    <ProfileField label="Số điện thoại" value={editPhone} onChange={setEditPhone} />
+                    <ProfileField label="電話番号" value={editPhone} onChange={setEditPhone} />
                   </div>
                 </div>
               </div>
@@ -831,7 +831,7 @@ export function WorkspaceScreens({
               <div className="rounded-[1.4rem] bg-slate-50 p-4 ring-1 ring-slate-200">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <div className="text-xs uppercase tracking-[0.18em] text-slate-500">Ngưỡng AQI</div>
+                    <div className="text-xs uppercase tracking-[0.18em] text-slate-500">AQI しきい値</div>
                     <div className="mt-1 text-2xl text-slate-900">{aqiThresholdInput}</div>
                   </div>
                   <Badge tone="green">{computedAdvice.label}</Badge>
@@ -845,15 +845,15 @@ export function WorkspaceScreens({
                   className="mt-4 w-full accent-emerald-600"
                 />
                 <div className="mt-2 text-xs leading-5 text-slate-500">
-                  Khi AQI vượt ngưỡng này, ứng dụng sẽ ưu tiên cảnh báo sớm và gợi ý tuyến ít phơi nhiễm hơn.
+                  このしきい値を超えると、アプリは早めの警告と曝露の少ないルートを優先します。
                 </div>
               </div>
 
               <div className="rounded-[1.4rem] bg-slate-50 p-4 ring-1 ring-slate-200">
-                <div className="text-xs uppercase tracking-[0.18em] text-slate-500">Thông báo</div>
+                <div className="text-xs uppercase tracking-[0.18em] text-slate-500">通知</div>
                 <div className="mt-3 space-y-2">
-                  <ToggleRow label="Thông báo đẩy" checked={pushEnabled} onToggle={() => setPushEnabled((value) => !value)} />
-                  <ToggleRow label="Cập nhật qua email" checked={mailEnabled} onToggle={() => setMailEnabled((value) => !value)} />
+                  <ToggleRow label="プッシュ通知" checked={pushEnabled} onToggle={() => setPushEnabled((value) => !value)} />
+                  <ToggleRow label="メール更新" checked={mailEnabled} onToggle={() => setMailEnabled((value) => !value)} />
                 </div>
               </div>
 
@@ -871,14 +871,14 @@ export function WorkspaceScreens({
                 disabled={profileSaving}
                 className="w-full rounded-[1.2rem] bg-emerald-600 px-5 py-3 text-sm text-white shadow-lg shadow-emerald-600/15 disabled:opacity-60"
               >
-                {profileSaving ? "Đang lưu..." : "Lưu cài đặt"}
+                {profileSaving ? "保存中..." : "設定を保存"}
               </button>
 
               <button
                 onClick={onLogout}
                 className="w-full rounded-[1.2rem] bg-rose-50 px-5 py-3 text-sm text-rose-700 ring-1 ring-rose-200"
               >
-                Đăng xuất
+                ログアウト
               </button>
             </div>
           </div>
@@ -894,19 +894,19 @@ export function WorkspaceScreens({
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <div className="text-sm text-slate-500">System admin dashboard</div>
-              <h2 className="text-2xl text-slate-900">Bảng điều khiển quản trị hệ thống</h2>
+              <h2 className="text-2xl text-slate-900">システム管理ダッシュボード</h2>
             </div>
             <div className="flex gap-2">
-              <button onClick={() => setView("facilities")} className="rounded-full bg-slate-100 px-4 py-2 text-sm text-slate-600 ring-1 ring-slate-200">Quản lý cơ sở</button>
-              <button onClick={() => setView("moderation")} className="rounded-full bg-emerald-600 px-4 py-2 text-sm text-white">Quản lý vi phạm</button>
+              <button onClick={() => setView("facilities")} className="rounded-full bg-slate-100 px-4 py-2 text-sm text-slate-600 ring-1 ring-slate-200">施設管理</button>
+              <button onClick={() => setView("moderation")} className="rounded-full bg-emerald-600 px-4 py-2 text-sm text-white">違反管理</button>
             </div>
           </div>
 
           <div className="mt-6 grid gap-4 md:grid-cols-4">
-            <SmallStat label="AQI trung bình" value={String(dashboard?.nearestAqi?.aqi ?? 42)} detail="Hà Nội" />
-            <SmallStat label="Người dùng hoạt động" value="1,284" detail="+8.2%" />
-            <SmallStat label="Cảnh báo" value={String(notifications.length || 12)} detail="Đang chờ xử lý" />
-            <SmallStat label="Cơ sở" value={String(featuredExercisePlaces.length)} detail="Đang hoạt động" />
+            <SmallStat label="平均 AQI" value={String(dashboard?.nearestAqi?.aqi ?? 42)} detail="ハノイ" />
+            <SmallStat label="アクティブユーザー" value="1,284" detail="+8.2%" />
+            <SmallStat label="警告" value={String(notifications.length || 12)} detail="処理待ち" />
+            <SmallStat label="施設" value={String(featuredExercisePlaces.length)} detail="稼働中" />
           </div>
         </section>
 
@@ -914,7 +914,7 @@ export function WorkspaceScreens({
           <div className="rounded-[1.8rem] bg-white p-5 ring-1 ring-slate-200">
             <div className="flex items-center gap-2 text-slate-900">
               <CircleAlert className="h-5 w-5 text-rose-500" />
-              <h3>Khẩn cấp</h3>
+              <h3>緊急</h3>
             </div>
             <div className="mt-4 space-y-3">
               {violationCards.map((item) => (
@@ -924,7 +924,7 @@ export function WorkspaceScreens({
                       <div className="text-sm text-slate-900">{item.title}</div>
                       <div className="mt-1 text-xs text-slate-500">User ID: {item.userId} · {item.location}</div>
                     </div>
-                    <span className="rounded-full bg-rose-50 px-3 py-1 text-xs text-rose-700 ring-1 ring-rose-200">Vi phạm {item.count} lần</span>
+                    <span className="rounded-full bg-rose-50 px-3 py-1 text-xs text-rose-700 ring-1 ring-rose-200">違反 {item.count} 回</span>
                   </div>
                   <p className="mt-3 text-sm leading-6 text-slate-600">{item.content}</p>
                 </article>
@@ -935,13 +935,13 @@ export function WorkspaceScreens({
           <div className="rounded-[1.8rem] bg-slate-900 p-5 text-white">
             <div className="flex items-center gap-2 text-white/80">
               <Users className="h-5 w-5" />
-              <h3>Thống kê nhanh</h3>
+              <h3>クイック統計</h3>
             </div>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <SmallStat label="Active users" value="1,284" detail="Online now" dark />
-              <SmallStat label="Avg AQI" value="42" detail="Trung bình thành phố" dark />
-              <SmallStat label="Reports" value="12" detail="Cần kiểm duyệt" dark />
-              <SmallStat label="Facilities" value="3" detail="Đã đăng ký" dark />
+              <SmallStat label="平均 AQI" value="42" detail="市内平均" dark />
+              <SmallStat label="レポート" value="12" detail="審査が必要" dark />
+              <SmallStat label="設備" value="3" detail="登録済み" dark />
             </div>
           </div>
         </section>
@@ -956,11 +956,11 @@ export function WorkspaceScreens({
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <div className="text-sm text-slate-500">Facility management</div>
-              <h2 className="text-2xl text-slate-900">Màn hình quản lý thông tin cơ sở</h2>
+              <h2 className="text-2xl text-slate-900">施設情報管理画面</h2>
             </div>
             <button onClick={() => setView("facility-add")} className="rounded-full bg-emerald-600 px-4 py-2 text-sm text-white">
               <Plus className="mr-2 inline h-4 w-4" />
-              Thêm cơ sở mới
+              新しい施設を追加
             </button>
           </div>
 
@@ -992,12 +992,12 @@ export function WorkspaceScreens({
         <section className="rounded-4xl bg-white p-6 shadow-sm ring-1 ring-slate-200/70">
           <button onClick={() => setView("facilities")} className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2 text-sm text-slate-600 ring-1 ring-slate-200">
             <ArrowLeft className="h-4 w-4" />
-            Trở về
+            戻る
           </button>
 
           <div className="mt-5 grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
             <div className="rounded-[1.8rem] bg-slate-50 p-5 ring-1 ring-slate-200">
-              <div className="text-sm text-slate-500">Màn hình thêm cơ sở mới</div>
+              <div className="text-sm text-slate-500">新しい施設追加画面</div>
               <div className="mt-4 flex min-h-72 items-center justify-center rounded-3xl border border-dashed border-slate-300 bg-white text-slate-500">
                 Map placeholder with draggable pin
               </div>
@@ -1005,9 +1005,9 @@ export function WorkspaceScreens({
 
             <div className="space-y-3 rounded-[1.8rem] bg-slate-50 p-5 ring-1 ring-slate-200">
               {[
-                ["Tên cơ sở", "Hoàn Kiếm Gym"],
-                ["Địa chỉ", "Hoàn Kiếm, Hà Nội"],
-                ["Mô tả", "Không gian xanh, có HEPA"],
+                ["施設名", "ホアンキエム・ジム"],
+                ["住所", "ホアンキエム、ハノイ"],
+                ["説明", "緑のある空間、HEPA あり"],
               ].map(([label, value]) => (
                 <ProfileField key={label} label={label} value={value} />
               ))}
@@ -1020,8 +1020,8 @@ export function WorkspaceScreens({
                 </div>
               </div>
               <div className="flex gap-3">
-                <button className="flex-1 rounded-2xl bg-emerald-600 px-4 py-3 text-white">Lưu</button>
-                <button onClick={() => setView("facilities")} className="flex-1 rounded-2xl bg-white px-4 py-3 text-slate-600 ring-1 ring-slate-200">Hủy</button>
+                <button className="flex-1 rounded-2xl bg-emerald-600 px-4 py-3 text-white">保存</button>
+                <button onClick={() => setView("facilities")} className="flex-1 rounded-2xl bg-white px-4 py-3 text-slate-600 ring-1 ring-slate-200">キャンセル</button>
               </div>
             </div>
           </div>
@@ -1037,7 +1037,7 @@ export function WorkspaceScreens({
           <div className="flex items-center justify-between gap-3">
             <div>
               <div className="text-sm text-slate-500">Comment moderation</div>
-              <h2 className="text-2xl text-slate-900">Màn hình quản lý bình luận vi phạm</h2>
+              <h2 className="text-2xl text-slate-900">違反コメント管理画面</h2>
             </div>
             <button onClick={() => setView("dashboard")} className="rounded-full bg-slate-100 px-4 py-2 text-sm text-slate-600 ring-1 ring-slate-200">
               <ArrowLeft className="mr-2 inline h-4 w-4" />
@@ -1046,7 +1046,7 @@ export function WorkspaceScreens({
           </div>
 
           <div className="mt-5 rounded-3xl bg-slate-50 p-4 ring-1 ring-slate-200">
-            <div className="text-xs text-slate-500">Lọc theo địa điểm</div>
+            <div className="text-xs text-slate-500">スポットで絞り込み</div>
             <div className="mt-2 flex flex-wrap gap-2">
               {moderationLocations.map((item) => (
                 <button
@@ -1058,7 +1058,7 @@ export function WorkspaceScreens({
                       : "bg-white text-slate-600 ring-slate-200"
                   }`}
                 >
-                  {item === "all" ? "Tất cả" : item}
+                  {item === "all" ? "すべて" : item}
                 </button>
               ))}
             </div>
@@ -1066,11 +1066,11 @@ export function WorkspaceScreens({
             <div className="mt-4 flex gap-4 text-xs text-slate-600">
               <label className="inline-flex items-center gap-2">
                 <input type="checkbox" checked={showPending} onChange={(event) => setShowPending(event.target.checked)} className="accent-emerald-600" />
-                Chưa xử lý
+                未処理
               </label>
               <label className="inline-flex items-center gap-2">
                 <input type="checkbox" checked={showDeleted} onChange={(event) => setShowDeleted(event.target.checked)} className="accent-emerald-600" />
-                Đã xóa
+                削除済み
               </label>
             </div>
           </div>
@@ -1088,7 +1088,7 @@ export function WorkspaceScreens({
                     <div className="mt-2 text-sm text-slate-600">{item.content}</div>
                   </div>
                   <span className={`rounded-full px-3 py-1 text-xs ring-1 ${status === "pending" ? "bg-rose-50 text-rose-700 ring-rose-200" : "bg-sky-50 text-sky-700 ring-sky-200"}`}>
-                    {status === "pending" ? `Vi phạm ${item.count} lần` : "Đã xóa"}
+                    {status === "pending" ? `違反 ${item.count} 回` : "削除済み"}
                   </span>
                 </div>
                 <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-slate-500">
@@ -1100,13 +1100,13 @@ export function WorkspaceScreens({
                     onClick={() => setModerationStatusById((prev) => ({ ...prev, [item.userId]: "deleted" }))}
                     className="rounded-2xl bg-rose-600 px-4 py-2 text-sm text-white"
                   >
-                    Xóa
+                    削除
                   </button>
                   <button
                     onClick={() => setModerationStatusById((prev) => ({ ...prev, [item.userId]: "pending" }))}
                     className="rounded-2xl bg-emerald-100 px-4 py-2 text-sm text-emerald-700"
                   >
-                    Khôi phục
+                    復元
                   </button>
                 </div>
               </article>
@@ -1125,9 +1125,9 @@ export function WorkspaceScreens({
           <div className="flex items-center justify-between gap-3">
             <div>
               <div className="text-sm text-slate-500">Admin profile</div>
-              <h2 className="text-2xl text-slate-900">Màn hình hồ sơ quản trị viên</h2>
+              <h2 className="text-2xl text-slate-900">管理者プロフィール画面</h2>
             </div>
-            <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs text-emerald-700 ring-1 ring-emerald-200">Xác thực</span>
+            <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs text-emerald-700 ring-1 ring-emerald-200">認証</span>
           </div>
 
           <div className="mt-6 grid gap-5 lg:grid-cols-[0.85fr_1.15fr]">
@@ -1137,26 +1137,26 @@ export function WorkspaceScreens({
                   <Shield className="h-7 w-7" />
                 </div>
                 <div>
-                  <div className="text-lg">Lê Minh Anh</div>
-                  <div className="text-sm text-white/80">Quản trị viên hệ thống</div>
+                  <div className="text-lg">ミン・アン</div>
+                  <div className="text-sm text-white/80">システム管理者</div>
                 </div>
               </div>
               <div className="mt-6 rounded-2xl bg-white/12 p-4 text-sm ring-1 ring-white/15">
-                Trạng thái xác thực: <strong>Đã xác nhận</strong>
+                認証状態: <strong>確認済み</strong>
               </div>
             </div>
 
             <div className="rounded-[1.8rem] bg-slate-50 p-5 ring-1 ring-slate-200">
-              <ProfileField label="Họ tên" value="Lê Minh Anh" />
+              <ProfileField label="氏名" value="ミン・アン" />
               <div className="mt-4 grid gap-4 md:grid-cols-2">
                 <ProfileField label="Email" value="minhanh.le@email.com" />
-                <ProfileField label="Số điện thoại" value="0900 000 000" />
+                <ProfileField label="電話番号" value="0900 000 000" />
               </div>
               <div className="mt-4 rounded-2xl bg-white p-4 ring-1 ring-slate-200">
-                <div className="text-sm text-slate-600">Quyền truy cập</div>
+                <div className="text-sm text-slate-600">アクセス権限</div>
                 <div className="mt-2 flex flex-wrap gap-2">
                   <Badge tone="green">Dashboard</Badge>
-                  <Badge tone="green">Facilities</Badge>
+                  <Badge tone="green">設備</Badge>
                   <Badge tone="green">Moderation</Badge>
                 </div>
               </div>

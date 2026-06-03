@@ -7,11 +7,11 @@ import { Shell, type View } from "./Shell";
 import {
   avatarFrames,
   avatarPresets,
-  defaultAvatarSelection,
-  getAvatarSelectionStyle,
-  type AvatarSelection,
-  loadAvatarSelection,
-  saveAvatarSelection,
+   defaultAvatarSelection,
+   getAvatarSelectionStyle,
+   type AvatarSelection,
+   loadAvatarSelection,
+   saveAvatarSelection,
 } from "@/lib/avatar-presets";
 import "../styles/demo-profile.css";
 import { createLocation, deleteLocation, fetchLocations, updateLocation } from "@/lib/api";
@@ -76,10 +76,10 @@ const emptyForm: LocationFormState = {
 };
 
 const addFacilityAmenities = [
-  { value: "water", label: "Trạm nước" },
-  { value: "shade", label: "Bóng râm" },
-  { value: "toilet", label: "Nhà vệ sinh" },
-  { value: "bench", label: "Ghế ngồi" },
+  { value: "water", label: "給水所" },
+  { value: "shade", label: "日陰" },
+  { value: "toilet", label: "トイレ" },
+  { value: "bench", label: "ベンチ" },
 ];
 
 const hanoiMapBounds = {
@@ -256,10 +256,10 @@ const facilityPickerIcon = L.divIcon({
 // moderation items will be loaded from backend hidden reviews
 
 function getAqiTone(value: number) {
-  if (value <= 50) return { label: "Tốt", badgeClass: "bg-emerald-100 text-emerald-700" };
-  if (value <= 100) return { label: "Trung bình", badgeClass: "bg-amber-100 text-amber-700" };
-  if (value <= 150) return { label: "Kém", badgeClass: "bg-orange-100 text-orange-700" };
-  return { label: "Xấu", badgeClass: "bg-rose-100 text-rose-700" };
+  if (value <= 50) return { label: "良好", badgeClass: "bg-emerald-100 text-emerald-700" };
+  if (value <= 100) return { label: "普通", badgeClass: "bg-amber-100 text-amber-700" };
+  if (value <= 150) return { label: "悪い", badgeClass: "bg-orange-100 text-orange-700" };
+  return { label: "非常に悪い", badgeClass: "bg-rose-100 text-rose-700" };
 }
 
 export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props) {
@@ -311,7 +311,7 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
         locationId: String(r.location_id || ""),
         locationName: r.location_name || r.location_id || "",
         userId: String(r.user_id || ""),
-        author: String(r.author || r.full_name || r.user_id || "Ẩn danh"),
+        author: String(r.author || r.full_name || r.user_id || "匿名"),
         violationCount: 1,
         content: String(r.content || ""),
         timestamp: r.created_at ? new Date(r.created_at).toLocaleString() : "",
@@ -343,14 +343,14 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
 
   const handleRefreshSystemAqi = async () => {
     if (!navigator.geolocation) {
-      setSystemAqiError("Trình duyệt không hỗ trợ định vị GPS.");
+      setSystemAqiError("ブラウザは GPS 位置情報をサポートしていません。");
       return;
     }
 
     try {
       const permission = await navigator.permissions?.query?.({ name: "geolocation" as PermissionName });
       if (permission?.state === "denied") {
-        setSystemAqiError("Trình duyệt đã chặn vị trí GPS. Mở cài đặt trình duyệt để cho phép.");
+        setSystemAqiError("ブラウザが GPS 位置情報をブロックしています。ブラウザ設定で許可してください。");
         return;
       }
     } catch {
@@ -379,7 +379,7 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
       setSystemAqi(data.measurement);
     } catch (error) {
       setSystemAqi(null);
-      setSystemAqiError(error instanceof Error ? error.message : "Không thể tải AQI hệ thống từ IQAir.");
+      setSystemAqiError(error instanceof Error ? error.message : "IQAir からシステム AQI を取得できませんでした。");
     } finally {
       setSystemAqiLoading(false);
     }
@@ -393,7 +393,7 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
       const response = await fetchLocations();
       setLocations(response.locations as LocationRecord[]);
     } catch (error) {
-      setLocationsError(error instanceof Error ? error.message : "Không thể tải danh sách địa điểm.");
+      setLocationsError(error instanceof Error ? error.message : "スポット一覧を読み込めませんでした。");
     } finally {
       setLoadingLocations(false);
     }
@@ -428,12 +428,12 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
     const entries = new Map<string, string>();
     for (const item of moderationItemsList) {
       if (!entries.has(item.locationId)) {
-        entries.set(item.locationId, item.locationName.trim() || "Cơ sở chưa đặt tên");
+        entries.set(item.locationId, item.locationName.trim() || "未設定の施設");
       }
     }
 
     return [
-      { id: "all", label: "Tất cả" },
+      { id: "all", label: "すべて" },
       ...Array.from(entries.entries()).map(([id, label]) => ({ id, label })),
     ];
   }, [moderationItemsList]);
@@ -467,7 +467,7 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
     );
   }, [moderationItemsList]);
 
-  const moderationLocationLabel = moderationLocations.find((location) => location.id === moderationLocation)?.label ?? "Tất cả";
+  const moderationLocationLabel = moderationLocations.find((location) => location.id === moderationLocation)?.label ?? "すべて";
 
   async function handleAdminAvatarSave() {
     setAdminAvatarSelection(pendingAvatarSelection);
@@ -569,7 +569,7 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
 
   async function submitLocation() {
     if (!formState.name.trim()) {
-      setFormError("Vui lòng nhập tên địa điểm.");
+      setFormError("スポット名を入力してください。");
       return;
     }
 
@@ -584,7 +584,7 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
     };
 
     if (Number.isNaN(payload.lat) || Number.isNaN(payload.lng)) {
-      setFormError("Vui lòng nhập tọa độ hợp lệ.");
+      setFormError("有効な座標を入力してください。");
       return;
     }
 
@@ -595,24 +595,24 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
     try {
       if (editingLocationId) {
         await updateLocation(editingLocationId, payload);
-        setActionMessage("Đã cập nhật địa điểm.");
+        setActionMessage("スポットを更新しました。");
       } else {
         await createLocation(payload);
-        setActionMessage("Đã tạo địa điểm mới.");
+        setActionMessage("新しいスポットを作成しました。");
       }
 
       await refreshLocations();
       resetForm();
       setView("facilities");
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : "Không thể lưu địa điểm.");
+      setFormError(error instanceof Error ? error.message : "スポットを保存できませんでした。");
     } finally {
       setSavingLocation(false);
     }
   }
 
   async function handleDelete(locationId: string) {
-    if (!window.confirm("Xóa địa điểm này?")) {
+    if (!window.confirm("このスポットを削除しますか？")) {
       return;
     }
 
@@ -624,9 +624,9 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
       if (editingLocationId === locationId) {
         resetForm();
       }
-      setActionMessage("Đã xóa địa điểm.");
+      setActionMessage("スポットを削除しました。");
     } catch (error) {
-      setActionMessage(error instanceof Error ? error.message : "Không thể xóa địa điểm.");
+      setActionMessage(error instanceof Error ? error.message : "スポットを削除できませんでした。");
     }
   }
 
@@ -665,7 +665,7 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
       .catch((err) => {
         // revert status on error
         setModerationStatusById((cur) => ({ ...cur, [commentId]: status === "deleted" ? "unprocessed" : "deleted" }));
-        window.alert(err instanceof Error ? err.message : "Không thể cập nhật bình luận.");
+        window.alert(err instanceof Error ? err.message : "コメントを更新できませんでした。");
       })
       .finally(() => {
         setModerationUpdatingById((cur) => ({ ...cur, [commentId]: false }));
@@ -693,8 +693,8 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
           <section className="rounded-4xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <div className="text-sm text-slate-500">Chào mừng trở lại, quản trị viên</div>
-                <h2 className="mt-1 text-2xl text-slate-900">Tổng quan hệ thống</h2>
+                <div className="text-sm text-slate-500">おかえりなさい、管理者</div>
+                <h2 className="mt-1 text-2xl text-slate-900">システム概要</h2>
               </div>
               <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs text-emerald-700 ring-1 ring-emerald-200">Admin</span>
             </div>
@@ -704,7 +704,7 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2 text-sm text-slate-500">
                     <CircleAlert className="h-4 w-4 text-emerald-600" />
-                    AQI hệ thống
+                    システム AQI
                   </div>
                   <span className={`rounded-full px-3 py-1 text-xs font-medium ring-1 ${getAqiTone(systemAqi?.aqi ?? overview?.systemAqi ?? 42).badgeClass}`}>
                     {getAqiTone(systemAqi?.aqi ?? overview?.systemAqi ?? 42).label}
@@ -716,8 +716,8 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
                 </div>
                 <div className="mt-5">
                   <div className="mb-2 flex items-center justify-between text-xs text-slate-500">
-                    <span>{systemAqi?.source === "iqair" ? "Nguồn: IQAir" : "Nguồn: hệ thống / IQAir"}</span>
-                    <span>{systemAqi?.location_name ?? "Hà Nội"}</span>
+                    <span>{systemAqi?.source === "iqair" ? "出典: IQAir" : "出典: システム / IQAir"}</span>
+                    <span>{systemAqi?.location_name ?? "ハノイ"}</span>
                   </div>
                   <div className="h-2 overflow-hidden rounded-full bg-slate-100">
                     <div
@@ -732,12 +732,12 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
               <article className="rounded-[1.7rem] bg-emerald-50 p-5 ring-1 ring-emerald-100">
                 <div className="flex items-center gap-2 text-sm text-slate-700">
                   <Users className="h-4 w-4 text-emerald-600" />
-                  Hoạt động hệ thống
+                  システムアクティビティ
                 </div>
                 <div className="mt-4 flex items-end justify-between gap-4">
                   <div>
                     <div className="text-4xl font-semibold text-emerald-700">{demoActiveUsers}</div>
-                    <div className="mt-1 text-xs text-slate-500">Người dùng hoạt động 7 ngày gần đây</div>
+                    <div className="mt-1 text-xs text-slate-500">過去7日間のアクティブユーザー</div>
                   </div>
                   <div className="flex -space-x-2">
                     <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-emerald-50 bg-white text-[10px] text-slate-500">A</div>
@@ -757,13 +757,13 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
                   <CircleAlert className="h-5 w-5" />
                 </div>
                 <div>
-                  <div className="text-sm font-medium text-slate-900">Có nội dung vi phạm cần xử lý</div>
+                  <div className="text-sm font-medium text-slate-900">処理が必要な違反コンテンツがあります</div>
                   <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600">
                   </p>
                 </div>
               </div>
               <button onClick={() => setView("moderation")} className="rounded-[1.25rem] bg-rose-600 px-4 py-3 text-sm text-white shadow-sm shadow-rose-600/15">
-                Kiểm duyệt nội dung vi phạm
+                違反コンテンツを審査
               </button>
             </div>
           </section>
@@ -775,11 +775,11 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
           <section className="rounded-4xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <h2 className="mt-1 text-2xl text-slate-900">Quản lý địa điểm tập thể dục</h2>
+                <h2 className="mt-1 text-2xl text-slate-900">運動スポット管理</h2>
               </div>
               <button onClick={() => { resetForm(); setView("facility-add"); }} className="rounded-full bg-emerald-600 px-4 py-2 text-sm text-white">
                 <Plus className="mr-2 inline h-4 w-4" />
-                Thêm địa điểm
+                スポットを追加
               </button>
             </div>
 
@@ -790,16 +790,16 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
                     <Building2 className="h-6 w-6" />
                   </div>
                   <div>
-                    <div className="text-xs uppercase tracking-[0.16em] text-slate-500">Quản lý địa điểm</div>
+                    <div className="text-xs uppercase tracking-[0.16em] text-slate-500">スポット管理</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
-                    <div className="text-sm text-slate-500">Đang hoạt động: {locations.length}</div>
+                    <div className="text-sm text-slate-500">稼働中: {locations.length}</div>
                   </div>
               </div>
               <div className="space-y-3">
                 {loadingLocations ? (
-                  <div className="rounded-[1.7rem] bg-white p-5 text-sm text-slate-500 ring-1 ring-slate-200">Đang tải địa điểm...</div>
+                  <div className="rounded-[1.7rem] bg-white p-5 text-sm text-slate-500 ring-1 ring-slate-200">スポットを読み込み中...</div>
                 ) : locationsError ? (
                   <div className="rounded-[1.7rem] bg-rose-50 p-5 text-sm text-rose-700 ring-1 ring-rose-200">{locationsError}</div>
                 ) : locations.length ? (
@@ -811,12 +811,12 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
                           <div className="mt-1 text-lg text-slate-900 flex items-center gap-2">
                             <span>{location.name}</span>
                           </div>
-                          <div className="mt-2 text-sm text-slate-600">{location.address ?? "Chưa có địa chỉ"}</div>
+                          <div className="mt-2 text-sm text-slate-600">{location.address ?? "住所未設定"}</div>
                           <div className="mt-2 text-xs text-slate-500">
                             {location.city ?? "-"} · {location.district ?? "-"}
                           </div>
                           <div className="mt-3 text-xs text-slate-500 flex items-center gap-3">
-                            <span className="flex items-center gap-1"><i className="fa-regular fa-clock"></i> Cập nhật: vài phút trước</span>
+                            <span className="flex items-center gap-1"><i className="fa-regular fa-clock"></i> 更新: 数分前</span>
                             <span className="battery-status text-xs"> <i className="fa-solid fa-battery-half"></i> {50 + (location.name.length % 50)}%</span>
                           </div>
                         </div>
@@ -825,14 +825,14 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
                           <div className="flex gap-2">
                             <button onClick={() => startEdit(location)} className="rounded-2xl bg-emerald-50 px-4 py-2 text-sm text-emerald-700 ring-1 ring-emerald-200">
                               <Edit3 className="mr-2 inline h-4 w-4" />
-                              Sửa
+                              編集
                             </button>
                             <button onClick={() => void handleDelete(location.id)} className="rounded-2xl bg-rose-50 px-4 py-2 text-sm text-rose-700 ring-1 ring-rose-200">
                               <Trash2 className="mr-2 inline h-4 w-4" />
-                              Xóa
+                              削除
                             </button>
                           </div>
-                          <button onClick={() => toggleJapanFriendly(location.id)} className="mt-2 text-xs text-slate-500 underline">Bật/Tắt hỗ trợ tiếng Nhật</button>
+                          <button onClick={() => toggleJapanFriendly(location.id)} className="mt-2 text-xs text-slate-500 underline">日本語対応の切り替え</button>
                         </div>
                       </div>
 
@@ -841,7 +841,7 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
                   ))
                 ) : (
                   <div className="rounded-[1.7rem] bg-white p-5 text-sm text-slate-500 ring-1 ring-slate-200">
-                    Chưa có địa điểm nào trong DB.
+                    DB にスポットがありません。
                   </div>
                 )}
               </div>
@@ -855,10 +855,10 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
           <section className="rounded-4xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <div className="text-sm text-slate-500">Thêm địa điểm mới</div>
+                <div className="text-sm text-slate-500">新しいスポットを追加</div>
                 <h2 className="mt-1 text-2xl text-slate-900">Add New Facility</h2>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                  Điền thông tin cơ sở, chọn vị trí trên bản đồ và lưu lại để tạo địa điểm mới.
+                  施設情報を入力し、地図上で位置を選んで保存すると新しいスポットを作成できます。
                 </p>
               </div>
               <button
@@ -869,7 +869,7 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
                 className="inline-flex items-center gap-2 rounded-[1.25rem] bg-white px-4 py-2 text-sm text-slate-700 ring-1 ring-slate-200"
               >
                 <ArrowLeft className="h-4 w-4" />
-                Back về quản lý cơ sở
+                施設管理に戻る
               </button>
             </div>
 
@@ -895,11 +895,11 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
                   </MapContainer>
 
                   <div className="pointer-events-none absolute left-5 top-5 rounded-full bg-white/90 px-4 py-2 text-sm text-slate-700 shadow-sm ring-1 ring-slate-200">
-                    Hà Nội - chọn vị trí trên bản đồ
+                    ハノイ - 地図上で位置を選択
                   </div>
 
                   <div className="pointer-events-none absolute bottom-5 left-5 rounded-2xl bg-slate-900/85 px-4 py-3 text-xs text-white shadow-lg shadow-slate-900/10 backdrop-blur">
-                    <div className="font-medium">Vị trí đã chọn</div>
+                    <div className="font-medium">選択済みの位置</div>
                     <div className="mt-1">
                       Lat {formState.lat || "--"} · Lng {formState.lng || "--"}
                     </div>
@@ -931,23 +931,23 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
                     <Building2 className="h-6 w-6" />
                   </div>
                   <div>
-                    <div className="text-xs uppercase tracking-[0.16em] text-slate-500">{editingLocationId ? "Chỉnh sửa địa điểm" : "Tạo địa điểm mới"}</div>
-                    <div className="mt-1 text-lg text-slate-900">Thông tin cơ sở</div>
+                    <div className="text-xs uppercase tracking-[0.16em] text-slate-500">{editingLocationId ? "スポットを編集" : "新しいスポットを作成"}</div>
+                    <div className="mt-1 text-lg text-slate-900">施設情報</div>
                   </div>
                 </div>
 
                 <div className="mt-5 grid gap-4">
-                  <Field label="Tên địa điểm" value={formState.name} onChange={(value) => setFormState((current) => ({ ...current, name: value }))} />
-                  <Field label="Địa chỉ" value={formState.address} onChange={(value) => setFormState((current) => ({ ...current, address: value }))} />
+                  <Field label="スポット名" value={formState.name} onChange={(value) => setFormState((current) => ({ ...current, name: value }))} />
+                  <Field label="住所" value={formState.address} onChange={(value) => setFormState((current) => ({ ...current, address: value }))} />
 
                   <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <div className="flex items-center gap-2 text-sm font-medium text-slate-900">
                             <span className="inline-flex h-6 items-center rounded-full bg-emerald-50 px-2 text-xs text-emerald-700 ring-1 ring-emerald-200">JP</span>
-                          Hỗ trợ tiếng Nhật
+                          日本語対応
                         </div>
-                        <div className="mt-1 text-xs text-slate-500">Hiển thị như địa điểm gợi ý cho người dùng Nhật</div>
+                        <div className="mt-1 text-xs text-slate-500">日本人ユーザー向けのおすすめスポットとして表示</div>
                       </div>
                       <label className="relative inline-flex cursor-pointer items-center">
                         <input type="checkbox" checked={isJapanFriendly} onChange={(event) => setIsJapanFriendly(event.target.checked)} className="peer sr-only" />
@@ -958,7 +958,7 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
                   </div>
 
                   <div>
-                    <div className="text-sm font-medium text-slate-900">Tiện ích chính</div>
+                    <div className="text-sm font-medium text-slate-900">主要設備</div>
                     <div className="mt-3 flex flex-wrap gap-2">
                       {addFacilityAmenities.map((amenity) => {
                         const active = selectedAmenities.includes(amenity.value);
@@ -983,25 +983,25 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
                         );
                       })}
                       <button type="button" className="rounded-full bg-slate-900 px-4 py-2 text-sm text-white ring-1 ring-slate-900">
-                        + Thêm
+                        + 追加
                       </button>
                     </div>
                   </div>
 
                   <div>
-                    <div className="text-sm font-medium text-slate-900">Mô tả</div>
+                    <div className="text-sm font-medium text-slate-900">説明</div>
                     <textarea
                       value={formState.description}
                       onChange={(event) => setFormState((current) => ({ ...current, description: event.target.value }))}
-                        placeholder="Nhập đặc điểm địa điểm hoặc thời gian sử dụng được khuyến nghị..."
+                        placeholder="スポットの特徴や推奨利用時間を入力してください..."
                       className="mt-3 min-h-32 w-full rounded-2xl bg-white px-4 py-3 text-slate-900 ring-1 ring-slate-200 outline-none placeholder:text-slate-400"
                     />
                   </div>
 
                   <div className="grid gap-3 md:grid-cols-2">
-                    <Field label="Loại địa điểm" value={formState.locationType} onChange={(value) => setFormState((current) => ({ ...current, locationType: value }))} />
-                    <Field label="Thành phố" value={formState.city} onChange={(value) => setFormState((current) => ({ ...current, city: value }))} />
-                    <Field label="Khu / quận" value={formState.district} onChange={(value) => setFormState((current) => ({ ...current, district: value }))} />
+                    <Field label="スポット種類" value={formState.locationType} onChange={(value) => setFormState((current) => ({ ...current, locationType: value }))} />
+                    <Field label="都市" value={formState.city} onChange={(value) => setFormState((current) => ({ ...current, city: value }))} />
+                    <Field label="地区 / 区" value={formState.district} onChange={(value) => setFormState((current) => ({ ...current, district: value }))} />
                     <Field label="Lat" value={formState.lat} onChange={(value) => setFormState((current) => ({ ...current, lat: value }))} />
                     <Field label="Lng" value={formState.lng} onChange={(value) => setFormState((current) => ({ ...current, lng: value }))} />
                   </div>
@@ -1012,7 +1012,7 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
 
                 <div className="mt-5 flex gap-3">
                   <button onClick={() => void submitLocation()} disabled={savingLocation} className="flex-1 rounded-[1.2rem] bg-emerald-600 px-4 py-3 text-sm text-white disabled:opacity-60">
-                    {savingLocation ? "Đang lưu..." : editingLocationId ? "Cập nhật" : "Lưu"}
+                    {savingLocation ? "保存中..." : editingLocationId ? "更新" : "保存"}
                   </button>
                   <button
                     onClick={() => {
@@ -1021,7 +1021,7 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
                     }}
                     className="flex-1 rounded-[1.2rem] bg-white px-4 py-3 text-sm text-slate-700 ring-1 ring-slate-200"
                   >
-                    Hủy
+                    キャンセル
                   </button>
                 </div>
               </main>
@@ -1035,9 +1035,9 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
           <section className="rounded-4xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <h2 className="mt-1 text-2xl text-slate-900">Quản lý bình luận không phù hợp</h2>
+                <h2 className="mt-1 text-2xl text-slate-900">不適切コメント管理</h2>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                  Kiểm tra các bình luận vi phạm
+                  違反コメントを確認します
                 </p>
               </div>
             </div>
@@ -1045,8 +1045,8 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
             <div className="mt-5 rounded-3xl bg-slate-50 p-4 ring-1 ring-slate-200">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <h4 className="text-sm font-medium text-slate-900">Bộ lọc theo cơ sở</h4>
-                  <p className="mt-1 text-xs leading-5 text-slate-500">Chọn cơ sở có bình luận bị blocklist để lọc nhanh.</p>
+                  <h4 className="text-sm font-medium text-slate-900">施設別フィルター</h4>
+                  <p className="mt-1 text-xs leading-5 text-slate-500">ブロックリスト入りのコメントがある施設を選ぶと素早く絞り込めます。</p>
                 </div>
               </div>
               <div className="relative mt-3 max-w-md">
@@ -1056,7 +1056,7 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
                   className="flex w-full items-center justify-between gap-3 rounded-2xl bg-white px-4 py-3 text-left text-sm text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50"
                 >
                   <span className="min-w-0">
-                    <span className="block text-xs uppercase tracking-[0.16em] text-slate-500">Cơ sở</span>
+                    <span className="block text-xs uppercase tracking-[0.16em] text-slate-500">施設</span>
                     <span className="mt-1 block truncate font-medium text-slate-900">{moderationLocationLabel}</span>
                   </span>
                   <ChevronDown className={`h-4 w-4 shrink-0 text-slate-500 transition ${moderationLocationMenuOpen ? "rotate-180" : ""}`} />
@@ -1108,7 +1108,7 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
                     }}
                     className="accent-emerald-600"
                   />
-                  Tất cả bình luận
+                  すべてのコメント
                 </label>
                 <label className="inline-flex items-center gap-2">
                   <input
@@ -1121,7 +1121,7 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
                     }}
                     className="accent-emerald-600 disabled:cursor-not-allowed disabled:opacity-60"
                   />
-                  Chưa xử lý
+                  未処理
                 </label>
                 <label className="inline-flex items-center gap-2">
                   <input
@@ -1134,7 +1134,7 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
                     }}
                     className="accent-emerald-600 disabled:cursor-not-allowed disabled:opacity-60"
                   />
-                  Đã xóa
+                  削除済み
                 </label>
               </div>
 
@@ -1146,7 +1146,7 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
                     onChange={(event) => setShowVietnameseViolations(event.target.checked)}
                     className="accent-emerald-600"
                   />
-                  Tiếng Việt
+                  ベトナム語
                 </label>
                 <label className="inline-flex items-center gap-2">
                   <input
@@ -1155,7 +1155,7 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
                     onChange={(event) => setShowJapaneseViolations(event.target.checked)}
                     className="accent-emerald-600"
                   />
-                  Tiếng Nhật
+                  日本語
                 </label>
               </div>
             </div>
@@ -1186,7 +1186,7 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
                           </div>
 
                           <span className={`rounded-full px-3 py-1 text-xs font-semibold ring-1 ${status === "unprocessed" ? "bg-rose-50 text-rose-700 ring-rose-200" : "bg-slate-100 text-slate-600 ring-slate-200"}`}>
-                            {status === "unprocessed" ? `Vi phạm ${item.violationCount} lần` : "Đã xóa"}
+                            {status === "unprocessed" ? `違反 ${item.violationCount} 回` : "削除済み"}
                           </span>
                         </div>
 
@@ -1197,12 +1197,12 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
                         <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-semibold">
                           {item.blockedLanguages.includes("vi") && (
                             <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-700 ring-1 ring-emerald-200">
-                              Tiếng Việt
+                              ベトナム語
                             </span>
                           )}
                           {item.blockedLanguages.includes("ja") && (
                             <span className="rounded-full bg-amber-50 px-2.5 py-1 text-amber-700 ring-1 ring-amber-200">
-                              Tiếng Nhật
+                              日本語
                             </span>
                           )}
                         </div>
@@ -1214,10 +1214,10 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
 
                         <div className="mt-4 flex gap-3">
                           <button onClick={() => setCommentStatus(item.id, "deleted")} className="flex-1 rounded-[0.9rem] bg-rose-600 px-4 py-3 text-sm font-semibold text-white shadow-sm shadow-rose-600/10">
-                            Xóa
+                            削除
                           </button>
                           <button onClick={() => setCommentStatus(item.id, "unprocessed")} className="flex-1 rounded-[0.9rem] bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700 ring-1 ring-slate-200">
-                            Khôi phục
+                            復元
                           </button>
                         </div>
                       </div>
@@ -1226,7 +1226,7 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
                 })
               ) : (
                 <div className="rounded-[1.2rem] bg-white p-5 text-sm text-slate-500 ring-1 ring-slate-200">
-                  Không có bình luận nào khớp bộ lọc.
+                  フィルターに一致するコメントはありません。
                 </div>
               )}
             </div>
@@ -1239,7 +1239,7 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
           <section className="rounded-4xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <h2 className="mt-1 text-2xl text-slate-900">Hồ sơ quản trị viên</h2>
+                <h2 className="mt-1 text-2xl text-slate-900">管理者プロフィール</h2>
               </div>
             </div>
 
@@ -1250,7 +1250,7 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
                     <div className="flex h-32 w-32 items-center justify-center rounded-full bg-white/10 p-2 ring-1 ring-white/15" style={getAvatarSelectionStyle(adminAvatarSelection)}>
                       <img
                         src={(avatarPresets.find((p) => p.id === adminAvatarSelection.avatarId) ?? avatarPresets[0]).src}
-                        alt="Avatar"
+                        alt="アバター"
                         className="h-full w-full rounded-full object-cover"
                         onError={(event) => {
                           event.currentTarget.src = (avatarPresets.find((p) => p.id === adminAvatarSelection.avatarId) ?? avatarPresets[0]).fallbackSrc;
@@ -1259,7 +1259,7 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
                     </div>
                     <button
                       type="button"
-                      title="Đổi avatar"
+                      title="アバターを変更"
                       onClick={() => setAvatarModalOpen(true)}
                       className="absolute -bottom-1 -right-1 flex h-10 w-10 items-center justify-center rounded-full bg-white text-slate-700 shadow-lg ring-1 ring-slate-200"
                     >
@@ -1270,21 +1270,21 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
 
                   <div className="mt-5 text-center">
                   <div className="text-2xl font-semibold">{adminName}</div>
-                  <div className="mt-1 text-sm text-white/70">Quản trị viên hệ thống</div>
+                  <div className="mt-1 text-sm text-white/70">システム管理者</div>
                 </div>
 
                 <div className="mt-6 rounded-2xl bg-white/10 p-4 text-sm leading-6 ring-1 ring-white/15">
-                  Tài khoản đăng nhập: <strong>admin</strong>
+                  ログインアカウント: <strong>admin</strong>
                   <br />
-                  Mật khẩu: <strong>{adminPassword}</strong>
+                  パスワード: <strong>{adminPassword}</strong>
                 </div>
               </div>
 
               <div className="rounded-[1.8rem] bg-slate-50 p-5 ring-1 ring-slate-200">
-                <h3 className="text-sm font-medium uppercase tracking-[0.16em] text-slate-500">Thông tin cá nhân</h3>
+                <h3 className="text-sm font-medium uppercase tracking-[0.16em] text-slate-500">個人情報</h3>
                 <div className="mt-4 space-y-3 rounded-[1.4rem] bg-white p-4 ring-1 ring-slate-200">
                   <AdminProfileRow
-                    label="Họ và tên"
+                    label="氏名"
                     value={adminName}
                     field="name"
                     editingField={editingAdminField}
@@ -1295,7 +1295,7 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
                     onSave={saveAdminEdit}
                   />
                   <AdminProfileRow
-                    label="Email"
+                    label="ログイン名"
                     value={adminEmail}
                     field="email"
                     editingField={editingAdminField}
@@ -1306,7 +1306,7 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
                     onSave={saveAdminEdit}
                   />
                   <AdminProfileRow
-                    label="Mật khẩu"
+                    label="パスワード"
                     value={adminPassword}
                     field="password"
                     editingField={editingAdminField}
@@ -1322,10 +1322,10 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
                 <div className="mt-4 rounded-2xl bg-emerald-50 p-4 text-sm leading-6 text-emerald-800 ring-1 ring-emerald-200">
                     <div className="flex items-center gap-2 font-medium">
                     <span>✅</span>
-                    Quản trị viên đã được xác minh
+                    管理者は認証済みです
                   </div>
                   <div className="mt-1 text-emerald-700/90">
-                    Danh tính của bạn đã được xác minh hoàn toàn, cho phép truy cập tất cả công cụ quản trị.
+                    あなたの身元は完全に確認されており、すべての管理ツールにアクセスできます。
                   </div>
                 </div>
               </div>
@@ -1336,15 +1336,15 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
                 <div className="avatar-modal-card" role="dialog" aria-modal="true" aria-labelledby="avatar-modal-title" onClick={(event) => event.stopPropagation()}>
                   <div className="avatar-modal-header">
                     <div>
-                      <h3 id="avatar-modal-title">Chọn avatar</h3>
+                      <h3 id="avatar-modal-title">アバターを選択</h3>
                     </div>
-                    <button className="avatar-modal-close" type="button" onClick={() => setAvatarModalOpen(false)} aria-label="Close avatar picker">
+                    <button className="avatar-modal-close" type="button" onClick={() => setAvatarModalOpen(false)} aria-label="アバター選択を閉じる">
                       <X size={16} />
                     </button>
                   </div>
 
                   <div className="avatar-modal-section">
-                    <div className="avatar-section-title">Khung</div>
+                    <div className="avatar-section-title">フレーム</div>
                     <div className="avatar-choice-grid">
                       {avatarFrames.map((frame) => (
                         <button
@@ -1362,7 +1362,7 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
                   </div>
 
                   <div className="avatar-modal-section">
-                    <div className="avatar-section-title">Avatar</div>
+                    <div className="avatar-section-title">アバター</div>
                     <div className="avatar-preset-grid">
                       {avatarPresets.map((preset) => {
                         const isSelected = pendingAvatarSelection.avatarId === preset.id;
@@ -1392,10 +1392,10 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
 
                   <div className="avatar-modal-actions">
                     <button type="button" className="avatar-modal-secondary" onClick={() => setAvatarModalOpen(false)}>
-                      Hủy
+                      キャンセル
                     </button>
                     <button type="button" className="avatar-modal-primary" onClick={() => void handleAdminAvatarSave()}>
-                      Lưu avatar
+                      保存 avatar
                     </button>
                   </div>
                 </div>
@@ -1407,10 +1407,10 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
               onClick={onLogout}
             >
               <span>↗</span>
-              Đăng xuất
+              ログアウト
             </button>
 
-            <div className="mt-4 text-center text-xs text-slate-400">Phiên bản 2.4.0 - SAFEMOVE HANOI 2024</div>
+            <div className="mt-4 text-center text-xs text-slate-400">バージョン 2.4.0 - SAFEMOVE HANOI 2024</div>
           </section>
         </div>
       )}
@@ -1516,7 +1516,7 @@ function AdminProfileRow({
           onClick={() => void onSave(field)}
           disabled={savingField === field}
           className="flex h-9 min-w-9 items-center justify-center rounded-full bg-emerald-600 px-3 text-white ring-1 ring-emerald-600 disabled:opacity-60"
-          aria-label={`Lưu ${label}`}
+          aria-label={`保存 ${label}`}
         >
           {savingField === field ? "…" : "✓"}
         </button>
@@ -1525,7 +1525,7 @@ function AdminProfileRow({
           type="button"
           onClick={() => onEdit(field, value)}
           className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-50 text-slate-500 ring-1 ring-slate-200"
-          aria-label={`Sửa ${label}`}
+          aria-label={`編集 ${label}`}
         >
           <span className="text-sm">✎</span>
         </button>

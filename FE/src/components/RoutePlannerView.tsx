@@ -70,7 +70,7 @@ export function RoutePlannerView({ locations, origin, destination, maxRatio, set
     const loadOriginPosition = async () => {
       if (originPosition || origin) return;
       if (!navigator?.geolocation) {
-        setPlanError("Trình duyệt không hỗ trợ vị trí GPS.");
+        setPlanError("ブラウザは GPS 位置情報をサポートしていません。");
         return;
       }
 
@@ -90,12 +90,12 @@ export function RoutePlannerView({ locations, origin, destination, maxRatio, set
           position = await getPosition({ enableHighAccuracy: false, timeout: 18000, maximumAge: 0 });
         }
         setOriginPosition({
-          label: "Vị trí hiện tại",
+          label: "現在地",
           lat: position.coords.latitude,
           lng: position.coords.longitude,
         });
       } catch (error) {
-        setPlanError("Không thể lấy vị trí GPS. Hãy cho phép quyền vị trí và thử lại.");
+        setPlanError("GPS 位置情報を取得できません。位置情報の許可を有効にして再試行してください。");
       } finally {
         setGeoLoading(false);
       }
@@ -123,7 +123,7 @@ export function RoutePlannerView({ locations, origin, destination, maxRatio, set
         setPlanResult(plan);
       } catch (error) {
         setPlanError(
-          error instanceof Error ? error.message : "Không thể lập kế hoạch dẫn đường."
+          error instanceof Error ? error.message : "ルート計画を作成できませんでした。"
         );
         setPlanResult(null);
       } finally {
@@ -142,7 +142,7 @@ export function RoutePlannerView({ locations, origin, destination, maxRatio, set
     }
 
     if (!navigator?.geolocation) {
-      setTrackingError("Trình duyệt không hỗ trợ định vị thời gian thực.");
+      setTrackingError("ブラウザはリアルタイム位置追跡をサポートしていません。");
       return;
     }
 
@@ -150,14 +150,14 @@ export function RoutePlannerView({ locations, origin, destination, maxRatio, set
     watchId = navigator.geolocation.watchPosition(
       (position) => {
         setCurrentPosition({
-          label: "Vị trí hiện tại",
+          label: "現在地",
           lat: position.coords.latitude,
           lng: position.coords.longitude,
           heading: position.coords.heading ?? null,
         });
       },
       (error) => {
-        setTrackingError("Không thể theo dõi vị trí. Hãy bật quyền GPS và thử lại.");
+        setTrackingError("位置を追跡できません。GPS 権限を有効にして再試行してください。");
         console.error("GPS watchPosition error:", error);
       },
       {
@@ -194,16 +194,16 @@ export function RoutePlannerView({ locations, origin, destination, maxRatio, set
     );
 
     if (deviationMeters > 40 && Date.now() - lastRerouteAt > 15000) {
-      setRerouteMessage(`Bạn đi lệch tuyến ${Math.round(deviationMeters)}m. Cập nhật lộ trình...`);
+      setRerouteMessage(`ルートから約 ${Math.round(deviationMeters)}m 逸れています。経路を更新しています...`);
       setOriginPosition({
-        label: "Vị trí hiện tại",
+        label: "現在地",
         lat: currentPosition.lat,
         lng: currentPosition.lng,
         heading: currentPosition.heading ?? null,
       });
       setLastRerouteAt(Date.now());
     } else if (deviationMeters > 25) {
-      setRerouteMessage(`Bạn đang lệch tuyến khoảng ${Math.round(deviationMeters)}m. Nếu tiếp tục sẽ cập nhật lại.`);
+      setRerouteMessage(`ルートから約 ${Math.round(deviationMeters)}m 逸れています。このまま進むと再計算します。`);
     } else {
       setRerouteMessage(null);
     }
@@ -218,7 +218,7 @@ export function RoutePlannerView({ locations, origin, destination, maxRatio, set
         exposure: selectedRoute.route.exposure,
       }
     : {
-        title: "Đang tải lộ trình",
+        title: "ルートを読み込み中",
         distanceKm: 0,
         durationMinutes: 0,
         averageAqi: 0,
@@ -229,9 +229,9 @@ export function RoutePlannerView({ locations, origin, destination, maxRatio, set
   const currentInstruction = currentStep
     ? `${currentStep.instruction} trong ${Math.round(currentStep.distanceM)} m`
     : selectedRoute
-      ? "Luồng dẫn đường sẵn sàng. Bắt đầu để xem chỉ dẫn tiếp theo."
-      : "Đang chờ lộ trình.";
-  const routeAqiLabel = routeData.averageAqi > 0 ? `${Math.round(routeData.averageAqi)}` : "Đang tải";
+      ? "ナビゲーションの準備ができました。開始すると次の案内を表示します。"
+      : "ルートを待機中です。";
+  const routeAqiLabel = routeData.averageAqi > 0 ? `${Math.round(routeData.averageAqi)}` : "読み込み中";
 
   async function startRealTimeNavigation() {
     if (!planResult || !selectedRoute || !originPosition || !routeDestination) {
@@ -270,7 +270,7 @@ export function RoutePlannerView({ locations, origin, destination, maxRatio, set
       });
     } catch (error) {
       console.error(error);
-      alert("Không thể bắt đầu dẫn đường. Vui lòng thử lại.");
+      alert("ナビゲーションを開始できませんでした。再試行してください。");
     } finally {
       setSubmitting(false);
     }
@@ -280,7 +280,7 @@ export function RoutePlannerView({ locations, origin, destination, maxRatio, set
     if (!originPosition) {
       return;
     }
-    alert(`Định vị về: ${originPosition.label} (${originPosition.lat.toFixed(5)}, ${originPosition.lng.toFixed(5)})`);
+    alert(`位置を中心に移動: ${originPosition.label} (${originPosition.lat.toFixed(5)}, ${originPosition.lng.toFixed(5)})`);
   }
 
   function getDistanceKm(a: RouteCoords, b: { lat: number; lng: number }) {
@@ -337,7 +337,7 @@ export function RoutePlannerView({ locations, origin, destination, maxRatio, set
     ? Math.max(0, getDistanceKm(currentPosition, { lat: routeDestination.lat, lng: routeDestination.lng }))
     : 0;
 
-  const routeStatus = navigationStarted ? "Đang dẫn đường" : "Xem trước lộ trình";
+  const routeStatus = navigationStarted ? "ナビゲーション中" : "ルートのプレビュー";
   function handleBackToPreview() {
     if (!navigationStarted) {
       // In preview mode: call onBack to exit the route view
@@ -400,7 +400,7 @@ export function RoutePlannerView({ locations, origin, destination, maxRatio, set
             </button>
             <div>
               <div className="text-xs uppercase tracking-[0.22em] text-slate-400">SafeMove Navigation</div>
-              <h1 className="text-xl font-semibold text-white">Chế độ dẫn đường</h1>
+              <h1 className="text-xl font-semibold text-white">ナビゲーションモード</h1>
             </div>
           </div>
 
@@ -410,7 +410,7 @@ export function RoutePlannerView({ locations, origin, destination, maxRatio, set
             className="inline-flex items-center gap-2 rounded-3xl bg-white/90 px-4 py-2 text-sm font-semibold text-slate-900 shadow-sm shadow-slate-950/10"
           >
             <LocateFixed className="h-4 w-4" />
-            Vị trí
+            現在地
           </button>
         </div>
       </div>
@@ -424,12 +424,12 @@ export function RoutePlannerView({ locations, origin, destination, maxRatio, set
               </div>
               <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                 <div className="rounded-2xl bg-slate-50 px-3 py-2 text-center text-[11px] uppercase tracking-[0.18em] text-slate-500">
-                  <div>Khoảng cách</div>
+                  <div>距離</div>
                   <div className="mt-1 text-sm font-semibold text-slate-950">{routeData.distanceKm.toFixed(1)} km</div>
                 </div>
                 <div className="rounded-2xl bg-slate-50 px-3 py-2 text-center text-[11px] uppercase tracking-[0.18em] text-slate-500">
-                  <div>Thời gian</div>
-                  <div className="mt-1 text-sm font-semibold text-slate-950">{routeData.durationMinutes} phút</div>
+                  <div>時間</div>
+                  <div className="mt-1 text-sm font-semibold text-slate-950">{routeData.durationMinutes} 分</div>
                 </div>
                 <div className="rounded-2xl bg-slate-50 px-3 py-2 text-center text-[11px] uppercase tracking-[0.18em] text-slate-500">
                   <div>AQI</div>
@@ -452,27 +452,27 @@ export function RoutePlannerView({ locations, origin, destination, maxRatio, set
 
               <div className="mt-4 grid gap-2.5 sm:grid-cols-3">
                 <div className="rounded-3xl bg-slate-50 p-3.5">
-                  <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Khoảng cách</div>
+                  <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">距離</div>
                   <div className="mt-1.5 text-xl font-semibold text-slate-950">{routeData.distanceKm.toFixed(1)} km</div>
                 </div>
                 <div className="rounded-3xl bg-slate-50 p-3.5">
-                  <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Thời gian</div>
-                  <div className="mt-1.5 text-xl font-semibold text-slate-950">{routeData.durationMinutes} phút</div>
+                  <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">時間</div>
+                  <div className="mt-1.5 text-xl font-semibold text-slate-950">{routeData.durationMinutes} 分</div>
                 </div>
                 <div className="rounded-3xl bg-slate-50 p-3.5">
-                  <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Đích đến</div>
+                  <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">目的地</div>
                   <div className="mt-1.5 text-xl font-semibold text-slate-950">{routeDestination?.name}</div>
                 </div>
               </div>
 
               <div className="mt-4 grid gap-2.5 sm:grid-cols-2">
                 <div className="rounded-3xl bg-slate-50 p-3.5">
-                  <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">AQI tuyến đường</div>
+                  <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">ルート AQI</div>
                   <div className="mt-1.5 text-base font-semibold text-slate-950">{routeAqiLabel}</div>
                 </div>
                 <div className="rounded-3xl bg-slate-50 p-3.5">
-                  <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Thông báo</div>
-                  <div className="mt-1.5 text-base font-semibold text-slate-950">{rerouteMessage ?? "Đang đi theo tuyến"}</div>
+                  <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">通知</div>
+                  <div className="mt-1.5 text-base font-semibold text-slate-950">{rerouteMessage ?? "ルートに沿って進行中"}</div>
                 </div>
               </div>
 
@@ -484,7 +484,7 @@ export function RoutePlannerView({ locations, origin, destination, maxRatio, set
                   className="inline-flex min-w-[160px] items-center justify-center gap-2 rounded-3xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-70"
                 >
                   <Navigation className="h-4 w-4" />
-                  {submitting || loading ? "Đang bắt đầu..." : "Bắt đầu dẫn đường"}
+                  {submitting || loading ? "開始中..." : "ナビゲーション開始"}
                 </button>
               </div>
             </div>

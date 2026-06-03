@@ -76,7 +76,7 @@ export function ReviewsListView({
                 <Star key={i + 5} size={18} color="#ddd" />
               ))}
           </div>
-          <div className="total-reviews-count">Tổng {reviews.length} đánh giá</div>
+          <div className="total-reviews-count">合計 {reviews.length} 件のレビュー</div>
         </div>
 
         {/* Distribution Graph */}
@@ -97,15 +97,15 @@ export function ReviewsListView({
 
         {/* List Header with Sort */}
         <div className="list-header-row">
-          <span className="list-title">Đánh giá</span>
+          <span className="list-title">レビュー</span>
           <select
             className="sort-dropdown-btn"
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as "recent" | "rating-high" | "rating-low")}
           >
-            <option value="recent">📅 Mới nhất</option>
-            <option value="rating-high">⭐ Cao nhất</option>
-            <option value="rating-low">⭐ Thấp nhất</option>
+            <option value="recent">📅 新しい順</option>
+            <option value="rating-high">⭐ 高評価順</option>
+            <option value="rating-low">⭐ 低評価順</option>
           </select>
         </div>
 
@@ -114,7 +114,7 @@ export function ReviewsListView({
           {reviewsError && <div className="no-reviews-message"><p>{reviewsError}</p></div>}
           {reviewsLoading ? (
             <div className="no-reviews-message">
-              <p>Đang tải nhận xét...</p>
+              <p>レビューを読み込み中...</p>
             </div>
           ) : sortedReviews.length > 0 ? (
             sortedReviews.map((review) => (
@@ -124,7 +124,7 @@ export function ReviewsListView({
                     <span className="review-avatar review-avatar-custom" style={getAvatarSelectionStyle(currentUserAvatarSelection)}>
                       <img
                         src={getAvatarPreset(currentUserAvatarSelection.avatarId).src}
-                        alt="Avatar của bạn"
+                        alt="あなたのアバター"
                         onError={(event) => {
                           event.currentTarget.src = getAvatarPreset(currentUserAvatarSelection.avatarId).fallbackSrc;
                         }}
@@ -153,15 +153,15 @@ export function ReviewsListView({
                 <p className="review-body">"{review.content}"</p>
                 {review.helpful_count > 0 && (
                   <div className="review-footer">
-                    <button className="helpful-btn">👍 Hữu ích ({review.helpful_count})</button>
+                  <button className="helpful-btn">👍 役に立った ({review.helpful_count})</button>
                   </div>
                 )}
               </div>
             ))
           ) : (
             <div className="no-reviews-message">
-              <p>Chưa có đánh giá</p>
-              <small>Hãy là người đầu tiên chia sẻ trải nghiệm!</small>
+              <p>レビューはまだありません</p>
+              <small>最初に体験を共有してください。</small>
             </div>
           )}
         </div>
@@ -173,18 +173,18 @@ export function ReviewsListView({
 function formatRelativeTime(value: string) {
   const timestamp = new Date(value).getTime();
   if (Number.isNaN(timestamp)) {
-    return "Vừa xong";
+    return "たった今";
   }
 
   const diffSeconds = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
-  if (diffSeconds < 60) return "Vừa xong";
+  if (diffSeconds < 60) return "たった今";
 
   const diffMinutes = Math.floor(diffSeconds / 60);
-  if (diffMinutes < 60) return `${diffMinutes} phút trước`;
+  if (diffMinutes < 60) return `${diffMinutes} 分前`;
 
   const diffHours = Math.floor(diffMinutes / 60);
-  if (diffHours < 24) return `${diffHours} giờ trước`;
+  if (diffHours < 24) return `${diffHours} 時間前`;
 
   const diffDays = Math.floor(diffHours / 24);
-  return `${diffDays} ngày trước`;
+  return `${diffDays} 日前`;
 }
