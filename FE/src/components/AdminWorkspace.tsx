@@ -22,6 +22,7 @@ import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from "react-lea
 type Props = {
   userId: string;
   userName: string;
+  userEmail: string;
   onLogout: () => void;
 };
 
@@ -126,6 +127,55 @@ function extractBlockedCommentLanguages(review: any) {
   return getBlockedCommentLanguages(String(review?.content ?? ""));
 }
 
+type AdminProfileDraft = {
+  name: string;
+  email: string;
+  password: string;
+};
+
+function getAdminProfileStorageKey(userId: string) {
+  return `safemove-admin-profile:${userId}`;
+}
+
+function loadAdminProfileDraft(userId: string, fallback: AdminProfileDraft): AdminProfileDraft {
+  if (typeof window === "undefined") {
+    return fallback;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(getAdminProfileStorageKey(userId));
+    if (!raw) {
+      return fallback;
+    }
+
+    const parsed = JSON.parse(raw) as Partial<AdminProfileDraft>;
+    return {
+      name: typeof parsed.name === "string" && parsed.name.trim() ? parsed.name : fallback.name,
+      email: typeof parsed.email === "string" && parsed.email.trim() ? parsed.email : fallback.email,
+      password:
+        typeof parsed.password === "string" && parsed.password.trim()
+          ? parsed.password
+          : typeof (parsed as { phone?: string }).phone === "string" && (parsed as { phone?: string }).phone.trim()
+            ? (parsed as { phone?: string }).phone
+            : fallback.password,
+    };
+  } catch {
+    return fallback;
+  }
+}
+
+function saveAdminProfileDraft(userId: string, draft: AdminProfileDraft) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(getAdminProfileStorageKey(userId), JSON.stringify(draft));
+  } catch {
+    // Ignore storage failures and keep the in-memory state.
+  }
+}
+
 function HanoiFacilityPickerMap({
   mapPoint,
   setMapPoint,
@@ -212,7 +262,7 @@ function getAqiTone(value: number) {
   return { label: "Xấu", badgeClass: "bg-rose-100 text-rose-700" };
 }
 
-export function AdminWorkspace({ userId, userName, onLogout }: Props) {
+export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props) {
   const [view, setView] = useState<View>("dashboard");
   const [locations, setLocations] = useState<LocationRecord[]>([]);
   const [overview, setOverview] = useState<AdminOverview | null>(null);
@@ -236,6 +286,12 @@ export function AdminWorkspace({ userId, userName, onLogout }: Props) {
   const [avatarModalOpen, setAvatarModalOpen] = useState(false);
   const [pendingAvatarSelection, setPendingAvatarSelection] = useState<AvatarSelection>(adminAvatarSelection);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [adminName, setAdminName] = useState(() => loadAdminProfileDraft(userId, { name: userName, email: userEmail, password: "adminsmhn" }).name);
+  const [adminEmail, setAdminEmail] = useState(() => loadAdminProfileDraft(userId, { name: userName, email: userEmail, password: "adminsmhn" }).email);
+  const [adminPassword, setAdminPassword] = useState(() => loadAdminProfileDraft(userId, { name: userName, email: userEmail, password: "adminsmhn" }).password);
+  const [editingAdminField, setEditingAdminField] = useState<string | null>(null);
+  const [adminEditValue, setAdminEditValue] = useState("");
+  const [savingAdminField, setSavingAdminField] = useState<string | null>(null);
   const [moderationLocation, setModerationLocation] = useState("all");
   const [moderationLocationMenuOpen, setModerationLocationMenuOpen] = useState(false);
   const [showAllModerationComments, setShowAllModerationComments] = useState(true);
@@ -354,6 +410,13 @@ export function AdminWorkspace({ userId, userName, onLogout }: Props) {
   }, [adminAvatarSelection]);
 
   useEffect(() => {
+    const draft = loadAdminProfileDraft(userId, { name: userName, email: userEmail, password: "adminsmhn" });
+    setAdminName(draft.name);
+    setAdminEmail(draft.email);
+    setAdminPassword(draft.password);
+  }, [userId, userName, userEmail]);
+
+  useEffect(() => {
     if (view !== "dashboard") {
       return;
     }
@@ -410,6 +473,43 @@ export function AdminWorkspace({ userId, userName, onLogout }: Props) {
     setAdminAvatarSelection(pendingAvatarSelection);
     saveAvatarSelection(`admin_${userId}`, pendingAvatarSelection);
     setAvatarModalOpen(false);
+  }
+
+  function startAdminEdit(field: string, value: string) {
+    setEditingAdminField(field);
+    setAdminEditValue(value);
+  }
+
+  async function saveAdminEdit(field: string) {
+    const nextValue = adminEditValue.trim();
+
+    if (!nextValue) {
+      setEditingAdminField(null);
+      return;
+    }
+
+    setSavingAdminField(field);
+    setEditingAdminField(null);
+
+    try {
+      const nextDraft: AdminProfileDraft = {
+        name: field === "name" ? nextValue : adminName,
+        email: field === "email" ? nextValue : adminEmail,
+        password: field === "password" ? nextValue : adminPassword,
+      };
+
+      if (field === "name") setAdminName(nextValue);
+      if (field === "email") setAdminEmail(nextValue);
+      if (field === "password") setAdminPassword(nextValue);
+
+      saveAdminProfileDraft(userId, nextDraft);
+    } catch (error) {
+      console.error("Failed to update admin profile:", error);
+      setEditingAdminField(field);
+      setAdminEditValue(nextValue);
+    } finally {
+      setSavingAdminField((current) => (current === field ? null : current));
+    }
   }
 
   function getModerationLocationImage(locationId: string) {
@@ -1169,23 +1269,54 @@ export function AdminWorkspace({ userId, userName, onLogout }: Props) {
                 </div>
 
                   <div className="mt-5 text-center">
-                  <div className="text-2xl font-semibold">{userName}</div>
+                  <div className="text-2xl font-semibold">{adminName}</div>
                   <div className="mt-1 text-sm text-white/70">Quản trị viên hệ thống</div>
                 </div>
 
                 <div className="mt-6 rounded-2xl bg-white/10 p-4 text-sm leading-6 ring-1 ring-white/15">
                   Tài khoản đăng nhập: <strong>admin</strong>
                   <br />
-                  Mật khẩu: <strong>adminsmhn</strong>
+                  Mật khẩu: <strong>{adminPassword}</strong>
                 </div>
               </div>
 
               <div className="rounded-[1.8rem] bg-slate-50 p-5 ring-1 ring-slate-200">
                 <h3 className="text-sm font-medium uppercase tracking-[0.16em] text-slate-500">Thông tin cá nhân</h3>
                 <div className="mt-4 space-y-3 rounded-[1.4rem] bg-white p-4 ring-1 ring-slate-200">
-                  <ProfileRow label="Họ và tên" value={userName} />
-                  <ProfileRow label="Email" value="admin@safemove.hanoi" />
-                  <ProfileRow label="Số điện thoại" value="0987 *** 321" noBorder />
+                  <AdminProfileRow
+                    label="Họ và tên"
+                    value={adminName}
+                    field="name"
+                    editingField={editingAdminField}
+                    editValue={adminEditValue}
+                    savingField={savingAdminField}
+                    onEdit={(field, value) => startAdminEdit(field, value)}
+                    onChange={setAdminEditValue}
+                    onSave={saveAdminEdit}
+                  />
+                  <AdminProfileRow
+                    label="Email"
+                    value={adminEmail}
+                    field="email"
+                    editingField={editingAdminField}
+                    editValue={adminEditValue}
+                    savingField={savingAdminField}
+                    onEdit={(field, value) => startAdminEdit(field, value)}
+                    onChange={setAdminEditValue}
+                    onSave={saveAdminEdit}
+                  />
+                  <AdminProfileRow
+                    label="Mật khẩu"
+                    value={adminPassword}
+                    field="password"
+                    editingField={editingAdminField}
+                    editValue={adminEditValue}
+                    savingField={savingAdminField}
+                    noBorder
+                    onEdit={(field, value) => startAdminEdit(field, value)}
+                    onChange={setAdminEditValue}
+                    onSave={saveAdminEdit}
+                  />
                 </div>
 
                 <div className="mt-4 rounded-2xl bg-emerald-50 p-4 text-sm leading-6 text-emerald-800 ring-1 ring-emerald-200">
@@ -1334,6 +1465,71 @@ function ProfileRow({
       <button type="button" className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-50 text-slate-500 ring-1 ring-slate-200">
         <span className="text-sm">✎</span>
       </button>
+    </div>
+  );
+}
+
+function AdminProfileRow({
+  label,
+  value,
+  field,
+  editingField,
+  editValue,
+  savingField,
+  noBorder = false,
+  onEdit,
+  onChange,
+  onSave,
+}: {
+  label: string;
+  value: string;
+  field: string;
+  editingField: string | null;
+  editValue: string;
+  savingField: string | null;
+  noBorder?: boolean;
+  onEdit: (field: string, value: string) => void;
+  onChange: (value: string) => void;
+  onSave: (field: string) => Promise<void>;
+}) {
+  const isEditing = editingField === field;
+
+  return (
+    <div className={`flex items-center justify-between gap-3 py-3 ${noBorder ? "" : "border-b border-slate-100"}`}>
+      <div className="min-w-0 flex-1">
+        <div className="text-xs uppercase tracking-[0.16em] text-slate-500">{label}</div>
+        {isEditing ? (
+          <input
+            value={editValue}
+            onChange={(event) => onChange(event.target.value)}
+            className="mt-1 w-full rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none ring-1 ring-slate-200"
+            autoFocus
+          />
+        ) : (
+          <div className="mt-1 text-sm text-slate-900">{value || "-"}</div>
+        )}
+      </div>
+
+      {isEditing ? (
+        <button
+          type="button"
+          onClick={() => void onSave(field)}
+          disabled={savingField === field}
+          className="flex h-9 min-w-9 items-center justify-center rounded-full bg-emerald-600 px-3 text-white ring-1 ring-emerald-600 disabled:opacity-60"
+          aria-label={`Lưu ${label}`}
+        >
+          {savingField === field ? "…" : "✓"}
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => onEdit(field, value)}
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-50 text-slate-500 ring-1 ring-slate-200"
+          aria-label={`Sửa ${label}`}
+        >
+          <span className="text-sm">✎</span>
+        </button>
+      )}
     </div>
   );
 }
