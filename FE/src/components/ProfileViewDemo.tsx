@@ -409,26 +409,7 @@ export function ProfileViewDemo({
             </label>
           </div>
 
-          {/* Email Notifications */}
-          <div className="toggle-row">
-            <span className="setting-item-title">
-              <span className="inline-icon" style={{ fontSize: "16px" }}>✉️</span>
-              Cập nhật qua email
-            </span>
-            <label className="switch">
-              <input
-                type="checkbox"
-                checked={emailEnabled}
-                onChange={(e) => {
-                  if (onUpdateEmailNotification) {
-                    void onUpdateEmailNotification(e.target.checked);
-                  }
-                }}
-                disabled={isLoading}
-              />
-              <span className="slider round"></span>
-            </label>
-          </div>
+          {/* Email Notifications removed as requested */}
 
         </div>
       </div>

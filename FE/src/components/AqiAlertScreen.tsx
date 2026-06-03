@@ -48,7 +48,20 @@ export function AqiAlertScreen({ gpsAqi, gpsCoords, locations, onBack, onOpenRou
       </header>
 
       <main className="alert-content">
-        <section className="health-alert-zone">
+        {/* add zone class to control color based on AQI */}
+        <section
+          className={`health-alert-zone ${
+            aqiValue === null
+              ? "zone-unknown"
+              : aqiValue <= 50
+              ? "zone-good"
+              : aqiValue <= 100
+              ? "zone-moderate"
+              : aqiValue <= 150
+              ? "zone-sensitive"
+              : "zone-danger"
+          }`}
+        >
           <span className="alert-label">⚠️ Cảnh báo sức khỏe</span>
           <h1 className="huge-aqi-value">{aqiLabel}</h1>
           <div className="aqi-level-badge">{aqiStatus}</div>
