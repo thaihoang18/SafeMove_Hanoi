@@ -1,4 +1,5 @@
 import { sql } from "../db.mjs";
+import { hashPassword } from "../utils/security.mjs";
 import { sanitizeArray, toBoolean, toNullableNumber, toNullableString } from "../utils/validation.mjs";
 
 export async function getUserProfileController(userId) {
@@ -71,6 +72,7 @@ export async function getUserProfileController(userId) {
 export async function updateUserProfileController(userId, body) {
   const fullName = toNullableString(body.fullName);
   const email = toNullableString(body.email);
+  const password = toNullableString(body.password);
   const birthYear = toNullableNumber(body.birthYear);
   const homeLat = toNullableNumber(body.homeLat);
   const homeLng = toNullableNumber(body.homeLng);
@@ -80,6 +82,7 @@ export async function updateUserProfileController(userId, body) {
   const primaryActivityId = toNullableString(body.primaryActivityId);
   const maskPreference = toNullableString(body.maskPreference);
   const phone = toNullableString(body.phone);
+  const passwordHash = password ? await hashPassword(password) : null;
 
   await sql`
     update airpath.users
@@ -88,7 +91,8 @@ export async function updateUserProfileController(userId, body) {
       full_name = coalesce(${fullName}, full_name),
       birth_year = coalesce(${birthYear}, birth_year),
       home_lat = ${homeLat},
-      home_lng = ${homeLng}
+      home_lng = ${homeLng},
+      password_hash = coalesce(${passwordHash}, password_hash)
     where id = ${userId}
   `;
 

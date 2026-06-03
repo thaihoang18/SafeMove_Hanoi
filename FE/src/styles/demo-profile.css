@@ -338,9 +338,16 @@
   box-shadow: 0 0 0 3px rgba(17, 120, 67, 0.1);
 }
 
+.password-edit-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 /* Edit Buttons */
 .btn-edit-inline,
-.btn-save-inline {
+.btn-save-inline,
+.btn-toggle-inline {
   background: none;
   border: 1px solid var(--border-color);
   width: 32px;
@@ -352,6 +359,10 @@
   justify-content: center;
   transition: all 0.2s ease;
   color: var(--text-muted);
+}
+
+.btn-toggle-inline {
+  flex: 0 0 auto;
 }
 
 .btn-edit-inline:hover {
@@ -369,6 +380,12 @@
 .btn-save-inline:hover {
   background: var(--primary-green);
   color: white;
+}
+
+.btn-toggle-inline:hover {
+  border-color: var(--primary-green);
+  color: var(--primary-green);
+  background: var(--light-green);
 }
 
 /* Divider */

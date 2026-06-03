@@ -13,3 +13,8 @@ export function hashPassword(password) {
   });
 }
 
+export function generateTemporaryPassword(length = 12) {
+  const raw = crypto.randomBytes(Math.ceil(length * 0.75)).toString("base64url");
+  return raw.slice(0, length);
+}
+

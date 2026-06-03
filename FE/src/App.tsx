@@ -10,6 +10,7 @@ import {
   fetchNotifications,
   fetchProfile,
   fetchRouteHistory,
+  forgotPassword,
   login,
   loginAdmin,
   markNotificationRead,
@@ -441,6 +442,17 @@ export default function App() {
     }
   }
 
+  async function handleForgotPassword(email: string) {
+    setLoadingAuth(true);
+    setAuthError(null);
+    try {
+      const response = await forgotPassword(email);
+      return response.message;
+    } finally {
+      setLoadingAuth(false);
+    }
+  }
+
   function handleGuestContinue() {
     setUser(guestUser);
     setRole("guest");
@@ -504,6 +516,8 @@ export default function App() {
       payload.fullName = value;
     } else if (field === "phone") {
       payload.phone = value;
+    } else if (field === "password") {
+      payload.password = value;
     } else {
       payload[field] = value;
     }
@@ -843,6 +857,7 @@ export default function App() {
         onAdminLogin={handleAdminLogin}
         onRegisterClick={() => setShowRegister(true)}
         onGuestContinue={handleGuestContinue}
+        onForgotPassword={handleForgotPassword}
         isLoading={loadingAuth}
         error={authError ?? undefined}
       />

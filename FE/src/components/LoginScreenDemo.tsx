@@ -1,4 +1,4 @@
-import { ArrowRight, Lock, Mail, Wind } from "lucide-react";
+import { ArrowRight, Lock, Mail, Wind, X } from "lucide-react";
 import { useState } from "react";
 import "../styles/demo-auth.css";
 
@@ -7,6 +7,7 @@ type Props = {
   onAdminLogin: (email: string, password: string) => Promise<void>;
   onRegisterClick: () => void;
   onGuestContinue: () => void;
+  onForgotPassword: (email: string) => Promise<string>;
   isLoading?: boolean;
   error?: string;
 };
@@ -18,6 +19,7 @@ export function LoginScreenDemo({
   onAdminLogin,
   onRegisterClick,
   onGuestContinue,
+  onForgotPassword,
   isLoading = false,
   error,
 }: Props) {
@@ -25,6 +27,11 @@ export function LoginScreenDemo({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [formError, setFormError] = useState<string | null>(error || null);
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotError, setForgotError] = useState<string | null>(null);
+  const [forgotMessage, setForgotMessage] = useState<string | null>(null);
+  const [forgotSending, setForgotSending] = useState(false);
 
   const isAdminMode = mode === "admin";
   const displayMode = isAdminMode ? "Quản trị viên" : "Người dùng";
@@ -32,6 +39,19 @@ export function LoginScreenDemo({
   function switchMode(nextMode: LoginMode) {
     setMode(nextMode);
     setFormError(null);
+  }
+
+  function openForgotPasswordModal() {
+    setForgotEmail(email.trim());
+    setForgotError(null);
+    setForgotMessage(null);
+    setForgotPasswordOpen(true);
+  }
+
+  function closeForgotPasswordModal() {
+    setForgotPasswordOpen(false);
+    setForgotError(null);
+    setForgotMessage(null);
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -65,6 +85,33 @@ export function LoginScreenDemo({
       await onUserLogin(email, password);
     } catch (err) {
       setFormError(err instanceof Error ? err.message : "Đăng nhập thất bại");
+    }
+  };
+
+  const handleForgotPasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotError(null);
+    setForgotMessage(null);
+
+    if (!forgotEmail.trim()) {
+      setForgotError("Vui lòng nhập email đã đăng ký");
+      return;
+    }
+
+    const normalizedEmail = forgotEmail.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      setForgotError("Vui lòng nhập email hợp lệ");
+      return;
+    }
+
+    setForgotSending(true);
+    try {
+      const message = await onForgotPassword(normalizedEmail);
+      setForgotMessage(message);
+    } catch (err) {
+      setForgotError(err instanceof Error ? err.message : "Không thể gửi mật khẩu mới");
+    } finally {
+      setForgotSending(false);
     }
   };
 
@@ -129,9 +176,9 @@ export function LoginScreenDemo({
             <div className="input-group-auth">
               <div className="label-row-auth">
                 <label className="input-label-auth">Mật khẩu</label>
-                <a href="#" className="forgot-pwd-link">
-                  Quên?
-                </a>
+                <button type="button" className="forgot-pwd-link" onClick={openForgotPasswordModal}>
+                  Quên mật khẩu?
+                </button>
               </div>
               <div className="input-icon-wrapper-auth">
                 <Lock size={16} className="input-icon-auth" />
@@ -171,6 +218,61 @@ export function LoginScreenDemo({
           </div>
         </div>
       </main>
+
+      {forgotPasswordOpen && (
+        <div className="forgot-modal-backdrop" role="presentation" onClick={closeForgotPasswordModal}>
+          <div
+            className="forgot-modal-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="forgot-modal-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="forgot-modal-header">
+              <div>
+                <h3 id="forgot-modal-title">Lấy lại mật khẩu</h3>
+                <p>Nhập email đã đăng ký để nhận mật khẩu mới qua email.</p>
+              </div>
+              <button type="button" className="forgot-modal-close" onClick={closeForgotPasswordModal} aria-label="Đóng">
+                <X size={16} />
+              </button>
+            </div>
+
+            <form className="forgot-modal-form" onSubmit={handleForgotPasswordSubmit}>
+              <div className="input-group-auth">
+                <label className="input-label-auth" htmlFor="forgot-email-input">
+                  Email đã đăng ký
+                </label>
+                <div className="input-icon-wrapper-auth">
+                  <Mail size={16} className="input-icon-auth" />
+                  <input
+                    id="forgot-email-input"
+                    type="email"
+                    className="auth-input"
+                    placeholder="email@example.com"
+                    value={forgotEmail}
+                    onChange={(event) => setForgotEmail(event.target.value)}
+                    disabled={forgotSending || isLoading}
+                    autoFocus
+                  />
+                </div>
+              </div>
+
+              {forgotError ? <div className="error-text-auth">{forgotError}</div> : null}
+              {forgotMessage ? <div className="success-text-auth">{forgotMessage}</div> : null}
+
+              <div className="forgot-modal-actions">
+                <button type="button" className="btn-secondary-auth" onClick={closeForgotPasswordModal} disabled={forgotSending}>
+                  Hủy
+                </button>
+                <button type="submit" className="btn-primary-auth" disabled={forgotSending || isLoading}>
+                  {forgotSending ? "Đang gửi..." : "Gửi mật khẩu mới"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

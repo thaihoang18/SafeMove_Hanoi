@@ -118,6 +118,11 @@
   color: var(--primary-green);
   text-decoration: none;
   transition: color 0.2s ease;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
 }
 
 .forgot-pwd-link:hover {
@@ -175,6 +180,15 @@
   padding: 8px 12px;
   border-radius: 6px;
   border-left: 3px solid var(--error-red);
+}
+
+.success-text-auth {
+  font-size: 12px;
+  color: #117843;
+  background: #edf8f1;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border-left: 3px solid var(--primary-green);
 }
 
 /* Buttons */
@@ -310,6 +324,86 @@
   text-decoration: underline;
 }
 
+.forgot-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 50;
+}
+
+.forgot-modal-card {
+  width: min(100%, 440px);
+  background: #ffffff;
+  border-radius: 24px;
+  box-shadow: 0 24px 72px rgba(15, 23, 42, 0.22);
+  border: 1px solid rgba(17, 120, 67, 0.12);
+  padding: 22px;
+}
+
+.forgot-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.forgot-modal-header h3 {
+  margin: 0;
+  font-size: 20px;
+  color: var(--text-dark);
+}
+
+.forgot-modal-header p {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.forgot-modal-close {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid rgba(17, 120, 67, 0.12);
+  background: #f8fbf8;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.forgot-modal-close:hover {
+  border-color: rgba(17, 120, 67, 0.28);
+  color: var(--primary-green);
+}
+
+.forgot-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.forgot-modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.forgot-modal-actions .btn-secondary-auth,
+.forgot-modal-actions .btn-primary-auth {
+  margin-top: 0;
+  width: auto;
+  min-width: 140px;
+}
+
 /* Responsive */
 @media (max-width: 480px) {
   .auth-scrollable-content {
@@ -341,6 +435,20 @@
   .btn-primary-auth {
     padding: 10px 14px;
     font-size: 13px;
+  }
+
+  .forgot-modal-card {
+    padding: 18px;
+  }
+
+  .forgot-modal-actions {
+    flex-direction: column;
+  }
+
+  .forgot-modal-actions .btn-secondary-auth,
+  .forgot-modal-actions .btn-primary-auth {
+    width: 100%;
+    min-width: 0;
   }
 }
 

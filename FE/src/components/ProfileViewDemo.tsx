@@ -1,4 +1,4 @@
-import { Bell, Edit2, AlertCircle, LogOut, X } from "lucide-react";
+import { Bell, Edit2, Eye, EyeOff, AlertCircle, LogOut, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
   avatarFrames,
@@ -49,6 +49,7 @@ export function ProfileViewDemo({
   const [avatarModalOpen, setAvatarModalOpen] = useState(false);
   const [pendingAvatarSelection, setPendingAvatarSelection] = useState<AvatarSelection>(avatarSelection);
   const [savingField, setSavingField] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const selectedAvatarPreset = avatarPresets.find((preset) => preset.id === avatarSelection.avatarId) ?? avatarPresets[0];
 
   useEffect(() => {
@@ -74,6 +75,7 @@ export function ProfileViewDemo({
   const handleEditClick = (field: string, currentValue: string) => {
     setEditingField(field);
     setEditValue(currentValue);
+    setShowPassword(false);
   };
 
   const handleAvatarSave = async () => {
@@ -94,6 +96,7 @@ export function ProfileViewDemo({
 
     try {
       await onUpdateProfile(field, nextValue);
+      setShowPassword(false);
     } catch (err) {
       console.error("Update failed:", err);
       setEditingField(field);
@@ -316,39 +319,51 @@ export function ProfileViewDemo({
             )}
           </div>
 
-          {/* Phone */}
+          {/* Password */}
           <div className="info-row no-border">
             <div className="info-content">
-              {editingField === "phone" ? (
-                <input
-                  type="tel"
-                  value={editValue}
-                  onChange={(e) => setEditValue(e.target.value)}
-                  className="edit-input"
-                  disabled={isLoading}
-                  autoFocus
-                />
+              {editingField === "password" ? (
+                <div className="password-edit-row">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    className="edit-input"
+                    disabled={isLoading}
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    className="btn-toggle-inline"
+                    onClick={() => setShowPassword((current) => !current)}
+                    disabled={isLoading}
+                    aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                    title={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                  >
+                    {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
+                </div>
               ) : (
                 <>
-                  <span className="info-label">Điện thoại</span>
-                  <span className="info-value">{user.phone || "Chưa có"}</span>
+                  <span className="info-label">Mật khẩu</span>
+                  <span className="info-value">••••••••</span>
                 </>
               )}
             </div>
-            {editingField === "phone" ? (
+            {editingField === "password" ? (
               <button
                 type="button"
                 className="btn-save-inline"
-                onClick={() => handleSaveEdit("phone")}
-                disabled={isLoading || savingField === "phone"}
+                onClick={() => handleSaveEdit("password")}
+                disabled={isLoading || savingField === "password"}
               >
-                {savingField === "phone" ? "…" : "✓"}
+                {savingField === "password" ? "…" : "✓"}
               </button>
             ) : (
               <button
                 type="button"
                 className="btn-edit-inline"
-                onClick={() => handleEditClick("phone", user.phone || "")}
+                onClick={() => handleEditClick("password", "")}
               >
                 <Edit2 size={14} />
               </button>

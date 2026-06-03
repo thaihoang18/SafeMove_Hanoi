@@ -74,6 +74,16 @@ export async function loginAdmin(email: string, password: string) {
   );
 }
 
+export async function forgotPassword(email: string) {
+  return request<{ ok: true; reset: boolean; emailSent: boolean; message: string }>(
+    "/api/auth/forgot-password",
+    {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    },
+  );
+}
+
 export async function register(
   fullName: string,
   email: string,
