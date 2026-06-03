@@ -393,7 +393,7 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
       const response = await fetchLocations();
       setLocations(response.locations as LocationRecord[]);
     } catch (error) {
-      setLocationsError(error instanceof Error ? error.message : "スポット一覧を読み込めませんでした。");
+      setLocationsError(error instanceof Error ? error.message : "施設一覧を読み込めませんでした。");
     } finally {
       setLoadingLocations(false);
     }
@@ -569,7 +569,7 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
 
   async function submitLocation() {
     if (!formState.name.trim()) {
-      setFormError("スポット名を入力してください。");
+      setFormError("施設名を入力してください。");
       return;
     }
 
@@ -595,24 +595,24 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
     try {
       if (editingLocationId) {
         await updateLocation(editingLocationId, payload);
-        setActionMessage("スポットを更新しました。");
+        setActionMessage("施設を更新しました。");
       } else {
         await createLocation(payload);
-        setActionMessage("新しいスポットを作成しました。");
+        setActionMessage("新しい施設を作成しました。");
       }
 
       await refreshLocations();
       resetForm();
       setView("facilities");
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : "スポットを保存できませんでした。");
+      setFormError(error instanceof Error ? error.message : "施設を保存できませんでした。");
     } finally {
       setSavingLocation(false);
     }
   }
 
   async function handleDelete(locationId: string) {
-    if (!window.confirm("このスポットを削除しますか？")) {
+    if (!window.confirm("この施設を削除しますか？")) {
       return;
     }
 
@@ -624,9 +624,9 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
       if (editingLocationId === locationId) {
         resetForm();
       }
-      setActionMessage("スポットを削除しました。");
+      setActionMessage("施設を削除しました。");
     } catch (error) {
-      setActionMessage(error instanceof Error ? error.message : "スポットを削除できませんでした。");
+      setActionMessage(error instanceof Error ? error.message : "施設を削除できませんでした。");
     }
   }
 
@@ -775,53 +775,73 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
           <section className="rounded-4xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <h2 className="mt-1 text-2xl text-slate-900">運動スポット管理</h2>
+                <div className="text-sm text-slate-500">施設一覧と公開設定をまとめて管理</div>
+                <h2 className="mt-1 text-2xl text-slate-900">施設管理</h2>
               </div>
-              <button onClick={() => { resetForm(); setView("facility-add"); }} className="rounded-full bg-emerald-600 px-4 py-2 text-sm text-white">
+              <button onClick={() => { resetForm(); setView("facility-add"); }} className="inline-flex items-center rounded-full bg-emerald-600 px-4 py-2 text-sm text-white shadow-sm shadow-emerald-600/15">
                 <Plus className="mr-2 inline h-4 w-4" />
-                スポットを追加
+                施設を追加
               </button>
             </div>
 
-            <div className="mt-5 grid gap-5 lg:grid-cols-[0.95fr_1.05fr]">
-              <div className="rounded-[1.7rem] bg-slate-50 p-4 ring-1 ring-slate-200">
+            <div className="mt-5 grid gap-5 lg:grid-cols-[0.92fr_1.08fr]">
+              <div className="space-y-4 rounded-[1.7rem] bg-slate-50 p-4 ring-1 ring-slate-200 lg:sticky lg:top-4 lg:h-fit">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-3xl bg-white/10 text-emerald-700">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-3xl bg-white text-emerald-700 ring-1 ring-emerald-100">
                     <Building2 className="h-6 w-6" />
                   </div>
                   <div>
-                    <div className="text-xs uppercase tracking-[0.16em] text-slate-500">スポット管理</div>
+                    <div className="text-xs uppercase tracking-[0.16em] text-slate-500">施設概要</div>
+                    <div className="mt-1 text-lg text-slate-900">登録済み施設</div>
                   </div>
                 </div>
-                <div className="flex items-center gap-4">
-                    <div className="text-sm text-slate-500">稼働中: {locations.length}</div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-2xl bg-white p-4 ring-1 ring-slate-200">
+                    <div className="text-xs uppercase tracking-[0.16em] text-slate-500">件数</div>
+                    <div className="mt-2 text-2xl text-slate-900">{locations.length}</div>
+                    <div className="mt-1 text-sm text-slate-500">公開中の施設</div>
                   </div>
+                  <div className="rounded-2xl bg-white p-4 ring-1 ring-slate-200">
+                    <div className="text-xs uppercase tracking-[0.16em] text-slate-500">状態</div>
+                    <div className="mt-2 text-2xl text-slate-900">安定</div>
+                    <div className="mt-1 text-sm text-slate-500">更新・公開を確認</div>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl bg-white p-4 text-sm leading-6 text-slate-600 ring-1 ring-slate-200">
+                  施設名、住所、公開設定をひとつの画面で整理できます。編集は一覧から直接行えます。
+                </div>
               </div>
               <div className="space-y-3">
                 {loadingLocations ? (
-                  <div className="rounded-[1.7rem] bg-white p-5 text-sm text-slate-500 ring-1 ring-slate-200">スポットを読み込み中...</div>
+                  <div className="rounded-[1.7rem] bg-white p-5 text-sm text-slate-500 ring-1 ring-slate-200">施設を読み込み中...</div>
                 ) : locationsError ? (
                   <div className="rounded-[1.7rem] bg-rose-50 p-5 text-sm text-rose-700 ring-1 ring-rose-200">{locationsError}</div>
                 ) : locations.length ? (
                   locations.map((location) => (
                     <article key={location.id} className="rounded-[1.7rem] bg-white p-4 ring-1 ring-slate-200">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="text-sm text-slate-500">{location.location_type}</div>
-                          <div className="mt-1 text-lg text-slate-900 flex items-center gap-2">
-                            <span>{location.name}</span>
+                      <div className="flex flex-col gap-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="mt-2 text-lg text-slate-900">{location.name}</div>
+                            <div className="mt-2 text-sm text-slate-600">{location.address ?? "住所未設定"}</div>
+                            <div className="mt-2 text-xs text-slate-500">
+                              {location.city ?? "-"} · {location.district ?? "-"}
+                            </div>
                           </div>
-                          <div className="mt-2 text-sm text-slate-600">{location.address ?? "住所未設定"}</div>
-                          <div className="mt-2 text-xs text-slate-500">
-                            {location.city ?? "-"} · {location.district ?? "-"}
-                          </div>
-                          <div className="mt-3 text-xs text-slate-500 flex items-center gap-3">
-                            <span className="flex items-center gap-1"><i className="fa-regular fa-clock"></i> 更新: 数分前</span>
-                            <span className="battery-status text-xs"> <i className="fa-solid fa-battery-half"></i> {50 + (location.name.length % 50)}%</span>
-                          </div>
-                        </div>
-                        <div className="flex flex-col items-end gap-3">
                           <MapPin className="h-5 w-5 shrink-0 text-emerald-600" />
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2.5 py-1 ring-1 ring-slate-200">
+                            <i className="fa-regular fa-clock"></i> 更新: 数分前
+                          </span>
+                          <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2.5 py-1 ring-1 ring-slate-200 battery-status">
+                            <i className="fa-solid fa-battery-half"></i> {50 + (location.name.length % 50)}%
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
+                          <button onClick={() => toggleJapanFriendly(location.id)} className="text-xs text-slate-500 underline decoration-slate-300 underline-offset-4">日本語対応の切り替え</button>
                           <div className="flex gap-2">
                             <button onClick={() => startEdit(location)} className="rounded-2xl bg-emerald-50 px-4 py-2 text-sm text-emerald-700 ring-1 ring-emerald-200">
                               <Edit3 className="mr-2 inline h-4 w-4" />
@@ -832,16 +852,13 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
                               削除
                             </button>
                           </div>
-                          <button onClick={() => toggleJapanFriendly(location.id)} className="mt-2 text-xs text-slate-500 underline">日本語対応の切り替え</button>
                         </div>
                       </div>
-
-                      
                     </article>
                   ))
                 ) : (
                   <div className="rounded-[1.7rem] bg-white p-5 text-sm text-slate-500 ring-1 ring-slate-200">
-                    DB にスポットがありません。
+                    DB に施設がありません。
                   </div>
                 )}
               </div>
@@ -853,29 +870,34 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
       {view === "facility-add" && (
         <div className="space-y-5 pb-40 md:pb-48 lg:pb-56">
           <section className="rounded-4xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <div className="text-sm text-slate-500">新しいスポットを追加</div>
-                <h2 className="mt-1 text-2xl text-slate-900">Add New Facility</h2>
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                  施設情報を入力し、地図上で位置を選んで保存すると新しいスポットを作成できます。
-                </p>
+            <div className="rounded-[1.7rem] bg-slate-50 px-4 py-4 ring-1 ring-slate-200">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs text-emerald-700 ring-1 ring-emerald-100">
+                    <Building2 className="h-3.5 w-3.5" />
+                    新しい施設を追加
+                  </div>
+                  <h2 className="mt-3 text-2xl text-slate-900">新しい施設を追加</h2>
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                    施設情報を入力し、地図上で位置を選んで保存すると新しい施設を登録できます。
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    resetForm();
+                    setView("facilities");
+                  }}
+                  className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  施設管理に戻る
+                </button>
               </div>
-              <button
-                onClick={() => {
-                  resetForm();
-                  setView("facilities");
-                }}
-                className="inline-flex items-center gap-2 rounded-[1.25rem] bg-white px-4 py-2 text-sm text-slate-700 ring-1 ring-slate-200"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                施設管理に戻る
-              </button>
             </div>
 
             <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_1.05fr]">
-              <div className="overflow-hidden rounded-[1.7rem] bg-slate-50 ring-1 ring-slate-200 lg:sticky lg:top-4 lg:h-[calc(100vh-12rem)] lg:min-h-[520px]">
-                <div className="relative min-h-[620px] lg:h-full lg:min-h-0">
+              <div className="overflow-hidden rounded-[1.7rem] bg-slate-50 ring-1 ring-slate-200 lg:sticky lg:top-4 lg:h-[calc(100vh-12rem)] lg:min-h-[620px]">
+                <div className="relative h-[620px] lg:h-full">
                   <MapContainer
                     center={[hanoiCenter.lat, hanoiCenter.lng]}
                     zoom={mapZoom}
@@ -883,7 +905,7 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
                     maxZoom={17}
                     scrollWheelZoom
                     zoomControl={false}
-                    className="h-full min-h-[420px] w-full lg:min-h-0 z-0"
+                    className="h-full w-full z-0"
                     style={{ background: "#eef4ea" }}
                   >
                     <TileLayer
@@ -895,7 +917,7 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
                   </MapContainer>
 
                   <div className="pointer-events-none absolute left-5 top-5 rounded-full bg-white/90 px-4 py-2 text-sm text-slate-700 shadow-sm ring-1 ring-slate-200">
-                    ハノイ - 地図上で位置を選択
+                    ハノイ - 地図で位置を選択
                   </div>
 
                   <div className="pointer-events-none absolute bottom-5 left-5 rounded-2xl bg-slate-900/85 px-4 py-3 text-xs text-white shadow-lg shadow-slate-900/10 backdrop-blur">
@@ -926,28 +948,31 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
               </div>
 
               <main className="rounded-[1.7rem] bg-white p-5 ring-1 ring-slate-200">
-                <div className="flex items-center gap-3">
+                <div className="flex items-start gap-3">
                   <div className="flex h-12 w-12 items-center justify-center rounded-3xl bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">
                     <Building2 className="h-6 w-6" />
                   </div>
-                  <div>
-                    <div className="text-xs uppercase tracking-[0.16em] text-slate-500">{editingLocationId ? "スポットを編集" : "新しいスポットを作成"}</div>
-                    <div className="mt-1 text-lg text-slate-900">施設情報</div>
+                  <div className="min-w-0">
+                    <div className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1 text-xs text-slate-500 ring-1 ring-slate-200">
+                      {editingLocationId ? "編集中" : "新規作成"}
+                    </div>
+                    <div className="mt-3 text-lg text-slate-900">{editingLocationId ? "施設を編集" : "新しい施設を作成"}</div>
+                    <div className="mt-1 text-sm text-slate-500">基本情報、公開設定、設備をまとめて入力します。</div>
                   </div>
                 </div>
 
                 <div className="mt-5 grid gap-4">
-                  <Field label="スポット名" value={formState.name} onChange={(value) => setFormState((current) => ({ ...current, name: value }))} />
+                  <Field label="施設名" value={formState.name} onChange={(value) => setFormState((current) => ({ ...current, name: value }))} />
                   <Field label="住所" value={formState.address} onChange={(value) => setFormState((current) => ({ ...current, address: value }))} />
 
                   <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <div className="flex items-center gap-2 text-sm font-medium text-slate-900">
-                            <span className="inline-flex h-6 items-center rounded-full bg-emerald-50 px-2 text-xs text-emerald-700 ring-1 ring-emerald-200">JP</span>
-                          日本語対応
+                          <span className="inline-flex h-6 items-center rounded-full bg-emerald-50 px-2 text-xs text-emerald-700 ring-1 ring-emerald-200">JP</span>
+                          日本語対応施設
                         </div>
-                        <div className="mt-1 text-xs text-slate-500">日本人ユーザー向けのおすすめスポットとして表示</div>
+                        <div className="mt-1 text-xs text-slate-500">日本人ユーザー向けのおすすめ施設として表示</div>
                       </div>
                       <label className="relative inline-flex cursor-pointer items-center">
                         <input type="checkbox" checked={isJapanFriendly} onChange={(event) => setIsJapanFriendly(event.target.checked)} className="peer sr-only" />
@@ -983,7 +1008,7 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
                         );
                       })}
                       <button type="button" className="rounded-full bg-slate-900 px-4 py-2 text-sm text-white ring-1 ring-slate-900">
-                        + 追加
+                        + 設備を追加
                       </button>
                     </div>
                   </div>
@@ -993,13 +1018,13 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
                     <textarea
                       value={formState.description}
                       onChange={(event) => setFormState((current) => ({ ...current, description: event.target.value }))}
-                        placeholder="スポットの特徴や推奨利用時間を入力してください..."
+                      placeholder="施設の特徴や推奨利用時間を入力してください..."
                       className="mt-3 min-h-32 w-full rounded-2xl bg-white px-4 py-3 text-slate-900 ring-1 ring-slate-200 outline-none placeholder:text-slate-400"
                     />
                   </div>
 
                   <div className="grid gap-3 md:grid-cols-2">
-                    <Field label="スポット種類" value={formState.locationType} onChange={(value) => setFormState((current) => ({ ...current, locationType: value }))} />
+                    <Field label="施設種類" value={formState.locationType} onChange={(value) => setFormState((current) => ({ ...current, locationType: value }))} />
                     <Field label="都市" value={formState.city} onChange={(value) => setFormState((current) => ({ ...current, city: value }))} />
                     <Field label="地区 / 区" value={formState.district} onChange={(value) => setFormState((current) => ({ ...current, district: value }))} />
                     <Field label="Lat" value={formState.lat} onChange={(value) => setFormState((current) => ({ ...current, lat: value }))} />
