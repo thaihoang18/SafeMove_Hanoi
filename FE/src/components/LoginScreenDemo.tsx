@@ -4,7 +4,7 @@ import "../styles/demo-auth.css";
 
 type Props = {
   onUserLogin: (email: string, password: string) => Promise<void>;
-  onAdminLogin: (email: string, password: string, securityCode: string) => Promise<void>;
+  onAdminLogin: (email: string, password: string) => Promise<void>;
   onRegisterClick: () => void;
   onGuestContinue: () => void;
   isLoading?: boolean;
@@ -24,7 +24,6 @@ export function LoginScreenDemo({
   const [mode, setMode] = useState<LoginMode>("user");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [securityCode, setSecurityCode] = useState("");
   const [formError, setFormError] = useState<string | null>(error || null);
 
   const isAdminMode = mode === "admin";
@@ -59,11 +58,7 @@ export function LoginScreenDemo({
 
     try {
       if (isAdminMode) {
-        if (!securityCode.trim()) {
-          setFormError("Vui lòng nhập mã bảo mật");
-          return;
-        }
-        await onAdminLogin(email, password, securityCode);
+        await onAdminLogin(email, password);
         return;
       }
 
@@ -150,23 +145,6 @@ export function LoginScreenDemo({
                 />
               </div>
             </div>
-
-            {isAdminMode && (
-              <div className="input-group-auth">
-                <label className="input-label-auth">Mã bảo mật</label>
-                <div className="input-icon-wrapper-auth">
-                  <Lock size={16} className="input-icon-auth" />
-                  <input
-                    type="password"
-                    className="auth-input"
-                    placeholder="Mã bảo mật quản trị viên"
-                    value={securityCode}
-                    onChange={(e) => setSecurityCode(e.target.value)}
-                    disabled={isLoading}
-                  />
-                </div>
-              </div>
-            )}
 
             {/* Error Message */}
             {formError && <div className="error-text-auth">{formError}</div>}

@@ -1110,7 +1110,7 @@ export function AdminWorkspace({ userId, userName, onLogout }: Props) {
                 <div className="mt-6 rounded-2xl bg-white/10 p-4 text-sm leading-6 ring-1 ring-white/15">
                   Tài khoản đăng nhập: <strong>admin</strong>
                   <br />
-                  Mã bảo mật: <strong>smhn</strong>
+                  Mật khẩu: <strong>adminsmhn</strong>
                 </div>
               </div>
 

@@ -3,10 +3,11 @@ import { hashPassword } from "../utils/security.mjs";
 import { assert, isNonEmptyString, toNullableNumber, toNullableString } from "../utils/validation.mjs";
 
 function getAdminCredentials() {
+  const username = (process.env.ADMIN_USERNAME ?? "admin").trim().toLowerCase();
   return {
-    username: (process.env.ADMIN_USERNAME ?? "admin").trim().toLowerCase(),
+    username,
+    email: `${username}@safemove.hanoi`,
     password: process.env.ADMIN_PASSWORD ?? "adminsmhn",
-    securityCode: process.env.ADMIN_SECURITY_CODE ?? "smhn",
   };
 }
 
@@ -77,16 +78,11 @@ export async function loginUserController(body) {
   const passwordHash = await hashPassword(body.password);
   const adminCredentials = getAdminCredentials();
 
-  if (identifier === adminCredentials.username) {
+  if (identifier === adminCredentials.username || identifier === adminCredentials.email) {
     const adminPasswordHash = await hashPassword(adminCredentials.password);
-    const securityCode = String(body.securityCode ?? "").trim();
 
     if (passwordHash !== adminPasswordHash) {
       throw new Error("Invalid admin credentials.");
-    }
-
-    if (securityCode !== adminCredentials.securityCode) {
-      throw new Error("Invalid security code.");
     }
 
     return { user: await buildAdminUser() };

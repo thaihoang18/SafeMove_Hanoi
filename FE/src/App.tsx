@@ -394,8 +394,6 @@ export default function App() {
       let msg = error instanceof Error ? error.message : "Đăng nhập thất bại.";
       if (/invalid email or password/i.test(msg) || /invalid admin credentials/i.test(msg) || /401/.test(msg)) {
         msg = "Tên đăng nhập hoặc mật khẩu không chính xác.";
-      } else if (/invalid security code/i.test(msg)) {
-        msg = "Mã bảo mật không đúng.";
       } else if (/email is required/i.test(msg) || /password is required/i.test(msg)) {
         msg = "Vui lòng nhập đầy đủ thông tin.";
       }
@@ -405,11 +403,11 @@ export default function App() {
     }
   }
 
-  async function handleAdminLogin(email: string, password: string, securityCode: string) {
+  async function handleAdminLogin(email: string, password: string) {
     setLoadingAuth(true);
     setAuthError(null);
     try {
-      const response = await loginAdmin(email, password, securityCode);
+      const response = await loginAdmin(email, password);
       setUser(response.user);
       setRole(response.user.role === "admin" ? "admin" : "user");
       setView(response.user.role === "admin" ? "dashboard" : "home");
@@ -418,8 +416,6 @@ export default function App() {
       let msg = error instanceof Error ? error.message : "Đăng nhập thất bại.";
       if (/invalid admin credentials/i.test(msg) || /401/.test(msg) || /invalid email or password/i.test(msg)) {
         msg = "Tên đăng nhập hoặc mật khẩu không chính xác.";
-      } else if (/invalid security code/i.test(msg)) {
-        msg = "Mã bảo mật không đúng.";
       } else if (/email is required/i.test(msg) || /password is required/i.test(msg)) {
         msg = "Vui lòng nhập đầy đủ thông tin.";
       }

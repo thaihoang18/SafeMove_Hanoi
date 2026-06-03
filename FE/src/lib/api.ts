@@ -64,16 +64,12 @@ export async function login(email: string, password: string) {
   );
 }
 
-export async function loginAdmin(
-  email: string,
-  password: string,
-  securityCode: string,
-) {
+export async function loginAdmin(email: string, password: string) {
   return request<{ ok: true; user: User & { role?: "user" | "admin" } }>(
     "/api/auth/login",
     {
       method: "POST",
-      body: JSON.stringify({ email, password, securityCode }),
+      body: JSON.stringify({ email, password }),
     },
   );
 }

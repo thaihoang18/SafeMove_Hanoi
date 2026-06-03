@@ -48,6 +48,7 @@ export function ProfileViewDemo({
   const [aqiThreshold, setAqiThreshold] = useState(currentAqiThreshold);
   const [avatarModalOpen, setAvatarModalOpen] = useState(false);
   const [pendingAvatarSelection, setPendingAvatarSelection] = useState<AvatarSelection>(avatarSelection);
+  const [savingField, setSavingField] = useState<string | null>(null);
   const selectedAvatarPreset = avatarPresets.find((preset) => preset.id === avatarSelection.avatarId) ?? avatarPresets[0];
 
   useEffect(() => {
@@ -81,16 +82,24 @@ export function ProfileViewDemo({
   };
 
   const handleSaveEdit = async (field: string) => {
-    if (!editValue.trim()) {
+    const nextValue = editValue;
+
+    if (!nextValue.trim()) {
       setEditingField(null);
       return;
     }
 
+    setSavingField(field);
+    setEditingField(null);
+
     try {
-      await onUpdateProfile(field, editValue);
-      setEditingField(null);
+      await onUpdateProfile(field, nextValue);
     } catch (err) {
       console.error("Update failed:", err);
+      setEditingField(field);
+      setEditValue(nextValue);
+    } finally {
+      setSavingField((current) => (current === field ? null : current));
     }
   };
 
@@ -100,6 +109,22 @@ export function ProfileViewDemo({
     if (value <= 150) return "Kém cho nhóm nhạy cảm";
     return "Không lành mạnh";
   };
+
+  const formatJoinDate = (value?: string) => {
+    if (!value) {
+      return null;
+    }
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      return null;
+    }
+
+    return date.toLocaleDateString("vi-VN", { month: "2-digit", year: "numeric" });
+  };
+
+  const joinDateLabel = formatJoinDate(user.joinDate);
 
   if (!user) {
     return (
@@ -133,7 +158,7 @@ export function ProfileViewDemo({
         <div className="user-primary-info">
           <h2 className="user-full-name">{user.name}</h2>
           <span className="user-join-date">
-            {user.joinDate ? `Thành viên từ ${user.joinDate}` : "Thành viên"}
+            {joinDateLabel ? `Thành viên từ ${joinDateLabel}` : "Thành viên"}
           </span>
         </div>
       </div>
@@ -234,14 +259,16 @@ export function ProfileViewDemo({
             </div>
             {editingField === "name" ? (
               <button
+                type="button"
                 className="btn-save-inline"
                 onClick={() => handleSaveEdit("name")}
-                disabled={isLoading}
+                disabled={isLoading || savingField === "name"}
               >
-                ✓
+                {savingField === "name" ? "…" : "✓"}
               </button>
             ) : (
               <button
+                type="button"
                 className="btn-edit-inline"
                 onClick={() => handleEditClick("name", user.name)}
               >
@@ -271,14 +298,16 @@ export function ProfileViewDemo({
             </div>
             {editingField === "email" ? (
               <button
+                type="button"
                 className="btn-save-inline"
                 onClick={() => handleSaveEdit("email")}
-                disabled={isLoading}
+                disabled={isLoading || savingField === "email"}
               >
-                ✓
+                {savingField === "email" ? "…" : "✓"}
               </button>
             ) : (
               <button
+                type="button"
                 className="btn-edit-inline"
                 onClick={() => handleEditClick("email", user.email)}
               >
@@ -308,14 +337,16 @@ export function ProfileViewDemo({
             </div>
             {editingField === "phone" ? (
               <button
+                type="button"
                 className="btn-save-inline"
                 onClick={() => handleSaveEdit("phone")}
-                disabled={isLoading}
+                disabled={isLoading || savingField === "phone"}
               >
-                ✓
+                {savingField === "phone" ? "…" : "✓"}
               </button>
             ) : (
               <button
+                type="button"
                 className="btn-edit-inline"
                 onClick={() => handleEditClick("phone", user.phone || "")}
               >
