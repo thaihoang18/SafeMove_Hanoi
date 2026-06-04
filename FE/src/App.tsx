@@ -529,9 +529,8 @@ export default function App() {
     if (!user) return;
     setProfileSaving(true);
     try {
-      const dbField = field === "pushEnabled" ? "push_enabled" : field === "emailEnabled" ? "email_enabled" : field;
       const updatedPrefs = await updateNotificationPreferences(user.id, {
-        [dbField]: value,
+        [field]: value,
       });
       setProfile((prev) =>
         prev
