@@ -19,7 +19,7 @@ export function RegisterScreenDemo({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [formError, setFormError] = useState<string | null>(error || null);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const validatePassword = (pwd: string) => {
     return pwd.length >= 8 && pwd.length <= 16;
@@ -150,7 +150,7 @@ export function RegisterScreenDemo({
             </div>
 
             {/* Error Message */}
-            {formError && <div className="error-text-auth">{formError}</div>}
+            {(formError || error) && <div className="error-text-auth">{formError || error}</div>}
 
             {/* Submit Button */}
             <button

@@ -26,7 +26,7 @@ export function LoginScreenDemo({
   const [mode, setMode] = useState<LoginMode>("user");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [formError, setFormError] = useState<string | null>(error || null);
+  const [formError, setFormError] = useState<string | null>(null);
   const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotError, setForgotError] = useState<string | null>(null);
@@ -194,7 +194,7 @@ export function LoginScreenDemo({
             </div>
 
             {/* Error Message */}
-            {formError && <div className="error-text-auth">{formError}</div>}
+            {(formError || error) && <div className="error-text-auth">{formError || error}</div>}
 
             {/* Submit Button */}
             <button type="submit" className="btn-primary-auth" disabled={isLoading}>
