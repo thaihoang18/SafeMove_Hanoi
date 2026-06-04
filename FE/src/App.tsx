@@ -529,8 +529,9 @@ export default function App() {
     if (!user) return;
     setProfileSaving(true);
     try {
+      const dbField = field === "pushEnabled" ? "push_enabled" : field === "emailEnabled" ? "email_enabled" : field;
       const updatedPrefs = await updateNotificationPreferences(user.id, {
-        [field]: value,
+        [dbField]: value,
       });
       setProfile((prev) =>
         prev
@@ -696,22 +697,26 @@ export default function App() {
 
     if (isUnsafe && (isStateChanged || isThresholdChanged)) {
       const isPushEnabled = profile?.notificationPreferences?.push_enabled !== false;
+      const isEmailEnabled = profile?.notificationPreferences?.email_enabled === true;
       const alertItem = buildThresholdAqiAlert(currentGpsAqi, threshold, true);
-      if (alertItem && isPushEnabled) {
+      
+      if (alertItem) {
         setAqiAlerts((current) => [alertItem, ...current].slice(0, 5));
         setAqiUnreadCount((current) => current + 1);
 
-        // Dispatch real push notification + email via backend
-        void dispatchAqiAlert(user.id, {
-          title: alertItem.title,
-          body: alertItem.body,
-          aqi: alertItem.aqi,
-          aqiLabel: alertItem.toneLabel,
-          location: alertItem.location,
-        }).catch((err) => {
-          // Non-fatal — in-app alert already shown
-          console.warn("[AQI Dispatch] Failed to send push/email:", err?.message);
-        });
+        if (isPushEnabled || isEmailEnabled) {
+          // Dispatch real push notification + email via backend
+          void dispatchAqiAlert(user.id, {
+            title: alertItem.title,
+            body: alertItem.body,
+            aqi: alertItem.aqi,
+            aqiLabel: alertItem.toneLabel,
+            location: alertItem.location,
+          }).catch((err) => {
+            // Non-fatal — in-app alert already shown
+            console.warn("[AQI Dispatch] Failed to send push/email:", err?.message);
+          });
+        }
       }
 
       lastAlertedThresholdRef.current = threshold;

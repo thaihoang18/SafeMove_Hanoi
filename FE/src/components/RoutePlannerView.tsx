@@ -227,7 +227,7 @@ export function RoutePlannerView({ locations, origin, destination, maxRatio, set
 
   const currentStep = selectedRoute?.route.steps?.[0] ?? null;
   const currentInstruction = currentStep
-    ? `${currentStep.instruction} trong ${Math.round(currentStep.distanceM)} m`
+    ? `${currentStep.instruction.replace("Bắt đầu di chuyển", "ルートに沿って進む")} (${Math.round(currentStep.distanceM)} m)`
     : selectedRoute
       ? "ナビゲーションの準備ができました。開始すると次の案内を表示します。"
       : "ルートを待機中です。";
@@ -400,7 +400,7 @@ export function RoutePlannerView({ locations, origin, destination, maxRatio, set
             </button>
             <div>
               <div className="text-xs uppercase tracking-[0.22em] text-slate-400">SafeMove Navigation</div>
-              <h1 className="text-xl font-semibold text-white">ナビゲーションモード</h1>
+              <h1 className="text-sm sm:text-xl font-semibold text-white truncate max-w-[140px] sm:max-w-none">ナビゲーションモード</h1>
             </div>
           </div>
 
@@ -415,7 +415,7 @@ export function RoutePlannerView({ locations, origin, destination, maxRatio, set
         </div>
       </div>
       {navigationStarted ? (
-        <div className="absolute inset-x-0 top-24 z-50 px-4">
+        <div className="absolute inset-x-0 top-[104px] sm:top-24 z-50 px-4">
           <div className="mx-auto max-w-6xl overflow-hidden rounded-[1.5rem] bg-white/95 shadow-[0_18px_40px_rgba(15,23,42,0.18)] ring-1 ring-slate-200/80 backdrop-blur-sm">
             <div className="flex flex-col gap-3 px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
               <div className="min-w-0">
@@ -450,29 +450,29 @@ export function RoutePlannerView({ locations, origin, destination, maxRatio, set
                 </div>
               </div>
 
-              <div className="mt-4 grid gap-2.5 sm:grid-cols-3">
-                <div className="rounded-3xl bg-slate-50 p-3.5">
-                  <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">距離</div>
-                  <div className="mt-1.5 text-xl font-semibold text-slate-950">{routeData.distanceKm.toFixed(1)} km</div>
+              <div className="mt-4 grid grid-cols-3 gap-2 sm:gap-2.5">
+                <div className="rounded-2xl sm:rounded-3xl bg-slate-50 p-2 sm:p-3.5">
+                  <div className="text-[10px] sm:text-[11px] uppercase tracking-[0.18em] text-slate-500">距離</div>
+                  <div className="mt-1 sm:mt-1.5 text-sm sm:text-xl font-semibold text-slate-950">{routeData.distanceKm.toFixed(1)} km</div>
                 </div>
-                <div className="rounded-3xl bg-slate-50 p-3.5">
-                  <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">時間</div>
-                  <div className="mt-1.5 text-xl font-semibold text-slate-950">{routeData.durationMinutes} 分</div>
+                <div className="rounded-2xl sm:rounded-3xl bg-slate-50 p-2 sm:p-3.5">
+                  <div className="text-[10px] sm:text-[11px] uppercase tracking-[0.18em] text-slate-500">時間</div>
+                  <div className="mt-1 sm:mt-1.5 text-sm sm:text-xl font-semibold text-slate-950">{routeData.durationMinutes} 分</div>
                 </div>
-                <div className="rounded-3xl bg-slate-50 p-3.5">
-                  <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">目的地</div>
-                  <div className="mt-1.5 text-xl font-semibold text-slate-950">{routeDestination?.name}</div>
+                <div className="rounded-2xl sm:rounded-3xl bg-slate-50 p-2 sm:p-3.5">
+                  <div className="text-[10px] sm:text-[11px] uppercase tracking-[0.18em] text-slate-500">目的地</div>
+                  <div className="mt-1 sm:mt-1.5 text-xs sm:text-xl font-semibold text-slate-950 truncate">{routeDestination?.name}</div>
                 </div>
               </div>
 
-              <div className="mt-4 grid gap-2.5 sm:grid-cols-2">
-                <div className="rounded-3xl bg-slate-50 p-3.5">
-                  <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">ルート AQI</div>
-                  <div className="mt-1.5 text-base font-semibold text-slate-950">{routeAqiLabel}</div>
+              <div className="mt-2.5 sm:mt-4 grid grid-cols-2 gap-2 sm:gap-2.5">
+                <div className="rounded-2xl sm:rounded-3xl bg-slate-50 p-2 sm:p-3.5">
+                  <div className="text-[10px] sm:text-[11px] uppercase tracking-[0.18em] text-slate-500">ルート AQI</div>
+                  <div className="mt-1 sm:mt-1.5 text-sm sm:text-base font-semibold text-slate-950">{routeAqiLabel}</div>
                 </div>
-                <div className="rounded-3xl bg-slate-50 p-3.5">
-                  <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">通知</div>
-                  <div className="mt-1.5 text-base font-semibold text-slate-950">{rerouteMessage ?? "ルートに沿って進行中"}</div>
+                <div className="rounded-2xl sm:rounded-3xl bg-slate-50 p-2 sm:p-3.5">
+                  <div className="text-[10px] sm:text-[11px] uppercase tracking-[0.18em] text-slate-500">通知</div>
+                  <div className="mt-1 sm:mt-1.5 text-xs sm:text-base font-semibold text-slate-950 truncate">{rerouteMessage ?? "ルートに沿って進行中"}</div>
                 </div>
               </div>
 

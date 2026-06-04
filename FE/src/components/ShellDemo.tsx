@@ -180,17 +180,20 @@ export function ShellDemo({
 
       {/* Bottom Navigation */}
       <nav className="bottom-nav-demo">
-        {navItems.map((item) => (
-          <button
-            key={item.id}
-            className={`nav-item-demo ${view === item.id ? "active" : ""}`}
-            onClick={() => handleNavigate(item.id)}
-            title={item.label}
-          >
-            <span className="nav-icon">{item.icon}</span>
-            <span className="nav-label-demo">{item.label}</span>
-          </button>
-        ))}
+        {navItems.map((item) => {
+          const activeView = view === "alert" ? "home" : view;
+          return (
+            <button
+              key={item.id}
+              className={`nav-item-demo ${activeView === item.id ? "active" : ""}`}
+              onClick={() => handleNavigate(item.id)}
+              title={item.label}
+            >
+              <span className="nav-icon">{item.icon}</span>
+              <span className="nav-label-demo">{item.label}</span>
+            </button>
+          );
+        })}
       </nav>
     </div>
   );

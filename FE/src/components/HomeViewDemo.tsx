@@ -36,6 +36,15 @@ export function HomeViewDemo({
     return "健康に良くない";
   };
 
+  const getAqiColorClass = (value: number | null) => {
+    if (value === null) return "aqi-unknown";
+    if (value <= 50) return "aqi-good";
+    if (value <= 100) return "aqi-moderate";
+    if (value <= 150) return "aqi-sensitive";
+    if (value <= 200) return "aqi-bad";
+    return "aqi-very-bad";
+  };
+
   const getAqiAdvice = (value: number | null) => {
     if (value === null) {
       return {
@@ -90,7 +99,7 @@ export function HomeViewDemo({
     <div className="demo-home-container">
       {/* AQI Circle Section */}
       <div className="aqi-section">
-        <div className="aqi-circle-border" onClick={onOpenAqiAlert}>
+        <div className={`aqi-circle-border ${getAqiColorClass(aqi)}`} onClick={onOpenAqiAlert}>
           <div className="aqi-value">{aqi ?? "--"}</div>
           <div className="aqi-label">AQI・{getAqiLabel(aqi)}</div>
         </div>
@@ -135,7 +144,7 @@ export function HomeViewDemo({
             </div>
           </div>
           <button className="refresh-btn" onClick={onRefreshGpsAqi} disabled={gpsLoading}>
-            <RefreshCw size={18} />
+            <RefreshCw size={18} className={gpsLoading ? "animate-spin" : ""} />
           </button>
         </div>
       </div>

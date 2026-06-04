@@ -263,6 +263,11 @@
   margin-bottom: 12px;
 }
 
+.expert-header h4 {
+  margin: 0;
+  font-size: 16px;
+}
+
 .expert-icon {
   display: inline-flex;
   align-items: center;

@@ -248,7 +248,6 @@ export function SearchLocationsView({
             <div className="pagination-footer">
               <span className="pagination-summary">
                 {Math.min(visibleCount, filteredLocations.length)} / {filteredLocations.length} 件を表示
-                {pageCount > 1 ? ` · ${pageIndex} / ${pageCount} ページ` : ""}
               </span>
               {pageIndex < pageCount && (
                 <button className="load-more-btn" type="button" onClick={loadMorePage}>

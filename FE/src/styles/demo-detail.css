@@ -55,12 +55,15 @@
 }
 
 .green-sub-badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 11px;
-  color: var(--primary-green);
-  background: var(--light-green);
-  padding: 4px 8px;
-  border-radius: 4px;
+  font-weight: 600;
+  color: #047857;
+  background: #d1fae5;
+  padding: 4px 10px;
+  border-radius: 999px;
   margin-bottom: 8px;
 }
 

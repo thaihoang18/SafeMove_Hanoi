@@ -174,8 +174,10 @@ export function LocationDetailView({
           <ArrowLeft className="h-5 w-5" />
         </button>
         <div className="detail-header-main">
-          <span className="green-sub-badge">📍 安全スポット</span>
           <h2 className="detail-title">{location.name}</h2>
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '8px', alignItems: 'center' }}>
+            <span className="green-sub-badge" style={{ margin: 0 }}>📍 安全スポット</span>
+          </div>
           <p className="detail-location">
             <MapPin size={14} className="inline" />
             {location.address || "ハノイ、ベトナム"}

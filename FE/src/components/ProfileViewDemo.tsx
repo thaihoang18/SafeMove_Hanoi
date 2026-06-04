@@ -1,4 +1,4 @@
-import { Bell, Edit2, Eye, EyeOff, AlertCircle, LogOut, X } from "lucide-react";
+import { Bell, Edit2, Eye, EyeOff, AlertCircle, LogOut, X, Mail } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
   avatarFrames,
@@ -424,7 +424,26 @@ export function ProfileViewDemo({
             </label>
           </div>
 
-          {/* Email Notifications removed as requested */}
+          {/* Email Notifications */}
+          <div className="toggle-row">
+            <span className="setting-item-title">
+              <Mail size={16} className="inline-icon" />
+              メール通知
+            </span>
+            <label className="switch">
+              <input
+                type="checkbox"
+                checked={emailEnabled}
+                onChange={(e) => {
+                  if (onUpdateEmailNotification) {
+                    void onUpdateEmailNotification(e.target.checked);
+                  }
+                }}
+                disabled={isLoading}
+              />
+              <span className="slider round"></span>
+            </label>
+          </div>
 
         </div>
       </div>
