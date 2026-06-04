@@ -99,7 +99,7 @@ export function AqiAlertScreen({ gpsAqi, gpsCoords, locations, onBack, onOpenRou
           </button>
         </div>
 
-        <div className="card expert-advice-card">
+        <div className="expert-advice-card">
           <div className="expert-header">
             <span className="expert-icon">👨‍⚕️</span>
             <h4>専門家のアドバイス</h4>

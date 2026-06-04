@@ -289,4 +289,5 @@
   color: var(--muted);
   line-height: 1.65;
   font-size: 13px;
+  padding-left: calc(34px + 10px);
 }
