@@ -1,6 +1,6 @@
 import { sql } from "../db.mjs";
 import { assert, isNonEmptyString, parseUuidParam, toNullableNumber, toNullableString } from "../utils/validation.mjs";
-import { fetchIqAirMeasurement } from "../services/iqair-service.mjs";
+import { fetchIqAirMeasurement, fetchAqicnMeasurementDirect } from "../services/iqair-service.mjs";
 
 function parseCoordinate(rawValue, fieldName, min, max) {
   const value = Number(rawValue);
@@ -81,3 +81,15 @@ export async function getIqAirAqiController(searchParams) {
   };
 }
 
+export async function getAqicnAqiController(searchParams) {
+  const lat = parseCoordinate(searchParams.get("lat"), "lat", -90, 90);
+  const lngRaw = searchParams.get("lng") ?? searchParams.get("lon");
+  const lng = parseCoordinate(lngRaw, "lng", -180, 180);
+  const measurement = await fetchAqicnMeasurementDirect(lat, lng);
+
+  if (!measurement) {
+    throw new Error("AQICN data not available for this location.");
+  }
+
+  return { measurement };
+}

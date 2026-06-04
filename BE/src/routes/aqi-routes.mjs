@@ -2,6 +2,7 @@ import {
   createMeasurementController,
   getIqAirAqiController,
   getLatestAqiController,
+  getAqicnAqiController,
 } from "../controllers/aqi-controller.mjs";
 import { readJsonBody, sendJson } from "../utils/http.mjs";
 
@@ -13,6 +14,11 @@ export async function handleAqiRoutes(req, res, pathname, searchParams) {
 
   if (req.method === "GET" && pathname === "/api/aqi/latest") {
     sendJson(res, 200, { ok: true, ...(await getLatestAqiController(searchParams)) });
+    return true;
+  }
+
+  if (req.method === "GET" && pathname === "/api/aqi/aqicn") {
+    sendJson(res, 200, { ok: true, ...(await getAqicnAqiController(searchParams)) });
     return true;
   }
 

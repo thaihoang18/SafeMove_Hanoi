@@ -43,7 +43,7 @@ export function AqiAlertScreen({ gpsAqi, gpsCoords, locations, onBack, onOpenRou
     <div className="demo-alert-container">
       <header className="alert-header">
         <button className="back-button" onClick={onBack}>
-          <ArrowLeft size={18} /> ホーム
+          <ArrowLeft size={16} /> ホーム
         </button>
       </header>
 
@@ -77,7 +77,7 @@ export function AqiAlertScreen({ gpsAqi, gpsCoords, locations, onBack, onOpenRou
           {suggestion?.featured_image ? (
             <img src={suggestion.featured_image} alt={suggestion.name} className="spot-card-img" />
           ) : (
-            <div className="spot-card-img placeholder">画像</div>
+            <div className="spot-card-img placeholder">画像なし</div>
           )}
 
           <div className="spot-card-body">

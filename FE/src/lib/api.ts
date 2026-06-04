@@ -344,6 +344,11 @@ export async function fetchIqAirAqiByCoordinates(
     : basePromise;
 }
 
+export async function fetchAqicnAqi(lat: number, lng: number): Promise<{ ok: true; measurement: GpsAqiMeasurement }> {
+  const params = new URLSearchParams({ lat: String(lat), lng: String(lng) });
+  return request<{ ok: true; measurement: GpsAqiMeasurement }>(`/api/aqi/aqicn?${params.toString()}`);
+}
+
 function raceWithAbortSignal<T>(promise: Promise<T>, signal: AbortSignal) {
   if (signal.aborted) {
     return Promise.reject(

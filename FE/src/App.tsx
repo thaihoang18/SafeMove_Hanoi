@@ -581,14 +581,24 @@ export default function App() {
 
   const handleRefreshGpsAqi = useCallback(async () => {
     if (!navigator.geolocation) {
-      setGpsError("ブラウザは GPS 位置情報をサポートしていません。");
+      // No geolocation support — silently use B1 fallback
+      setGpsCoords({ lat: 21.0041, lng: 105.8428 });
+      try {
+        const data = await fetchIqAirAqiByCoordinates(21.0041, 105.8428);
+        setGpsAqi(data.measurement);
+      } catch { /* ignore */ }
       return;
     }
 
     try {
       const permission = await navigator.permissions?.query?.({ name: "geolocation" as PermissionName });
       if (permission?.state === "denied") {
-        setGpsError("ブラウザが GPS 位置情報をブロックしています。ブラウザ設定で許可してください。");
+        // Permission denied — silently fall back to B1
+        setGpsCoords({ lat: 21.0041, lng: 105.8428 });
+        try {
+          const data = await fetchIqAirAqiByCoordinates(21.0041, 105.8428);
+          setGpsAqi(data.measurement);
+        } catch { /* ignore */ }
         return;
       }
     } catch {
@@ -645,12 +655,8 @@ export default function App() {
           window.localStorage.setItem("safemove:lastAqiValue", nextAqi === null ? "" : String(nextAqi));
           window.localStorage.setItem("safemove:lastAqiTone", nextTone);
         }
-      } catch (innerError) {
-        if (innerError instanceof Error) {
-          setGpsError(`GPS 位置情報から AQI を取得できませんでした: ${innerError.message}`);
-        } else {
-          setGpsError("GPS 位置情報から AQI を取得できませんでした。");
-        }
+      } catch {
+        // AQI fetch failed — silently ignore, gpsAqi stays null
       }
     } catch (error) {
       console.warn("GPS 取得エラー。B1 Building のフォールバックを使用します:", error);
@@ -660,19 +666,11 @@ export default function App() {
       const fallbackLng = 105.8428;
       
       setGpsCoords({ lat: fallbackLat, lng: fallbackLng });
-      setGpsError("GPS エラーのため、模擬位置（B1 Building）を使用しています。");
       
       try {
         const data = await fetchIqAirAqiByCoordinates(fallbackLat, fallbackLng);
         setGpsAqi(data.measurement);
-        // ... (we don't strictly need to trigger local alerts on fallback load)
-      } catch (innerError) {
-        if (innerError instanceof Error) {
-          setGpsError(`フォールバック AQI を取得できませんでした: ${innerError.message}`);
-        } else {
-          setGpsError("フォールバック AQI を取得できませんでした。");
-        }
-      }
+      } catch { /* ignore */ }
     } finally {
       setGpsLoading(false);
     }
@@ -938,7 +936,7 @@ export default function App() {
           gpsLoading={gpsLoading}
           onOpenAqiAlert={() => setView("alert")}
           onRefreshGpsAqi={handleRefreshGpsAqi}
-          
+          gpsError={gpsError}
         />
       )}
 

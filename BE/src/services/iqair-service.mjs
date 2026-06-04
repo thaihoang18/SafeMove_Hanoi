@@ -202,6 +202,14 @@ async function fetchIqAirMeasurementFresh(lat, lng, cacheKey) {
 }
 
 /**
+ * Direct AQICN fetch — exported for the /api/aqi/aqicn endpoint.
+ * Uses the same logic as the internal fallback.
+ */
+export async function fetchAqicnMeasurementDirect(lat, lng) {
+  return fetchAqicnMeasurement(lat, lng);
+}
+
+/**
  * Fallback: fetch AQI from AQICN (waqi.info) using geo-based feed.
  * Requires AQICN_TOKEN env variable (free tier: https://aqicn.org/api/).
  * Returns null if token missing or request fails — silently skipped.
