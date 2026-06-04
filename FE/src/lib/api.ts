@@ -15,6 +15,7 @@ import type {
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+const REQUEST_TIMEOUT_MS = 20000;
 
 const iqAirAqiCache = new Map<
   string,
@@ -28,22 +29,52 @@ function getIqAirCacheKey(lat: number, lng: number) {
   return `${lat.toFixed(6)}|${lng.toFixed(6)}`;
 }
 
-async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    headers: {
-      "Content-Type": "application/json",
-      ...(options?.headers ?? {}),
-    },
-    ...options,
-  });
+async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const externalSignal = options.signal;
+  const onAbort = () => controller.abort();
 
-  const data = await response.json();
+  if (externalSignal) {
+    if (externalSignal.aborted) {
+      window.clearTimeout(timeoutId);
+      throw new DOMException("The operation was aborted.", "AbortError");
+    }
 
-  if (!response.ok || data.ok === false) {
-    throw new Error(data.error || `Request failed: ${response.status}`);
+    externalSignal.addEventListener("abort", onAbort, { once: true });
   }
 
-  return data as T;
+  try {
+    const { headers, signal: _ignoredSignal, ...restOptions } = options;
+    const response = await fetch(`${API_BASE_URL}${path}`, {
+      ...restOptions,
+      headers: {
+        "Content-Type": "application/json",
+        ...(headers ?? {}),
+      },
+      signal: controller.signal,
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || data.ok === false) {
+      throw new Error(data.error || `Request failed: ${response.status}`);
+    }
+
+    return data as T;
+  } catch (error) {
+    if (controller.signal.aborted) {
+      throw new Error("Request timed out. Vui lòng thử lại sau.");
+    }
+
+    throw error;
+  } finally {
+    if (externalSignal) {
+      externalSignal.removeEventListener("abort", onAbort);
+    }
+
+    window.clearTimeout(timeoutId);
+  }
 }
 
 export async function fetchBootstrapData() {

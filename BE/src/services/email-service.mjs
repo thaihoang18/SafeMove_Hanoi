@@ -17,6 +17,26 @@
 import nodemailer from "nodemailer";
 
 let transporter = null;
+const SMTP_TIMEOUT_MS = 15000;
+const SEND_MAIL_TIMEOUT_MS = 20000;
+
+function withTimeout(promise, timeoutMs, label) {
+  let timerId;
+
+  const timeoutPromise = new Promise((_, reject) => {
+    timerId = setTimeout(() => {
+      const error = new Error(`${label} timed out after ${timeoutMs}ms`);
+      error.code = "EMAIL_TIMEOUT";
+      reject(error);
+    }, timeoutMs);
+  });
+
+  return Promise.race([promise, timeoutPromise]).finally(() => {
+    if (timerId) {
+      clearTimeout(timerId);
+    }
+  });
+}
 
 function getTransporter() {
   if (transporter) return transporter;
@@ -34,10 +54,15 @@ function getTransporter() {
     host,
     port,
     secure: port === 465,
+    requireTLS: port !== 465,
+    connectionTimeout: SMTP_TIMEOUT_MS,
+    greetingTimeout: SMTP_TIMEOUT_MS,
+    socketTimeout: SMTP_TIMEOUT_MS,
     auth: { user, pass },
     tls: {
       // Reject unauthorized certs in production; allow in dev if needed
       rejectUnauthorized: process.env.NODE_ENV === "production",
+      minVersion: "TLSv1.2",
     },
   });
 
@@ -62,13 +87,17 @@ export async function sendEmail(to, subject, htmlBody, textBody) {
   const from = process.env.SMTP_FROM?.trim() || "SafeMove HaNoi <noreply@safemove.local>";
 
   try {
-    await t.sendMail({
-      from,
-      to,
-      subject,
-      html: htmlBody,
-      text: textBody ?? htmlBody.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim(),
-    });
+    await withTimeout(
+      t.sendMail({
+        from,
+        to,
+        subject,
+        html: htmlBody,
+        text: textBody ?? htmlBody.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim(),
+      }),
+      SEND_MAIL_TIMEOUT_MS,
+      "SMTP sendMail",
+    );
     return { sent: true, error: null };
   } catch (error) {
     console.error("[Email] sendMail error:", error.message);

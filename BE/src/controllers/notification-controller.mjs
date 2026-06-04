@@ -181,7 +181,7 @@ export async function dispatchAqiAlertController(userId, alert) {
   try {
     await sql`
       insert into airpath.notifications (user_id, type, title, description)
-      values (${userId}, 'aqi_alert', ${title}, ${body})
+      values (${userId}, 'alert', ${title}, ${body})
     `;
   } catch (error) {
     console.error("[Dispatch] Failed to save DB notification:", error.message);
