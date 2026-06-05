@@ -25,6 +25,14 @@ Required env vars:
 - `LLM_API_KEY` (optional, default `ollama`)
 - `LLM_MODEL` (optional, default `qwen2.5:7b`)
 
+Email sending:
+
+- Preferred on Render free: `MAILTRAP_API_TOKEN`
+- Sender identity for Mailtrap: `MAILTRAP_FROM=SafeMove HaNoi <noreply@your-verified-domain.com>`
+- Optional SMTP fallback: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`
+
+When `MAILTRAP_API_TOKEN` is set, the backend uses Mailtrap's HTTPS API instead of SMTP, so it avoids Render free's outbound SMTP port block.
+
 ## Endpoints
 
 - `GET /api/health`

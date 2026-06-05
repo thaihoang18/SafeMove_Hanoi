@@ -1,17 +1,17 @@
 /**
  * email-service.mjs
- * Email notifications via nodemailer (SMTP).
- * Works with Gmail App Password, SendGrid SMTP, Mailgun, etc.
+ * Email notifications via Mailtrap API or nodemailer (SMTP).
+ * Prefers Mailtrap API when MAILTRAP_API_TOKEN is present so it works on
+ * platforms that block outbound SMTP, such as Render free web services.
  *
- * Setup (Gmail example):
- *   1. Enable 2FA on your Google account
- *   2. Go to https://myaccount.google.com/apppasswords → create App Password
- *   3. Add to .env:
- *      SMTP_HOST=smtp.gmail.com
- *      SMTP_PORT=587
- *      SMTP_USER=you@gmail.com
- *      SMTP_PASS=your-app-password
- *      SMTP_FROM=SafeMove HaNoi <you@gmail.com>
+ * Mailtrap API setup:
+ *   1. Verify your sending domain in Mailtrap.
+ *   2. Add to env:
+ *      MAILTRAP_API_TOKEN=...
+ *      MAILTRAP_FROM=SafeMove HaNoi <noreply@your-verified-domain.com>
+ *
+ * SMTP fallback setup:
+ *   1. Add SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM.
  */
 
 import nodemailer from "nodemailer";
@@ -19,6 +19,7 @@ import nodemailer from "nodemailer";
 let transporter = null;
 const SMTP_TIMEOUT_MS = 15000;
 const SEND_MAIL_TIMEOUT_MS = 20000;
+const MAILTRAP_SEND_URL = "https://send.api.mailtrap.io/api/send";
 
 function withTimeout(promise, timeoutMs, label) {
   let timerId;
@@ -69,6 +70,68 @@ function getTransporter() {
   return transporter;
 }
 
+function parseFromAddress(value) {
+  const raw = value?.trim();
+  if (!raw) return null;
+
+  const match = raw.match(/^(.*?)<([^<>]+)>$/);
+  if (match) {
+    const name = match[1].trim().replace(/["']/g, "");
+    const email = match[2].trim();
+    return { email, ...(name ? { name } : {}) };
+  }
+
+  return { email: raw };
+}
+
+function getMailtrapConfig() {
+  const token = process.env.MAILTRAP_API_TOKEN?.trim() || process.env.MAILTRAP_TOKEN?.trim();
+  if (!token) return null;
+
+  const from = parseFromAddress(process.env.MAILTRAP_FROM?.trim() || process.env.SMTP_FROM?.trim());
+  if (!from?.email) {
+    return { token, from: null };
+  }
+
+  return { token, from };
+}
+
+async function sendViaMailtrap(to, subject, htmlBody, textBody) {
+  const config = getMailtrapConfig();
+  if (!config?.token) return null;
+  if (!config.from?.email) {
+    return { sent: false, error: "mailtrap_from_not_configured" };
+  }
+
+  const response = await withTimeout(
+    fetch(MAILTRAP_SEND_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${config.token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: config.from,
+        to: [{ email: to }],
+        subject,
+        text: textBody ?? htmlBody.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim(),
+        html: htmlBody,
+      }),
+    }),
+    SEND_MAIL_TIMEOUT_MS,
+    "Mailtrap send",
+  );
+
+  if (!response.ok) {
+    const errorBody = await response.text().catch(() => "");
+    throw new Error(
+      `Mailtrap API failed with ${response.status}${errorBody ? `: ${errorBody}` : ""}`,
+    );
+  }
+
+  return { sent: true, error: null };
+}
+
 /**
  * Send an HTML email.
  * @param {string} to - Recipient email address
@@ -78,13 +141,21 @@ function getTransporter() {
  * @returns {{ sent: boolean, error: string|null }}
  */
 export async function sendEmail(to, subject, htmlBody, textBody) {
-  const t = getTransporter();
-  if (!t) {
-    console.warn("[Email] SMTP not configured — email skipped.");
-    return { sent: false, error: "smtp_not_configured" };
+  const mailtrapResult = await sendViaMailtrap(to, subject, htmlBody, textBody);
+  if (mailtrapResult) {
+    return mailtrapResult;
   }
 
-  const from = process.env.SMTP_FROM?.trim() || "SafeMove HaNoi <noreply@safemove.local>";
+  const t = getTransporter();
+  if (!t) {
+    console.warn("[Email] No Mailtrap token or SMTP settings — email skipped.");
+    return { sent: false, error: "email_not_configured" };
+  }
+
+  const from = process.env.SMTP_FROM?.trim();
+  if (!from) {
+    return { sent: false, error: "smtp_from_not_configured" };
+  }
 
   try {
     await withTimeout(
