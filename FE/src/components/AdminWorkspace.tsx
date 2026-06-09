@@ -892,7 +892,15 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
 
             <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_1.05fr]">
               <div className="overflow-hidden rounded-[1.7rem] bg-slate-50 ring-1 ring-slate-200 lg:sticky lg:top-4 lg:h-[calc(100vh-12rem)] lg:min-h-[620px]">
-                <div className="relative h-[620px] lg:h-full">
+                <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-white px-5 py-4">
+                  <div>
+                    <div className="text-sm font-semibold text-slate-900">地図で位置を選択</div>
+                    <div className="mt-1 text-xs text-slate-500">ハノイ市内の位置をクリック、またはピンをドラッグしてください。</div>
+                  </div>
+                  <MapPin className="h-5 w-5 shrink-0 text-emerald-600" />
+                </div>
+
+                <div className="relative h-[540px] lg:h-[calc(100%-73px)]">
                   <MapContainer
                     center={[hanoiCenter.lat, hanoiCenter.lng]}
                     zoom={mapZoom}
@@ -910,10 +918,6 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
                     <HanoiMapZoomSync zoom={mapZoom} onZoomChange={setMapZoom} />
                     <HanoiFacilityPickerMap mapPoint={mapPoint} setMapPoint={setMapPoint} setFormState={setFormState} />
                   </MapContainer>
-
-                  <div className="pointer-events-none absolute left-5 top-5 rounded-full bg-white/90 px-4 py-2 text-sm text-slate-700 shadow-sm ring-1 ring-slate-200">
-                    ハノイ - 地図で位置を選択
-                  </div>
 
                   <div className="pointer-events-none absolute bottom-5 left-5 rounded-2xl bg-slate-900/85 px-4 py-3 text-xs text-white shadow-lg shadow-slate-900/10 backdrop-blur">
                     <div className="font-medium">選択済みの位置</div>
