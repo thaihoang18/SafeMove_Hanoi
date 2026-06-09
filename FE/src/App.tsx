@@ -437,6 +437,9 @@ export default function App() {
     setAuthError(null);
     try {
       const response = await login(email, password);
+      if (response.user.role === "admin") {
+        throw new Error("Admin account cannot log in from the user login screen.");
+      }
       setUser(response.user);
       setRole(response.user.role === "admin" ? "admin" : "user");
       setView(response.user.role === "admin" ? "dashboard" : "home");
@@ -444,7 +447,9 @@ export default function App() {
       hasAutoLoadedGpsAqiRef.current = false;
     } catch (error) {
       let msg = error instanceof Error ? error.message : "ログインに失敗しました。";
-      if (/invalid email or password/i.test(msg) || /invalid admin credentials/i.test(msg) || /401/.test(msg)) {
+      if (/admin account cannot log in from the user login screen/i.test(msg)) {
+        msg = "管理者アカウントはユーザー用ログイン画面からログインできません。管理者ログイン画面を使用してください。";
+      } else if (/invalid email or password/i.test(msg) || /invalid admin credentials/i.test(msg) || /401/.test(msg)) {
         msg = "ユーザー名またはパスワードが正しくありません。";
       } else if (/email is required/i.test(msg) || /password is required/i.test(msg)) {
         msg = "必要な情報をすべて入力してください。";
@@ -460,6 +465,9 @@ export default function App() {
     setAuthError(null);
     try {
       const response = await loginAdmin(email, password);
+      if (response.user.role !== "admin") {
+        throw new Error("User account cannot log in from the admin login screen.");
+      }
       setUser(response.user);
       setRole(response.user.role === "admin" ? "admin" : "user");
       setView(response.user.role === "admin" ? "dashboard" : "home");
@@ -467,7 +475,9 @@ export default function App() {
       hasAutoLoadedGpsAqiRef.current = false;
     } catch (error) {
       let msg = error instanceof Error ? error.message : "ログインに失敗しました。";
-      if (/invalid admin credentials/i.test(msg) || /401/.test(msg) || /invalid email or password/i.test(msg)) {
+      if (/user account cannot log in from the admin login screen/i.test(msg)) {
+        msg = "一般ユーザーアカウントは管理者用ログイン画面からログインできません。ユーザー用ログイン画面を使用してください。";
+      } else if (/invalid admin credentials/i.test(msg) || /401/.test(msg) || /invalid email or password/i.test(msg)) {
         msg = "ユーザー名またはパスワードが正しくありません。";
       } else if (/email is required/i.test(msg) || /password is required/i.test(msg)) {
         msg = "必要な情報をすべて入力してください。";
