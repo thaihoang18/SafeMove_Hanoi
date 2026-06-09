@@ -5,9 +5,64 @@ import "../styles/demo-search.css";
 
 type Props = {
   locations: PlaceCatalogItem[];
+  currentPosition?: Coordinates | null;
   onSelectLocation: (location: PlaceCatalogItem) => void;
   onRequireLogin?: () => void;
 };
+
+type Coordinates = {
+  lat: number;
+  lng: number;
+};
+
+const SEARCH_POSITION_CACHE_KEY = "safemove:search-position";
+const SEARCH_POSITION_CACHE_TTL_MS = 10 * 60 * 1000;
+
+function loadCachedSearchPosition(): Coordinates | null {
+  try {
+    const cached = JSON.parse(localStorage.getItem(SEARCH_POSITION_CACHE_KEY) ?? "null") as {
+      position?: Coordinates;
+      cachedAt?: number;
+    } | null;
+
+    if (
+      cached?.position &&
+      typeof cached.position.lat === "number" &&
+      typeof cached.position.lng === "number" &&
+      typeof cached.cachedAt === "number" &&
+      Date.now() - cached.cachedAt < SEARCH_POSITION_CACHE_TTL_MS
+    ) {
+      return cached.position;
+    }
+  } catch {
+    // Ignore unavailable or malformed browser storage.
+  }
+
+  return null;
+}
+
+function storeSearchPosition(position: Coordinates) {
+  try {
+    localStorage.setItem(
+      SEARCH_POSITION_CACHE_KEY,
+      JSON.stringify({ position, cachedAt: Date.now() })
+    );
+  } catch {
+    // Distance display still works when browser storage is unavailable.
+  }
+}
+
+function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const toRad = (value: number) => (value * Math.PI) / 180;
+  const earthRadiusKm = 6371;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return earthRadiusKm * c;
+}
 
 function getFilterType(location: PlaceCatalogItem): "park" | "gym" | "sports" {
   if (location.filter_type) {
@@ -42,6 +97,7 @@ function getSpotCardImage(location: PlaceCatalogItem) {
 
 export function SearchLocationsView({
   locations,
+  currentPosition: initialPosition,
   onSelectLocation,
   onRequireLogin,
 }: Props) {
@@ -52,7 +108,9 @@ export function SearchLocationsView({
   const [pageIndex, setPageIndex] = useState<number>(1);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
-  const [currentPosition, setCurrentPosition] = useState<{ lat: number; lng: number } | null>(null);
+  const [currentPosition, setCurrentPosition] = useState<Coordinates | null>(
+    () => loadCachedSearchPosition() ?? initialPosition ?? null
+  );
 
   const filteredLocations = locations.filter((loc) => {
     const matchesKeyword = searchKeyword === "" || loc.name.toLowerCase().includes(searchKeyword.toLowerCase());
@@ -71,19 +129,6 @@ export function SearchLocationsView({
     pageIndex === 1 ? 10 : 10 + (pageIndex - 1) * itemsPerPage
   );
 
-  // Haversine distance in kilometers
-  const haversineKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-    const toRad = (v: number) => (v * Math.PI) / 180;
-    const R = 6371; // km
-    const dLat = toRad(lat2 - lat1);
-    const dLon = toRad(lon2 - lon1);
-    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-      Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-  };
-
   const toggleFavorite = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     const newFavorites = new Set(favorites);
@@ -95,20 +140,42 @@ export function SearchLocationsView({
     setFavorites(newFavorites);
   };
 
-  // Request current position once (best-effort)
+  // Use the app-level position immediately while a fresher GPS fix is requested.
+  useEffect(() => {
+    if (initialPosition) {
+      setCurrentPosition((current) => current ?? initialPosition);
+    }
+  }, [initialPosition]);
+
+  // Resolve a cached/low-power fix quickly, then improve accuracy in the background.
   useEffect(() => {
     if (!navigator?.geolocation) return;
     let mounted = true;
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        if (!mounted) return;
-        setCurrentPosition({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-      },
-      () => {
-        /* ignore errors silently */
-      },
-      { enableHighAccuracy: true, maximumAge: 60 * 1000 }
-    );
+
+    const applyPosition = (position: GeolocationPosition) => {
+      if (!mounted) return;
+      const nextPosition = {
+        lat: position.coords.latitude,
+        lng: position.coords.longitude,
+      };
+      setCurrentPosition(nextPosition);
+      storeSearchPosition(nextPosition);
+    };
+    const ignoreError = () => {
+      // Keep showing the immediate cached/app-level distance.
+    };
+
+    navigator.geolocation.getCurrentPosition(applyPosition, ignoreError, {
+      enableHighAccuracy: false,
+      maximumAge: 5 * 60 * 1000,
+      timeout: 900,
+    });
+    navigator.geolocation.getCurrentPosition(applyPosition, ignoreError, {
+      enableHighAccuracy: true,
+      maximumAge: 60 * 1000,
+      timeout: 5000,
+    });
+
     return () => { mounted = false; };
   }, []);
 
@@ -202,7 +269,7 @@ export function SearchLocationsView({
                   <h4 className="spot-name">{location.name}</h4>
                   <span className="distance-tag">
                     {(() => {
-                      if (location.distance_km && typeof location.distance_km === 'number') return `${location.distance_km.toFixed(1)} km`;
+                      if (typeof location.distance_km === 'number') return `${location.distance_km.toFixed(1)} km`;
                       if (currentPosition && typeof location.lat === 'number' && typeof location.lng === 'number') {
                         const km = haversineKm(currentPosition.lat, currentPosition.lng, location.lat, location.lng);
                         return `${km.toFixed(1)} km`;

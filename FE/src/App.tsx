@@ -1013,6 +1013,7 @@ export default function App() {
       {view === "search" && (
       <SearchLocationsView
         locations={mergedLocations}
+        currentPosition={gpsCoords}
         onSelectLocation={(location) => {
             const backendLocation = resolveBackendLocation(location);
             setSelectedLocation(backendLocation);
