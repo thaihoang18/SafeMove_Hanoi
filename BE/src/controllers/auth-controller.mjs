@@ -78,12 +78,17 @@ export async function loginUserController(body) {
   const identifier = body.email.trim().toLowerCase();
   const passwordHash = await hashPassword(body.password);
   const adminCredentials = getAdminCredentials();
+  const expectedRole = body.expectedRole === "admin" || body.expectedRole === "user" ? body.expectedRole : null;
 
   if (identifier === adminCredentials.username || identifier === adminCredentials.email) {
     const adminPasswordHash = await hashPassword(adminCredentials.password);
 
     if (passwordHash !== adminPasswordHash) {
       throw new Error("Invalid admin credentials.");
+    }
+
+    if (expectedRole === "user") {
+      throw new Error("Admin account cannot log in from the user login screen.");
     }
 
     return { user: await buildAdminUser() };
@@ -99,6 +104,10 @@ export async function loginUserController(body) {
 
   if (!rows[0]) {
     throw new Error("Invalid email or password.");
+  }
+
+  if (expectedRole === "admin") {
+    throw new Error("User account cannot log in from the admin login screen.");
   }
 
   return { user: { ...rows[0], role: "user" } };

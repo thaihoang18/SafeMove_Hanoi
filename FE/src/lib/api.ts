@@ -142,7 +142,7 @@ export async function login(email: string, password: string) {
     "/api/auth/login",
     {
       method: "POST",
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, expectedRole: "user" }),
     },
   );
 }
@@ -152,7 +152,7 @@ export async function loginAdmin(email: string, password: string) {
     "/api/auth/login",
     {
       method: "POST",
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, expectedRole: "admin" }),
     },
   );
 }
