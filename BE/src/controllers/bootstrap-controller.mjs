@@ -1,4 +1,5 @@
 import { sql, getDatabaseHealth } from "../db.mjs";
+import { getBootstrapAqiSnapshot } from "../services/bootstrap-aqi-cache.mjs";
 
 export async function getHealthController() {
   return {
@@ -19,7 +20,7 @@ export async function getBootstrapController() {
       order by name asc
     `,
   ]);
+  const aqiSnapshot = await getBootstrapAqiSnapshot();
 
-  return { activities, healthConditions };
+  return { activities, healthConditions, aqiSnapshot };
 }
-

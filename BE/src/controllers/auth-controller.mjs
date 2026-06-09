@@ -18,7 +18,7 @@ async function buildAdminUser() {
   return {
     id: "admin",
     email: username,
-    full_name: "Quản trị viên",
+    full_name: "管理者",
     birth_year: null,
     home_lat: null,
     home_lng: null,
@@ -119,7 +119,7 @@ export async function resetPasswordController(body) {
     return {
       reset: true,
       emailSent: true,
-      message: "Nếu email tồn tại trong hệ thống, mật khẩu mới đã được gửi.",
+      message: "メールアドレスが登録済みの場合は、新しいパスワードを送信しました。",
     };
   }
 
@@ -134,9 +134,9 @@ export async function resetPasswordController(body) {
   `;
 
   const displayName = user.full_name?.trim() || user.email;
-  const subject = "[SafeMove Hà Nội] Mật khẩu mới của bạn";
+  const subject = "[SafeMove Hanoi] 新しいパスワードのお知らせ";
   const htmlBody = `<!DOCTYPE html>
-<html lang="vi">
+<html lang="ja">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -145,21 +145,21 @@ export async function resetPasswordController(body) {
   <div style="max-width:640px;margin:0 auto;padding:32px 20px;">
     <div style="background:#ffffff;border:1px solid #dbe7de;border-radius:20px;overflow:hidden;box-shadow:0 12px 32px rgba(17,120,67,0.08);">
       <div style="padding:24px 28px;background:linear-gradient(135deg,#117843,#0d5a2c);color:#ffffff;">
-        <div style="font-size:12px;letter-spacing:0.12em;text-transform:uppercase;opacity:0.85;">SafeMove Hà Nội</div>
-        <h1 style="margin:10px 0 0;font-size:24px;line-height:1.3;">Mật khẩu mới của bạn đã được tạo</h1>
+        <div style="font-size:12px;letter-spacing:0.12em;text-transform:uppercase;opacity:0.85;">SafeMove Hanoi</div>
+        <h1 style="margin:10px 0 0;font-size:24px;line-height:1.3;">新しいパスワードを作成しました</h1>
       </div>
       <div style="padding:28px;">
-        <p style="margin:0 0 16px;font-size:15px;line-height:1.7;">Xin chào ${displayName},</p>
-        <p style="margin:0 0 16px;font-size:15px;line-height:1.7;">Chúng tôi đã nhận được yêu cầu đặt lại mật khẩu cho tài khoản SafeMove Hà Nội của bạn.</p>
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.7;">${displayName} 様</p>
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.7;">SafeMove Hanoi のアカウントに対するパスワード再設定のご依頼を受け付けました。</p>
         <div style="margin:24px 0;padding:18px 20px;border-radius:16px;background:#f7faf8;border:1px dashed #a8c9b4;">
-          <div style="font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#117843;margin-bottom:8px;font-weight:700;">Mật khẩu mới</div>
+          <div style="font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#117843;margin-bottom:8px;font-weight:700;">新しいパスワード</div>
           <div style="font-size:28px;font-weight:700;letter-spacing:0.08em;color:#0f3d24;">${temporaryPassword}</div>
         </div>
-        <p style="margin:0 0 12px;font-size:15px;line-height:1.7;">Bạn có thể dùng mật khẩu này để đăng nhập ngay lập tức. Sau khi đăng nhập, nên đổi sang mật khẩu riêng của bạn để an toàn hơn.</p>
-        <p style="margin:0;font-size:14px;line-height:1.7;color:#4b5563;">Nếu bạn không yêu cầu thay đổi mật khẩu, hãy bỏ qua email này và đăng nhập lại sau để kiểm tra tài khoản.</p>
+        <p style="margin:0 0 12px;font-size:15px;line-height:1.7;">このパスワードで今すぐログインできます。ログイン後は、より安全のためご自身のパスワードへ変更してください。</p>
+        <p style="margin:0;font-size:14px;line-height:1.7;color:#4b5563;">パスワード再設定をご依頼いただいていない場合は、このメールを無視してください。後ほど再度ログインしてアカウントをご確認いただけます。</p>
       </div>
       <div style="padding:16px 28px;border-top:1px solid #e5efe7;background:#fbfdfb;font-size:12px;line-height:1.6;color:#6b7280;">
-        Email này được gửi tự động từ SafeMove Hà Nội.
+        このメールは SafeMove Hanoi から自動送信されています。
       </div>
     </div>
   </div>
@@ -167,11 +167,11 @@ export async function resetPasswordController(body) {
 </html>`;
 
   const textBody = [
-    "SafeMove Hà Nội - Mật khẩu mới của bạn",
-    `Xin chào ${displayName},`,
-    "Chúng tôi đã tạo một mật khẩu mới cho tài khoản của bạn.",
-    `Mật khẩu mới: ${temporaryPassword}`,
-    "Bạn có thể dùng mật khẩu này để đăng nhập ngay. Sau khi đăng nhập, hãy đổi sang mật khẩu riêng của bạn.",
+    "SafeMove Hanoi - 新しいパスワードのお知らせ",
+    `${displayName} 様`,
+    "アカウント用の新しいパスワードを作成しました。",
+    `新しいパスワード: ${temporaryPassword}`,
+    "このパスワードで今すぐログインできます。ログイン後は、ご自身のパスワードへ変更してください。",
   ].join("\n\n");
 
   const result = await sendEmail(email, subject, htmlBody, textBody);
@@ -183,13 +183,12 @@ export async function resetPasswordController(body) {
       where id = ${user.id}
     `;
 
-    throw new Error("Không thể gửi email đặt lại mật khẩu. Vui lòng thử lại sau.");
+    throw new Error("パスワード再設定メールを送信できませんでした。しばらくしてからもう一度お試しください。");
   }
 
   return {
     reset: true,
     emailSent: true,
-    message: "Mật khẩu mới đã được gửi tới email của bạn.",
+    message: "新しいパスワードをメールで送信しました。",
   };
 }
-

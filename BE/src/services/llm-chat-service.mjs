@@ -8,7 +8,7 @@ const provider = process.env.LLM_PROVIDER?.trim() || "ollama";
 const systemPrompt = `You are SafeMove HaNoi AI, an AQI assistant inside an air-pollution route and health app.
 
 Rules:
-- Answer in Vietnamese unless the user clearly writes in another language.
+- Answer in Japanese unless the user clearly writes in another language.
 - Use tool data whenever the question depends on AQI, profile, alerts, locations, or SafeMove HaNoi app state.
 - Do not invent AQI values, routes, medical facts, or notifications.
 - If tool data is missing, say what is missing.
@@ -64,7 +64,7 @@ async function runToolCallingLoop({ userId, messages }) {
 
     if (!message.tool_calls?.length) {
       return {
-        content: message.content?.trim() || "Tôi chưa có câu trả lời phù hợp.",
+        content: message.content?.trim() || "適切な回答はまだありません。",
         toolEvents,
         provider,
         model,
@@ -111,6 +111,5 @@ function safeJsonParse(value) {
 
 function buildFallbackReply(error) {
   const reason = error instanceof Error ? error.message : "unknown error";
-  return `Chat AI hiện chưa kết nối được tới model server (${reason}). Nếu bạn đang dùng Ollama local, hãy bật Ollama và pull model trước, ví dụ: ollama pull qwen2.5:7b`;
+  return `Chat AI は現在モデルサーバーに接続できません (${reason})。ローカルで Ollama を使っている場合は、Ollama を起動してからモデルを取得してください。例: ollama pull qwen2.5:7b`;
 }
-

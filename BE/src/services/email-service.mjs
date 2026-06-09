@@ -1,14 +1,21 @@
 /**
  * email-service.mjs
- * Email notifications via Mailtrap API or nodemailer (SMTP).
- * Prefers Mailtrap API when MAILTRAP_API_TOKEN is present so it works on
- * platforms that block outbound SMTP, such as Render free web services.
+ * Email notifications via Mailtrap API, Mailgun API, or nodemailer (SMTP).
+ * Prefers HTTPS email APIs when available so it works on platforms that block
+ * outbound SMTP, such as Render free web services.
  *
  * Mailtrap API setup:
  *   1. Verify your sending domain in Mailtrap.
  *   2. Add to env:
  *      MAILTRAP_API_TOKEN=...
  *      MAILTRAP_FROM=SafeMove HaNoi <noreply@your-verified-domain.com>
+ *
+ * Mailgun API setup:
+ *   1. Verify your sending domain in Mailgun.
+ *   2. Add to env:
+ *      MAILGUN_API_KEY=...
+ *      MAILGUN_DOMAIN=mg.your-domain.com
+ *      MAILGUN_FROM=SafeMove HaNoi <noreply@mg.your-domain.com>
  *
  * SMTP fallback setup:
  *   1. Add SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM.
@@ -96,6 +103,19 @@ function getMailtrapConfig() {
   return { token, from };
 }
 
+function getMailgunConfig() {
+  const apiKey = process.env.MAILGUN_API_KEY?.trim();
+  const domain = process.env.MAILGUN_DOMAIN?.trim();
+  if (!apiKey || !domain) return null;
+
+  const from = parseFromAddress(process.env.MAILGUN_FROM?.trim() || process.env.SMTP_FROM?.trim());
+  if (!from?.email) {
+    return { apiKey, domain, from: null };
+  }
+
+  return { apiKey, domain, from };
+}
+
 async function sendViaMailtrap(to, subject, htmlBody, textBody) {
   const config = getMailtrapConfig();
   if (!config?.token) return null;
@@ -107,7 +127,7 @@ async function sendViaMailtrap(to, subject, htmlBody, textBody) {
     fetch(MAILTRAP_SEND_URL, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${config.token}`,
+        "Api-Token": config.token,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -124,12 +144,59 @@ async function sendViaMailtrap(to, subject, htmlBody, textBody) {
 
   if (!response.ok) {
     const errorBody = await response.text().catch(() => "");
-    throw new Error(
+    const error = new Error(
       `Mailtrap API failed with ${response.status}${errorBody ? `: ${errorBody}` : ""}`,
     );
+    error.code = `MAILTRAP_${response.status}`;
+    throw error;
   }
 
   return { sent: true, error: null };
+}
+
+async function sendViaMailgun(to, subject, htmlBody, textBody) {
+  const config = getMailgunConfig();
+  if (!config?.apiKey || !config?.domain) return null;
+  if (!config.from?.email) {
+    return { sent: false, error: "mailgun_from_not_configured" };
+  }
+
+  const endpoint = `https://api.mailgun.net/v3/${encodeURIComponent(config.domain)}/messages`;
+  const body = new URLSearchParams();
+  body.set("from", config.from.name ? `${config.from.name} <${config.from.email}>` : config.from.email);
+  body.set("to", to);
+  body.set("subject", subject);
+  body.set("text", textBody ?? htmlBody.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim());
+  body.set("html", htmlBody);
+
+  const basicAuth = Buffer.from(`api:${config.apiKey}`).toString("base64");
+  const response = await withTimeout(
+    fetch(endpoint, {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${basicAuth}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body,
+    }),
+    SEND_MAIL_TIMEOUT_MS,
+    "Mailgun send",
+  );
+
+  if (!response.ok) {
+    const errorBody = await response.text().catch(() => "");
+    const error = new Error(
+      `Mailgun API failed with ${response.status}${errorBody ? `: ${errorBody}` : ""}`,
+    );
+    error.code = `MAILGUN_${response.status}`;
+    throw error;
+  }
+
+  return { sent: true, error: null };
+}
+
+function getEmailProviderPreference() {
+  return process.env.EMAIL_PROVIDER?.trim().toLowerCase() || "auto";
 }
 
 /**
@@ -141,39 +208,67 @@ async function sendViaMailtrap(to, subject, htmlBody, textBody) {
  * @returns {{ sent: boolean, error: string|null }}
  */
 export async function sendEmail(to, subject, htmlBody, textBody) {
-  const mailtrapResult = await sendViaMailtrap(to, subject, htmlBody, textBody);
-  if (mailtrapResult) {
-    return mailtrapResult;
+  const providerPreference = getEmailProviderPreference();
+  const smtpFallbackAllowed = providerPreference === "auto" || providerPreference === "smtp";
+  const attempts = [];
+
+  async function tryProvider(label, sender) {
+    try {
+      const result = await sender();
+      if (result?.sent) {
+        return result;
+      }
+      attempts.push(`${label}:${result?.error ?? "not_configured"}`);
+      return null;
+    } catch (error) {
+      attempts.push(`${label}:${error instanceof Error ? error.message : String(error)}`);
+      if (providerPreference !== "auto") {
+        throw error;
+      }
+      return null;
+    }
   }
 
-  const t = getTransporter();
-  if (!t) {
-    console.warn("[Email] No Mailtrap token or SMTP settings — email skipped.");
-    return { sent: false, error: "email_not_configured" };
+  if (providerPreference === "mailtrap" || providerPreference === "auto") {
+    const result = await tryProvider("mailtrap", () => sendViaMailtrap(to, subject, htmlBody, textBody));
+    if (result) return result;
   }
 
-  const from = process.env.SMTP_FROM?.trim();
-  if (!from) {
-    return { sent: false, error: "smtp_from_not_configured" };
+  if (providerPreference === "mailgun" || providerPreference === "auto") {
+    const result = await tryProvider("mailgun", () => sendViaMailgun(to, subject, htmlBody, textBody));
+    if (result) return result;
   }
 
-  try {
-    await withTimeout(
-      t.sendMail({
-        from,
-        to,
-        subject,
-        html: htmlBody,
-        text: textBody ?? htmlBody.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim(),
-      }),
-      SEND_MAIL_TIMEOUT_MS,
-      "SMTP sendMail",
-    );
-    return { sent: true, error: null };
-  } catch (error) {
-    console.error("[Email] sendMail error:", error.message);
-    return { sent: false, error: error.message };
+  if (smtpFallbackAllowed) {
+    const t = getTransporter();
+    if (t) {
+      const from = process.env.SMTP_FROM?.trim();
+      if (!from) {
+        return { sent: false, error: "smtp_from_not_configured" };
+      }
+
+      try {
+        await withTimeout(
+          t.sendMail({
+            from,
+            to,
+            subject,
+            html: htmlBody,
+            text: textBody ?? htmlBody.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim(),
+          }),
+          SEND_MAIL_TIMEOUT_MS,
+          "SMTP sendMail",
+        );
+        return { sent: true, error: null };
+      } catch (error) {
+        console.error("[Email] sendMail error:", error.message);
+        return { sent: false, error: error.message };
+      }
+    }
   }
+
+  console.warn("[Email] No usable email provider configured:", attempts.join(" | "));
+  return { sent: false, error: attempts.length ? attempts[attempts.length - 1] : "email_not_configured" };
 }
 
 /**
@@ -188,7 +283,7 @@ export function buildAqiAlertEmailHtml({ title, body, aqi, aqiLabel, location, u
 <body style="margin:0;padding:0;background:#f8fafc;font-family:system-ui,sans-serif;">
   <div style="max-width:480px;margin:40px auto;background:white;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
     <div style="background:${color};padding:24px 28px;color:white;">
-      <div style="font-size:12px;text-transform:uppercase;letter-spacing:0.15em;opacity:0.85;">SafeMove HaNoi · Cảnh báo AQI</div>
+      <div style="font-size:12px;text-transform:uppercase;letter-spacing:0.15em;opacity:0.85;">SafeMove Hanoi · AQI アラート</div>
       <h1 style="margin:8px 0 0;font-size:22px;font-weight:700;">${title}</h1>
     </div>
     <div style="padding:24px 28px;">
@@ -198,10 +293,10 @@ export function buildAqiAlertEmailHtml({ title, body, aqi, aqiLabel, location, u
         <div style="font-size:12px;color:#94a3b8;margin-top:2px;">📍 ${location ?? ""}</div>
       </div>` : ""}
       <p style="font-size:14px;line-height:1.7;color:#374151;margin:0 0 20px;">${body}</p>
-      <a href="#" style="display:inline-block;background:${color};color:white;text-decoration:none;padding:10px 24px;border-radius:8px;font-size:13px;font-weight:600;">Xem chi tiết trong ứng dụng</a>
+      <a href="#" style="display:inline-block;background:${color};color:white;text-decoration:none;padding:10px 24px;border-radius:8px;font-size:13px;font-weight:600;">アプリで詳細を見る</a>
     </div>
     <div style="padding:16px 28px;background:#f8fafc;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8;">
-      Xin chào ${userName ?? "bạn"} — bạn nhận email này vì đã đăng ký nhận cảnh báo AQI từ SafeMove HaNoi.
+      ${userName ?? "お客様"} 様 - このメールは、SafeMove Hanoi の AQI アラート配信にご登録いただいているため送信されています。
     </div>
   </div>
 </body>

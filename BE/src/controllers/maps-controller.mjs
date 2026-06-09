@@ -21,14 +21,14 @@ function normalizePlace(raw) {
 
 function translateModifier(modifier) {
   const map = {
-    left: "trái",
-    right: "phải",
-    straight: "thẳng",
-    "slight left": "chếch trái",
-    "slight right": "chếch phải",
-    "sharp left": "gắt trái",
-    "sharp right": "gắt phải",
-    uturn: "quay đầu",
+    left: "左",
+    right: "右",
+    straight: "直進",
+    "slight left": "やや左",
+    "slight right": "やや右",
+    "sharp left": "大きく左折",
+    "sharp right": "大きく右折",
+    uturn: "Uターン",
   };
 
   return map[modifier] ?? modifier;
@@ -37,37 +37,37 @@ function translateModifier(modifier) {
 function buildInstruction(step) {
   const type = step?.maneuver?.type;
   const modifier = step?.maneuver?.modifier;
-  const name = step?.name ? ` vào ${step.name}` : "";
+  const name = step?.name ? ` ${step.name}` : "";
 
   if (type === "depart") {
-    return `Bắt đầu di chuyển${name}`;
+    return `移動を開始してください${name}`;
   }
 
   if (type === "arrive") {
-    return "Bạn đã đến nơi";
+    return "目的地に到着しました";
   }
 
   if (type === "roundabout") {
-    return `Đi vòng xuyến${name}`;
+    return `ロータリーを進んでください${name}`;
   }
 
   if (type === "merge") {
-    return `Nhập làn${name}`;
+    return `車線に合流してください${name}`;
   }
 
   if (type === "fork") {
-    return `Đi theo nhánh ${translateModifier(modifier ?? "straight")}${name}`;
+    return `${translateModifier(modifier ?? "straight")}の分岐を進んでください${name}`;
   }
 
   if (type === "turn") {
-    return `Rẽ ${translateModifier(modifier ?? "straight")}${name}`;
+    return `${translateModifier(modifier ?? "straight")}へ曲がってください${name}`;
   }
 
   if (modifier) {
-    return `Đi ${translateModifier(modifier)}${name}`;
+    return `${translateModifier(modifier)}へ進んでください${name}`;
   }
 
-  return `Tiếp tục di chuyển${name}`;
+  return `そのまま進んでください${name}`;
 }
 
 function deriveExposure(avgAqi) {
@@ -404,22 +404,22 @@ export async function planRoutesController(body) {
     recommendations: [
       {
         kind: "green",
-        title: "Lộ trình xanh",
+        title: "グリーンルート",
         reason: greenRoute.isWithinRatio
-          ? "AQI thấp nhất trong giới hạn độ dài cho phép"
-          : "AQI thấp nhất (vượt nhẹ giới hạn max ratio)",
+          ? "許容距離内で AQI が最も低いルートです"
+          : "AQI が最も低いルートです（max ratio をわずかに超過）",
         route: greenRoute,
       },
       {
         kind: "shortest",
-        title: "Lộ trình ngắn nhất",
-        reason: "Tối ưu quãng đường và thời gian di chuyển",
+        title: "最短ルート",
+        reason: "距離と移動時間を最適化したルートです",
         route: shortestRoute,
       },
       {
         kind: "balanced",
-        title: "Lộ trình cân bằng",
-        reason: "Cân bằng giữa độ dài tuyến và mức độ ô nhiễm",
+        title: "バランスルート",
+        reason: "距離と汚染レベルのバランスを取ったルートです",
         route: balancedRoute,
       },
     ],

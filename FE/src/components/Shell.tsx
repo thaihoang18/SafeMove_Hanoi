@@ -1,5 +1,6 @@
 import { Building2, Home, Map, Search, Settings2, UserCircle2, Wind } from "lucide-react";
 import type { ReactNode } from "react";
+import { getAvatarPreset, getAvatarSelectionStyle, type AvatarSelection } from "@/lib/avatar-presets";
 
 export type Role = "guest" | "user" | "admin";
 export type View =
@@ -21,6 +22,7 @@ type Props = {
   view: View;
   setView: (view: View) => void;
   userName: string;
+  avatarSelection?: AvatarSelection;
   unreadCount: number;
   onRequireLogin: () => void;
   children: ReactNode;
@@ -44,12 +46,13 @@ export function Shell({
   view,
   setView,
   userName,
+  avatarSelection,
   unreadCount,
   onRequireLogin,
   children,
 }: Props) {
   const navItems = role === "admin" ? adminNavItems : guestNavItems;
-  const avatarLabel = userName.trim().charAt(0).toUpperCase() || "S";
+  const selectedAvatarPreset = avatarSelection ? getAvatarPreset(avatarSelection.avatarId) : null;
 
   function handleNavigate(nextView: View) {
     if (role === "guest" && ["route", "profile", "alert"].includes(nextView)) {
@@ -76,11 +79,31 @@ export function Shell({
 
           <div className="flex items-center gap-2">
             <button
-              onClick={() => (role === "guest" ? onRequireLogin() : setView("profile"))}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-700 ring-1 ring-slate-200"
+              onClick={() => {
+                if (role === "guest") {
+                  onRequireLogin();
+                  return;
+                }
+
+                setView(role === "admin" ? "admin-profile" : "profile");
+              }}
+              className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-slate-100 text-slate-700 ring-1 ring-slate-200"
               aria-label="プロフィールを開く"
+              style={avatarSelection ? getAvatarSelectionStyle(avatarSelection) : undefined}
             >
-              {role === "guest" ? <UserCircle2 className="h-5 w-5" /> : avatarLabel}
+              {role === "guest" || !avatarSelection || !selectedAvatarPreset ? (
+                <UserCircle2 className="h-5 w-5" />
+              ) : (
+                <img
+                  src={selectedAvatarPreset.src}
+                  alt="アバター画像"
+                  className="h-full w-full rounded-full object-cover"
+                  style={getAvatarSelectionStyle(avatarSelection)}
+                  onError={(event) => {
+                    event.currentTarget.src = selectedAvatarPreset.fallbackSrc;
+                  }}
+                />
+              )}
             </button>
           </div>
         </div>

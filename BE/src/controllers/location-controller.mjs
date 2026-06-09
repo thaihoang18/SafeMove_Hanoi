@@ -7,8 +7,27 @@ export async function listLocationsController(searchParams) {
   const type = toNullableString(searchParams.get("type"));
 
   const locations = await sql`
-    select id, name, location_type, city, district, address, lat, lng, created_at
-    from airpath.locations
+    select
+      l.id,
+      l.name,
+      l.location_type,
+      l.city,
+      l.district,
+      l.address,
+      l.lat,
+      l.lng,
+      l.created_at,
+      nearest_aqi.aqi as aqi_level
+    from airpath.locations l
+    left join lateral (
+      select m.aqi
+      from airpath.aqi_measurements m
+      join airpath.locations ml on ml.id = m.location_id
+      order by
+        power(ml.lat - l.lat, 2) + power(ml.lng - l.lng, 2),
+        m.measured_at desc
+      limit 1
+    ) nearest_aqi on true
     where (${city}::text is null or city = ${city})
       and (${district}::text is null or district = ${district})
       and (${type}::text is null or location_type = ${type})
@@ -85,4 +104,3 @@ export async function deleteLocationController(locationId) {
 
   return { location };
 }
-

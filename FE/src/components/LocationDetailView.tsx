@@ -1,7 +1,7 @@
 import { MapPin, Star, Activity, ArrowLeft, Languages } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { PlaceCatalogItem } from "@/lib/guest-exercise-places";
-import { fetchIqAirAqiByCoordinates, translateReviewContent } from "@/lib/api";
+import { translateReviewContent } from "@/lib/api";
 import type { GpsAqiMeasurement, LocationReview } from "@/lib/types";
 import { getAvatarPreset, getAvatarSelectionStyle, type AvatarSelection } from "@/lib/avatar-presets";
 import "../styles/demo-detail.css";
@@ -17,6 +17,9 @@ type Props = {
   reviews: LocationReview[];
   reviewsLoading?: boolean;
   reviewsError?: string | null;
+  aqiMeasurement: GpsAqiMeasurement | null;
+  aqiLoading?: boolean;
+  aqiError?: string | null;
   onSubmitReview: (payload: { rating: number; content: string }) => Promise<void>;
   currentUserId: string;
   currentUserAvatarSelection: AvatarSelection;
@@ -33,6 +36,9 @@ export function LocationDetailView({
   reviews,
   reviewsLoading = false,
   reviewsError,
+  aqiMeasurement,
+  aqiLoading = false,
+  aqiError,
   onSubmitReview,
   currentUserId,
   currentUserAvatarSelection,
@@ -40,9 +46,6 @@ export function LocationDetailView({
   const [reviewText, setReviewText] = useState("");
   const [userRating, setUserRating] = useState(0);
   const [submittingReview, setSubmittingReview] = useState(false);
-  const [aqiMeasurement, setAqiMeasurement] = useState<GpsAqiMeasurement | null>(null);
-  const [aqiLoading, setAqiLoading] = useState(false);
-  const [aqiError, setAqiError] = useState<string | null>(null);
   // Translate state: reviewId -> { translated, loading, shown }
   const [translateMap, setTranslateMap] = useState<Record<string, { text: string; loading: boolean; shown: boolean }>>({});
 
@@ -101,48 +104,6 @@ export function LocationDetailView({
     }
   };
 
-  useEffect(() => {
-    if (!location) {
-      setAqiMeasurement(null);
-      setAqiError(null);
-      return;
-    }
-
-    const controller = new AbortController();
-    setAqiLoading(true);
-    setAqiError(null);
-
-    fetchIqAirAqiByCoordinates(location.lat, location.lng, {
-      signal: controller.signal,
-    })
-      .then((response) => {
-        if (!controller.signal.aborted) {
-          setAqiMeasurement(response.measurement);
-        }
-      })
-      .catch((error) => {
-        if (
-          controller.signal.aborted ||
-          (error instanceof Error && error.name === "AbortError") ||
-          (typeof error === "object" && error !== null && "name" in error && (error as any).name === "AbortError")
-        ) {
-          return;
-        }
-
-        console.error("Failed to load IQAir AQI:", error);
-        setAqiError("IQAir から AQI を取得できませんでした。");
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) {
-          setAqiLoading(false);
-        }
-      });
-
-    return () => {
-      controller.abort();
-    };
-  }, [location]);
-
   if (!location) {
     return (
       <div className="demo-detail-container">
@@ -154,12 +115,11 @@ export function LocationDetailView({
     );
   }
 
-  const safetyScore = location.aqi_level ? Math.max(0, 100 - location.aqi_level * 2) : 85;
   const apiAqi = aqiMeasurement?.aqi ?? null;
   const apiPm25 = apiAqi != null ? (apiAqi * 0.4).toFixed(1) : null;
-  const smallCircleValue = apiAqi ?? Math.round(safetyScore);
-  const smallCircleLabel = apiAqi != null ? "AQI" : "安全";
-  const pm25Value = apiPm25 ?? (location.aqi_level ? (location.aqi_level * 0.4).toFixed(1) : "15.5");
+  const smallCircleValue = apiAqi ?? (aqiLoading ? null : "--");
+  const smallCircleLabel = apiAqi != null ? "AQI" : aqiLoading ? "取得中" : "未取得";
+  const pm25Value = apiPm25 ?? "--";
 
   return (
     <div className="demo-detail-container">
@@ -200,13 +160,13 @@ export function LocationDetailView({
       <div className="stats-grid">
         <div className="stat-circle-box">
           <div className="small-aqi-circle">
-            <div className="circle-value">{smallCircleValue}</div>
+            <div className="circle-value">{smallCircleValue ?? "..."}</div>
             <div className="circle-label">{smallCircleLabel}</div>
           </div>
           <span className="stat-desc">
-            {apiAqi != null ? "IQAir のリアルタイム AQI" : "安全スポット"}
+            {apiAqi != null ? "IQAir の AQI" : aqiLoading ? "AQI を取得中" : "AQI 未取得"}
             <br />
-            <small className="green-text">{apiAqi != null ? "API から更新済み" : "推定値"}</small>
+            <small className="green-text">{apiAqi != null ? "リアルタイム更新済み" : aqiLoading ? "しばらくお待ちください" : "推定値"}</small>
           </span>
         </div>
         <div className="stat-pm25-box">
@@ -216,12 +176,7 @@ export function LocationDetailView({
         </div>
       </div>
 
-      {aqiLoading && !apiAqi && (
-        <div className="aqi-loading-note">AQI を読み込み中...</div>
-      )}
-      {aqiError && (
-        <div className="aqi-error-message">AQI エラー: {aqiError}</div>
-      )}
+      {aqiError && <div className="aqi-error-message">AQI エラー: {aqiError}</div>}
 
       {/* Amenities */}
       {Array.isArray(location.amenities) && location.amenities.length > 0 && (

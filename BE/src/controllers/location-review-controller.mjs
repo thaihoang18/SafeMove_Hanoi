@@ -5,7 +5,7 @@ function normalizeAuthor(row) {
   const fullName = typeof row.full_name === "string" ? row.full_name.trim() : "";
   const emailPrefix = typeof row.email === "string" ? row.email.split("@")[0]?.trim() : "";
 
-  return fullName || emailPrefix || "Ẩn danh";
+  return fullName || emailPrefix || "匿名";
 }
 
 function toReview(row) {
@@ -92,8 +92,8 @@ export async function createLocationReviewController(locationId, body) {
         ) values (
           ${body.userId.trim()},
           'review_flagged',
-          'Bình luận của bạn đang chờ kiểm duyệt',
-          ${`Nội dung: ${body.content.trim()}`}
+          'あなたのコメントは審査待ちです',
+          ${`内容: ${body.content.trim()}`}
         )
       `;
     } catch (err) {

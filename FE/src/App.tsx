@@ -269,7 +269,8 @@ export default function App() {
   const [bootstrap, setBootstrap] = useState<{
     activities: LookupItem[];
     healthConditions: LookupItem[];
-  }>({ activities: [], healthConditions: [] });
+    aqiSnapshot: GpsAqiMeasurement | null;
+  }>({ activities: [], healthConditions: [], aqiSnapshot: null });
   const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
   const [profile, setProfile] = useState<ProfileResponse | null>(null);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -279,6 +280,9 @@ export default function App() {
   const [locations, setLocations] = useState<LocationItem[]>([]);
   const [routeHistory, setRouteHistory] = useState<Array<Record<string, unknown>>>([]);
   const [selectedLocation, setSelectedLocation] = useState<LocationItem | null>(null);
+  const [selectedLocationAqi, setSelectedLocationAqi] = useState<GpsAqiMeasurement | null>(null);
+  const [selectedLocationAqiLoading, setSelectedLocationAqiLoading] = useState(false);
+  const [selectedLocationAqiError, setSelectedLocationAqiError] = useState<string | null>(null);
   const [selectedLocationReviews, setSelectedLocationReviews] = useState<LocationReview[]>([]);
   const [selectedLocationReviewsLoading, setSelectedLocationReviewsLoading] = useState(false);
   const [selectedLocationReviewsError, setSelectedLocationReviewsError] = useState<string | null>(null);
@@ -299,6 +303,50 @@ export default function App() {
   const lastStoredToneRef = useRef<AqiTone>("unknown");
   const lastThresholdAlertStateRef = useRef<"safe" | "unsafe" | null>(null);
   const lastAlertedThresholdRef = useRef<number | null>(null);
+  const selectedLocationAqiAbortRef = useRef<AbortController | null>(null);
+
+  function applyBootstrapAqiSnapshot(snapshot: GpsAqiMeasurement | null) {
+    if (!snapshot) {
+      return;
+    }
+
+    setGpsAqi(snapshot);
+    setGpsCoords({ lat: snapshot.lat, lng: snapshot.lng });
+  }
+
+  const loadSelectedLocationAqi = useCallback(async (location: LocationItem) => {
+    selectedLocationAqiAbortRef.current?.abort();
+    const controller = new AbortController();
+    selectedLocationAqiAbortRef.current = controller;
+
+    setSelectedLocationAqiLoading(true);
+    setSelectedLocationAqiError(null);
+
+    try {
+      const response = await fetchIqAirAqiByCoordinates(location.lat, location.lng, {
+        signal: controller.signal,
+      });
+
+      if (!controller.signal.aborted) {
+        setSelectedLocationAqi(response.measurement);
+      }
+    } catch (error) {
+      if (
+        controller.signal.aborted ||
+        (error instanceof Error && error.name === "AbortError") ||
+        (typeof error === "object" && error !== null && "name" in error && (error as any).name === "AbortError")
+      ) {
+        return;
+      }
+
+      setSelectedLocationAqi(null);
+      setSelectedLocationAqiError(error instanceof Error ? error.message : "AQI を取得できませんでした。");
+    } finally {
+      if (!controller.signal.aborted) {
+        setSelectedLocationAqiLoading(false);
+      }
+    }
+  }, []);
 
   const guestUser = useMemo<User>(
     () => ({
@@ -314,12 +362,14 @@ export default function App() {
 
   useEffect(() => {
     fetchBootstrapData()
-      .then((data) =>
+      .then((data) => {
         setBootstrap({
           activities: data.activities,
           healthConditions: data.healthConditions,
-        }),
-      )
+          aqiSnapshot: data.aqiSnapshot,
+        });
+        applyBootstrapAqiSnapshot(data.aqiSnapshot);
+      })
       .catch((error) => setGlobalError(error.message));
 
     fetchLocations()
@@ -390,6 +440,7 @@ export default function App() {
       setUser(response.user);
       setRole(response.user.role === "admin" ? "admin" : "user");
       setView(response.user.role === "admin" ? "dashboard" : "home");
+      applyBootstrapAqiSnapshot(bootstrap.aqiSnapshot);
       hasAutoLoadedGpsAqiRef.current = false;
     } catch (error) {
       let msg = error instanceof Error ? error.message : "ログインに失敗しました。";
@@ -412,6 +463,7 @@ export default function App() {
       setUser(response.user);
       setRole(response.user.role === "admin" ? "admin" : "user");
       setView(response.user.role === "admin" ? "dashboard" : "home");
+      applyBootstrapAqiSnapshot(bootstrap.aqiSnapshot);
       hasAutoLoadedGpsAqiRef.current = false;
     } catch (error) {
       let msg = error instanceof Error ? error.message : "ログインに失敗しました。";
@@ -434,6 +486,7 @@ export default function App() {
       setUser(response.user);
       setRole("user");
       setView("home");
+      applyBootstrapAqiSnapshot(bootstrap.aqiSnapshot);
       hasAutoLoadedGpsAqiRef.current = false;
     } catch (error) {
       setAuthError(error instanceof Error ? error.message : "新規登録に失敗しました。");
@@ -466,6 +519,7 @@ export default function App() {
     // Guests should not receive demo notifications or unread counts
     setAqiAlerts([]);
     setAqiUnreadCount(0);
+    applyBootstrapAqiSnapshot(bootstrap.aqiSnapshot);
   }
 
   async function handleMarkRead(notificationId: string) {
@@ -745,7 +799,8 @@ export default function App() {
       }
 
       const key = normalizeLocationKey(location);
-      return locations.find((item) => normalizeLocationKey(item) === key) ?? null;
+      const matched = locations.find((item) => normalizeLocationKey(item) === key);
+      return matched ? { ...location, ...matched } : location;
     },
     [locations],
   );
@@ -778,15 +833,22 @@ export default function App() {
     }
 
     void loadSelectedLocationReviews(selectedBackendLocation.id);
+  }, [loadSelectedLocationReviews, selectedBackendLocation, view]);
 
-    const timer = window.setInterval(() => {
-      void loadSelectedLocationReviews(selectedBackendLocation.id);
-    }, 15000);
+  useEffect(() => {
+    if (!selectedLocation || view !== "spot-detail") {
+      selectedLocationAqiAbortRef.current?.abort();
+      setSelectedLocationAqiLoading(false);
+      setSelectedLocationAqiError(null);
+      return;
+    }
+
+    void loadSelectedLocationAqi(selectedLocation);
 
     return () => {
-      window.clearInterval(timer);
+      selectedLocationAqiAbortRef.current?.abort();
     };
-  }, [loadSelectedLocationReviews, selectedBackendLocation, view]);
+  }, [loadSelectedLocationAqi, selectedLocation, view]);
 
 
   const handleSubmitLocationReview = useCallback(
@@ -818,19 +880,11 @@ export default function App() {
         } catch (err) {
           // ignore
         }
-
-        // reload visible reviews from backend (they exclude hidden ones)
-        if (view === "reviews") {
-          void loadSelectedLocationReviews(selectedBackendLocation.id);
-        }
       } else {
         setSelectedLocationReviews((current) => [response.review, ...current]);
-        if (view === "reviews") {
-          void loadSelectedLocationReviews(selectedBackendLocation.id);
-        }
       }
     },
-    [loadSelectedLocationReviews, selectedBackendLocation, user, view],
+    [selectedBackendLocation, user, view],
   );
 
   const handleUpdateAvatarSelection = useCallback(
@@ -877,22 +931,22 @@ export default function App() {
       setAdvice(null);
       setRouteHistory([]);
       setSelectedLocation(null);
-      setGpsAqi(null);
-      setGpsCoords(null);
+      applyBootstrapAqiSnapshot(bootstrap.aqiSnapshot);
       setGpsError(null);
-    }} />;
+    }} bootstrapAqiSnapshot={bootstrap.aqiSnapshot} />;
   }
 
   return (
-    <ShellDemo
-      role={role}
-      view={view}
-      setView={setView}
-      userName={user.full_name || user.email}
-      onRequireLogin={() => {
-        setGlobalError("この機能を使うにはログインしてください。");
-        setView("home");
-      }}
+      <ShellDemo
+        role={role}
+        view={view}
+        setView={setView}
+        userName={user.full_name || user.email}
+        avatarSelection={avatarSelection}
+        onRequireLogin={() => {
+          setGlobalError("この機能を使うにはログインしてください。");
+          setView("home");
+        }}
       onShowLogin={() => {
         // Navigate to login screen by clearing current user (will render LoginScreenDemo)
         setUser(null);
@@ -910,8 +964,7 @@ export default function App() {
         setAdvice(null);
         setRouteHistory([]);
         setSelectedLocation(null);
-        setGpsAqi(null);
-        setGpsCoords(null);
+        applyBootstrapAqiSnapshot(bootstrap.aqiSnapshot);
         setGpsError(null);
         setAqiAlerts([]);
         setAqiUnreadCount(0);
@@ -946,18 +999,26 @@ export default function App() {
           gpsCoords={gpsCoords}
           locations={mergedLocations}
           onBack={() => setView("home")}
-          onOpenRoute={() => {
-            // allow previewing route screen even for guests (actions that require auth still guarded at action time)
-            setView("route");
+          onOpenSuggestion={(location) => {
+            const backendLocation = resolveBackendLocation(location);
+            setSelectedLocation(backendLocation);
+            setSelectedLocationAqi(null);
+            setSelectedLocationAqiError(null);
+            setSelectedLocationAqiLoading(true);
+            setView("spot-detail");
           }}
         />
       )}
 
       {view === "search" && (
-        <SearchLocationsView
-          locations={mergedLocations}
-          onSelectLocation={(location) => {
-            setSelectedLocation(resolveBackendLocation(location));
+      <SearchLocationsView
+        locations={mergedLocations}
+        onSelectLocation={(location) => {
+            const backendLocation = resolveBackendLocation(location);
+            setSelectedLocation(backendLocation);
+            setSelectedLocationAqi(null);
+            setSelectedLocationAqiError(null);
+            setSelectedLocationAqiLoading(true);
             setView("spot-detail");
           }}
           onRequireLogin={() => {
@@ -969,6 +1030,9 @@ export default function App() {
       {view === "spot-detail" && (
         <LocationDetailView
           location={selectedLocation}
+          aqiMeasurement={selectedLocationAqi}
+          aqiLoading={selectedLocationAqiLoading}
+          aqiError={selectedLocationAqiError}
           isGuest={role === "guest"}
           reviews={selectedLocationReviews}
           reviewsLoading={selectedLocationReviewsLoading}
@@ -1057,8 +1121,7 @@ export default function App() {
             setAdvice(null);
             setRouteHistory([]);
             setSelectedLocation(null);
-            setGpsAqi(null);
-            setGpsCoords(null);
+            applyBootstrapAqiSnapshot(bootstrap.aqiSnapshot);
             setGpsError(null);
             setAqiAlerts([]);
             setAqiUnreadCount(0);

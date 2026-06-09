@@ -282,7 +282,7 @@ async function fetchNearestDatabaseMeasurement(lat, lng) {
       aqi: 120,
       measured_at: new Date().toISOString(),
       source: "DB_DEFAULT",
-      location_name: "Tòa B1 ĐH Bách Khoa Hà Nội",
+      location_name: "ハノイ工科大学 B1 棟",
       lat: 21.0041,
       lng: 105.8428,
       main_pollutant: null,
@@ -297,7 +297,7 @@ async function fetchNearestDatabaseMeasurement(lat, lng) {
     aqi: toNullableNumber(row.aqi) ?? 120, // Default fallback AQI
     measured_at: toNullableString(row.measured_at) ?? new Date().toISOString(),
     source: "DB",
-    location_name: row.location_name ?? "Tòa B1 ĐH Bách Khoa Hà Nội",
+    location_name: row.location_name ?? "ハノイ工科大学 B1 棟",
     lat: toNullableNumber(row.lat) ?? 21.0041,
     lng: toNullableNumber(row.lng) ?? 105.8428,
     main_pollutant: null,

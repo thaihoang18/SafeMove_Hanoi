@@ -1,28 +1,28 @@
 # SafeMove UI Components - Demo Design Implementation
 
 ## 📋 Overview
-Các components React mới được tạo dựa trên design demo từ các file trong `assets/demo_JS_code_screen(99%)/`.
+React コンポーネントは、`assets/demo_JS_code_screen(99%)/` のデザインデモをもとに新規作成されています。
 
 ---
 
-## 🎨 Components Tạo Mới
+## 🎨 新規コンポーネント
 
 ### 1. **ShellDemo** (`src/components/ShellDemo.tsx`)
-- **Mục đích**: Layout chính + Navigation
+- **目的**: メインレイアウト + ナビゲーション
 - **File CSS**: `src/styles/demo-shell.css`
 - **Features**:
-  - Header với logo + avatar button
+  - ロゴ + アバターボタン付きヘッダー
   - Scrollable main content
   - Bottom navigation (4 tabs: Home, Search, Route, Profile)
   - Responsive design
 
-**Cách sử dụng**:
+**使用方法**:
 ```tsx
 <ShellDemo
   role="user"
   view={currentView}
   setView={setCurrentView}
-  userName="Trần An"
+  userName="山田太郎"
   onRequireLogin={handleLogin}
   onLogout={handleLogout}
 >
@@ -33,11 +33,11 @@ Các components React mới được tạo dựa trên design demo từ các fil
 ---
 
 ### 2. **HomeViewDemo** (`src/components/HomeViewDemo.tsx`)
-- **Mục đích**: Màn hình Home - Hiển thị AQI, weather, advice
+- **目的**: ホーム画面 - AQI、天気、アドバイスを表示
 - **File CSS**: `src/styles/demo-home.css`
 - **Screen Reference**: Screen 1 (demo)
 - **Features**:
-  - AQI circle hiển thị (160px border circle)
+  - AQI サークル表示 (160px border circle)
   - Source selection buttons
   - Weather information
   - Advice card
@@ -61,13 +61,13 @@ type Props = {
 ---
 
 ### 3. **SearchLocationsView** (`src/components/SearchLocationsView.tsx`)
-- **Mục đích**: Tìm kiếm và lọc địa điểm
+- **目的**: スポットの検索と絞り込み
 - **File CSS**: `src/styles/demo-search.css`
 - **Screen Reference**: Screen 2 (demo)
 - **Features**:
-  - Sticky search header với search input
+  - 検索入力付きの固定ヘッダー
   - Filter tags (Parks, Gym, Sports, All)
-  - Spot cards hiển thị (image, name, distance, AQI badge)
+  - スポットカード表示 (image, name, distance, AQI badge)
   - Breathing advice card
   - Favorite button
 
@@ -83,11 +83,11 @@ type Props = {
 ---
 
 ### 4. **LocationDetailView** (`src/components/LocationDetailView.tsx`)
-- **Mục đích**: Chi tiết địa điểm - an toàn, PM2.5, amenities, reviews
+- **目的**: スポット詳細 - 安全性、PM2.5、設備、レビュー
 - **File CSS**: `src/styles/demo-detail.css`
 - **Screen Reference**: Screen 3 (demo)
 - **Features**:
-  - Location header với badge "Safe Spot"
+  - 「Safe Spot」バッジ付きのロケーションヘッダー
   - Safety score circle + PM2.5 display
   - Amenities tags
   - About section
@@ -109,13 +109,13 @@ type Props = {
 ---
 
 ### 5. **ReviewsListView** (`src/components/ReviewsListView.tsx`)
-- **Mục đích**: Danh sách đầy đủ các reviews
+- **目的**: レビュー一覧
 - **File CSS**: `src/styles/demo-reviews.css`
 - **Screen Reference**: Screen 4 (demo)
 - **Features**:
-  - Header với back button
+  - 戻るボタン付きヘッダー
   - Rating summary (average score + stars)
-  - Distribution graph (bar chart của rating distribution)
+  - Distribution graph (rating distribution の棒グラフ)
   - Sort dropdown (Recent, Highest, Lowest)
   - Full review list
 
@@ -131,11 +131,11 @@ type Props = {
 ---
 
 ### 6. **LoginScreenDemo** (`src/components/LoginScreenDemo.tsx`)
-- **Mục đích**: Màn hình đăng nhập
+- **目的**: ログイン画面
 - **File CSS**: `src/styles/demo-auth.css`
 - **Screen Reference**: Screen 11 (demo)
 - **Features**:
-  - Email input với icon
+  - アイコン付きメール入力
   - Password input
   - Forgot password link
   - Login button
@@ -155,7 +155,7 @@ type Props = {
 ---
 
 ### 7. **RegisterScreenDemo** (`src/components/RegisterScreenDemo.tsx`)
-- **Mục đích**: Màn hình đăng ký tài khoản mới
+- **目的**: 新規アカウント登録画面
 - **File CSS**: `src/styles/demo-auth.css`
 - **Screen Reference**: Screen 12 (demo)
 - **Features**:
@@ -180,11 +180,11 @@ type Props = {
 ---
 
 ### 8. **ProfileViewDemo** (`src/components/ProfileViewDemo.tsx`)
-- **Mục đích**: Màn hình hồ sơ người dùng
+- **目的**: ユーザープロフィール画面
 - **File CSS**: `src/styles/demo-profile.css`
 - **Screen Reference**: Screen 13 (demo)
 - **Features**:
-  - Profile header với avatar
+  - アバター付きプロフィールヘッダー
   - Personal info section (name, email, phone - with inline edit)
   - App settings section:
     - AQI alert threshold slider (0-200)
@@ -211,7 +211,7 @@ type Props = {
 
 ---
 
-## 🎯 Color Scheme (từ Demo)
+## 🎯 カラースキーム（デモ由来）
 
 ```css
 --primary-green: #117843;       /* Main green color */

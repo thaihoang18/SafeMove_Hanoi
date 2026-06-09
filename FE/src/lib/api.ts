@@ -16,17 +16,68 @@ import type {
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 const REQUEST_TIMEOUT_MS = 20000;
+const IQAIR_CACHE_TTL_MS = 10 * 60 * 1000;
+const IQAIR_CACHE_STORAGE_PREFIX = "safemove:iqair:";
 
 const iqAirAqiCache = new Map<
   string,
   {
     expiresAt: number;
-    promise: Promise<{ ok: true; measurement: GpsAqiMeasurement }>;
+    promise?: Promise<{ ok: true; measurement: GpsAqiMeasurement }>;
+    measurement?: GpsAqiMeasurement;
   }
 >();
 
 function getIqAirCacheKey(lat: number, lng: number) {
-  return `${lat.toFixed(6)}|${lng.toFixed(6)}`;
+  return `${lat.toFixed(4)}|${lng.toFixed(4)}`;
+}
+
+function getIqAirStorageKey(cacheKey: string) {
+  return `${IQAIR_CACHE_STORAGE_PREFIX}${cacheKey}`;
+}
+
+function readCachedIqAirMeasurement(cacheKey: string): GpsAqiMeasurement | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(getIqAirStorageKey(cacheKey));
+    if (!raw) {
+      return null;
+    }
+
+    const parsed = JSON.parse(raw) as {
+      expiresAt?: number;
+      measurement?: GpsAqiMeasurement;
+    };
+
+    if (!parsed.measurement || typeof parsed.expiresAt !== "number" || parsed.expiresAt <= Date.now()) {
+      return null;
+    }
+
+    return parsed.measurement;
+  } catch {
+    return null;
+  }
+}
+
+function storeCachedIqAirMeasurement(cacheKey: string, measurement: GpsAqiMeasurement) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(
+      getIqAirStorageKey(cacheKey),
+      JSON.stringify({
+        expiresAt: Date.now() + IQAIR_CACHE_TTL_MS,
+        measurement,
+      }),
+    );
+  } catch {
+    // Ignore storage failures.
+  }
 }
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
@@ -64,7 +115,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     return data as T;
   } catch (error) {
     if (controller.signal.aborted) {
-      throw new Error("Request timed out. Vui lòng thử lại sau.");
+      throw new Error("リクエストがタイムアウトしました。しばらくしてからもう一度お試しください。");
     }
 
     throw error;
@@ -82,6 +133,7 @@ export async function fetchBootstrapData() {
     ok: true;
     activities: LookupItem[];
     healthConditions: LookupItem[];
+    aqiSnapshot: GpsAqiMeasurement | null;
   }>("/api/bootstrap");
 }
 
@@ -212,6 +264,7 @@ export async function fetchLocations() {
       district: string | null;
       lat: number;
       lng: number;
+      aqi_level?: number | null;
     }>;
   }>("/api/locations");
 }
@@ -340,12 +393,25 @@ export async function fetchIqAirAqiByCoordinates(
   options?: RequestInit,
 ) {
   const cacheKey = getIqAirCacheKey(lat, lng);
+  const now = Date.now();
 
   const cached = iqAirAqiCache.get(cacheKey);
-  if (cached && cached.expiresAt > Date.now()) {
-    return options?.signal
-      ? raceWithAbortSignal(cached.promise, options.signal)
-      : cached.promise;
+  if (cached?.measurement && cached.expiresAt > now) {
+    return Promise.resolve({ ok: true as const, measurement: cached.measurement });
+  }
+
+  if (cached?.promise && cached.expiresAt > now) {
+    return options?.signal ? raceWithAbortSignal(cached.promise, options.signal) : cached.promise;
+  }
+
+  const persistedMeasurement = readCachedIqAirMeasurement(cacheKey);
+  if (persistedMeasurement) {
+    iqAirAqiCache.set(cacheKey, {
+      expiresAt: now + IQAIR_CACHE_TTL_MS,
+      promise: Promise.resolve({ ok: true as const, measurement: persistedMeasurement }),
+      measurement: persistedMeasurement,
+    });
+    return Promise.resolve({ ok: true as const, measurement: persistedMeasurement });
   }
 
   const params = new URLSearchParams({
@@ -355,24 +421,34 @@ export async function fetchIqAirAqiByCoordinates(
 
   const basePromise = request<{ ok: true; measurement: GpsAqiMeasurement }>(
     `/api/aqi/iqair?${params.toString()}`,
-    options?.signal ? undefined : options,
+    options,
   );
 
-  iqAirAqiCache.set(cacheKey, {
-    expiresAt: Date.now() + 120000,
-    promise: basePromise,
+  const wrappedPromise = basePromise.then((data) => {
+    storeCachedIqAirMeasurement(cacheKey, data.measurement);
+    iqAirAqiCache.set(cacheKey, {
+      expiresAt: Date.now() + IQAIR_CACHE_TTL_MS,
+      promise: Promise.resolve(data),
+      measurement: data.measurement,
+    });
+    return data;
   });
 
-  basePromise.catch(() => {
+  iqAirAqiCache.set(cacheKey, {
+    expiresAt: now + IQAIR_CACHE_TTL_MS,
+    promise: wrappedPromise,
+  });
+
+  wrappedPromise.catch(() => {
     const current = iqAirAqiCache.get(cacheKey);
-    if (current?.promise === basePromise) {
+    if (current?.promise === wrappedPromise) {
       iqAirAqiCache.delete(cacheKey);
     }
   });
 
   return options?.signal
-    ? raceWithAbortSignal(basePromise, options.signal)
-    : basePromise;
+    ? raceWithAbortSignal(wrappedPromise, options.signal)
+    : wrappedPromise;
 }
 
 export async function fetchAqicnAqi(lat: number, lng: number): Promise<{ ok: true; measurement: GpsAqiMeasurement }> {

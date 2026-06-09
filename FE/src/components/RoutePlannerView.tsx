@@ -227,7 +227,7 @@ export function RoutePlannerView({ locations, origin, destination, maxRatio, set
 
   const currentStep = selectedRoute?.route.steps?.[0] ?? null;
   const currentInstruction = currentStep
-    ? `${currentStep.instruction.replace("Bắt đầu di chuyển", "ルートに沿って進む")} (${Math.round(currentStep.distanceM)} m)`
+    ? `ルートに沿って進んでください (${Math.round(currentStep.distanceM)} m)`
     : selectedRoute
       ? "ナビゲーションの準備ができました。開始すると次の案内を表示します。"
       : "ルートを待機中です。";

@@ -139,13 +139,6 @@ export function SearchLocationsView({
     return () => obs.disconnect();
   }, [pageCount]);
 
-  const getAqiBadgeClass = (aqi: number | undefined) => {
-    if (!aqi) return "aqi-badge neutral";
-    if (aqi <= 50) return "aqi-badge green-text";
-    if (aqi <= 100) return "aqi-badge orange-text";
-    return "aqi-badge red-text";
-  };
-
   return (
     <div className="demo-search-container">
       {/* Sticky Search Header */}
@@ -220,11 +213,6 @@ export function SearchLocationsView({
                 </div>
 
                 <div className="spot-info-right">
-                  {location.aqi_level !== undefined && (
-                    <span className={getAqiBadgeClass(location.aqi_level)}>
-                      AQI {location.aqi_level}
-                    </span>
-                  )}
                   {location.is_japan_friendly && (
                     <span className="japan-badge">🇯🇵 JP</span>
                   )}

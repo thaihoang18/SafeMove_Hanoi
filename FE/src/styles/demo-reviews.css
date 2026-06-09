@@ -187,6 +187,8 @@
   border: 1px solid var(--border-color);
   border-radius: 12px;
   padding: 12px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .review-header-row {
@@ -223,6 +225,7 @@
 }
 .review-meta {
   flex: 1;
+  min-width: 0;
 }
 
 .review-author {
@@ -243,6 +246,7 @@
   color: var(--text-muted);
   white-space: nowrap;
   text-align: right;
+  flex-shrink: 0;
 }
 
 .review-body {
@@ -250,6 +254,9 @@
   color: var(--text-muted);
   margin: 8px 0 0 0;
   line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .review-footer {

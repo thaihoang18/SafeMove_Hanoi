@@ -1,5 +1,6 @@
 import { Bell, Home, Search, Map, User, Wind, LogOut, Shield } from "lucide-react";
 import { useState, type ReactNode } from "react";
+import { getAvatarPreset, getAvatarSelectionStyle, type AvatarSelection } from "@/lib/avatar-presets";
 import "../styles/demo-shell.css";
 
 export type Role = "guest" | "user" | "admin";
@@ -29,6 +30,7 @@ type Props = {
   view: View;
   setView: (view: View) => void;
   userName: string;
+  avatarSelection?: AvatarSelection;
   onRequireLogin: () => void;
   onShowLogin?: () => void;
   aqiAlerts: Array<{
@@ -72,6 +74,7 @@ export function ShellDemo({
   view,
   setView,
   userName,
+  avatarSelection,
   onRequireLogin,
   onShowLogin,
   aqiAlerts,
@@ -110,6 +113,9 @@ export function ShellDemo({
     }
   };
 
+  const resolvedAvatarSelection = avatarSelection;
+  const avatarPreset = resolvedAvatarSelection ? getAvatarPreset(resolvedAvatarSelection.avatarId) : null;
+
   const handleBellClick = () => {
     setShowAqiPopover((current) => !current);
     onAqiBellClick();
@@ -131,7 +137,20 @@ export function ShellDemo({
             </button>
           )}
           <button className="avatar-btn-demo" onClick={avatarClick} title={userName}>
-            {role === "guest" ? <User size={18} /> : <span className="avatar-letter">{userName.charAt(0).toUpperCase()}</span>}
+            {role === "guest" || !resolvedAvatarSelection || !avatarPreset ? (
+              <User size={18} />
+            ) : (
+              <div className="avatar-btn-demo-image" style={getAvatarSelectionStyle(resolvedAvatarSelection)}>
+                <img
+                  src={avatarPreset.src}
+                  alt="user avatar"
+                  className="h-full w-full object-cover"
+                  onError={(event) => {
+                    event.currentTarget.src = avatarPreset.fallbackSrc;
+                  }}
+                />
+              </div>
+            )}
           </button>
         </div>
       </header>

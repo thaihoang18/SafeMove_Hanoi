@@ -1,7 +1,10 @@
 import http from "node:http";
 import { handleRoute } from "./routes/index.mjs";
+import { prewarmBootstrapAqiSnapshot } from "./services/bootstrap-aqi-cache.mjs";
 
 const preferredPort = Number(process.env.PORT || 5001);
+
+void prewarmBootstrapAqiSnapshot();
 
 function createServer() {
   return http.createServer(async (req, res) => {

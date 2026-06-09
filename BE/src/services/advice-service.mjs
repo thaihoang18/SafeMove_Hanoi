@@ -145,8 +145,8 @@ export async function buildAdvicePreview({ userId, locationId, activityId }) {
         })
     : {
         severity: "info",
-        title: "Không có dữ liệu AQI hiện tại",
-        body: `Không tìm thấy chỉ số không khí cho vị trí hiện tại. Hãy cập nhật vị trí hoặc chọn địa điểm có dữ liệu để nhận lời khuyên chính xác hơn.`,
+        title: "現在の AQI データがありません",
+        body: `現在地の空気品質指標が見つかりませんでした。位置情報を更新するか、データのあるスポットを選ぶと、より正確なアドバイスを受け取れます。`,
       };
 
   return {
@@ -157,4 +157,3 @@ export async function buildAdvicePreview({ userId, locationId, activityId }) {
     advice,
   };
 }
-

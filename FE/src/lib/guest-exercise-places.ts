@@ -58,23 +58,34 @@ const assetPlaces = (rawPlaces as AssetPlaceRecord[])
 export const featuredExercisePlaces = assetPlaces.slice(0, 6);
 
 export function mergeExercisePlaces(basePlaces: PlaceCatalogItem[]) {
-  const merged: PlaceCatalogItem[] = [...assetPlaces];
-  const seen = new Set(merged.map(createKey));
+  const mergedByKey = new Map<string, PlaceCatalogItem>();
+
+  for (const assetPlace of assetPlaces) {
+    mergedByKey.set(createKey(assetPlace), assetPlace);
+  }
 
   for (const place of basePlaces) {
     const key = createKey(place);
-    if (seen.has(key)) {
-      continue;
-    }
-
-    seen.add(key);
-    merged.push({
-      ...place,
-      filter_type: place.filter_type ?? inferFilterType(place.name, place.location_type, place.categories, place.description),
-    });
+    const existing = mergedByKey.get(key);
+    mergedByKey.set(
+      key,
+      existing
+        ? {
+            ...existing,
+            ...place,
+            filter_type:
+              existing.filter_type ??
+              place.filter_type ??
+              inferFilterType(place.name, place.location_type, place.categories, place.description),
+          }
+        : {
+            ...place,
+            filter_type: place.filter_type ?? inferFilterType(place.name, place.location_type, place.categories, place.description),
+          },
+    );
   }
 
-  return merged;
+  return Array.from(mergedByKey.values());
 }
 
 function normalizeAssetPlace(record: AssetPlaceRecord): PlaceCatalogItem | null {

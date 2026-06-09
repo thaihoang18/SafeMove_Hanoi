@@ -23,6 +23,7 @@ type Props = {
   userId: string;
   userName: string;
   userEmail: string;
+  bootstrapAqiSnapshot: GpsAqiMeasurement | null;
   onLogout: () => void;
 };
 
@@ -262,7 +263,7 @@ function getAqiTone(value: number) {
   return { label: "非常に悪い", badgeClass: "bg-rose-100 text-rose-700" };
 }
 
-export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props) {
+export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapshot, onLogout }: Props) {
   const [view, setView] = useState<View>("dashboard");
   const [locations, setLocations] = useState<LocationRecord[]>([]);
   const [overview, setOverview] = useState<AdminOverview | null>(null);
@@ -302,6 +303,7 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
   const [moderationStatusById, setModerationStatusById] = useState<Record<string, ModerationStatus>>({});
   const [moderationItemsList, setModerationItemsList] = useState<ModerationItem[]>([]);
   const [moderationUpdatingById, setModerationUpdatingById] = useState<Record<string, boolean>>({});
+  const adminAvatarPreset = avatarPresets.find((preset) => preset.id === adminAvatarSelection.avatarId) ?? avatarPresets[0];
 
   const loadModerationItems = async () => {
     try {
@@ -403,7 +405,10 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
     void refreshLocations();
     void loadOverview();
     setAdminAvatarSelection(loadAvatarSelection(`admin_${userId}`));
-  }, [userId]);
+    setSystemAqi(bootstrapAqiSnapshot);
+    setSystemAqiError(null);
+    setSystemAqiLoading(false);
+  }, [bootstrapAqiSnapshot, userId]);
 
   useEffect(() => {
     setPendingAvatarSelection(adminAvatarSelection);
@@ -415,14 +420,6 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
     setAdminEmail(draft.email);
     setAdminPassword(draft.password);
   }, [userId, userName, userEmail]);
-
-  useEffect(() => {
-    if (view !== "dashboard") {
-      return;
-    }
-
-    void handleRefreshSystemAqi();
-  }, [view]);
 
   const moderationLocations = useMemo(() => {
     const entries = new Map<string, string>();
@@ -684,6 +681,7 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
       view={view}
       setView={setView}
       userName={userName}
+      avatarSelection={adminAvatarSelection}
       unreadCount={0}
       onRequireLogin={() => undefined}
       onLogout={onLogout}
@@ -1272,16 +1270,22 @@ export function AdminWorkspace({ userId, userName, userEmail, onLogout }: Props)
               <div className="rounded-[1.8rem] bg-[#1f2937] p-6 text-white shadow-sm">
                 <div className="flex items-center justify-between gap-3">
                   <div className="relative mx-auto">
-                    <div className="flex h-32 w-32 items-center justify-center rounded-full bg-white/10 p-2 ring-1 ring-white/15" style={getAvatarSelectionStyle(adminAvatarSelection)}>
+                    <button
+                      type="button"
+                      title="プロフィールを開く"
+                      onClick={() => setView("admin-profile")}
+                      className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-full bg-white/10 p-2 ring-1 ring-white/15 transition hover:scale-[1.02]"
+                      style={getAvatarSelectionStyle(adminAvatarSelection)}
+                    >
                       <img
-                        src={(avatarPresets.find((p) => p.id === adminAvatarSelection.avatarId) ?? avatarPresets[0]).src}
+                        src={adminAvatarPreset.src}
                         alt="アバター"
                         className="h-full w-full rounded-full object-cover"
                         onError={(event) => {
-                          event.currentTarget.src = (avatarPresets.find((p) => p.id === adminAvatarSelection.avatarId) ?? avatarPresets[0]).fallbackSrc;
+                          event.currentTarget.src = adminAvatarPreset.fallbackSrc;
                         }}
                       />
-                    </div>
+                    </button>
                     <button
                       type="button"
                       title="アバターを変更"

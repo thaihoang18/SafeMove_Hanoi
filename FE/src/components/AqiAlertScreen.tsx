@@ -8,10 +8,10 @@ type Props = {
   gpsCoords: { lat: number; lng: number } | null;
   locations: PlaceCatalogItem[];
   onBack: () => void;
-  onOpenRoute: () => void;
+  onOpenSuggestion: (location: PlaceCatalogItem) => void;
 };
 
-export function AqiAlertScreen({ gpsAqi, gpsCoords, locations, onBack, onOpenRoute }: Props) {
+export function AqiAlertScreen({ gpsAqi, gpsCoords, locations, onBack, onOpenSuggestion }: Props) {
   const aqiValue = gpsAqi?.aqi ?? null;
   const aqiLabel = aqiValue === null ? "--" : `${aqiValue}`;
   const aqiStatus =
@@ -94,8 +94,12 @@ export function AqiAlertScreen({ gpsAqi, gpsCoords, locations, onBack, onOpenRou
             </div>
           </div>
 
-          <button className="btn-route-guidance" onClick={onOpenRoute}>
-            💚 ルートを見る
+          <button
+            className="btn-route-guidance"
+            onClick={() => suggestion && onOpenSuggestion(suggestion)}
+            disabled={!suggestion}
+          >
+            💚 詳細を見る
           </button>
         </div>
 
