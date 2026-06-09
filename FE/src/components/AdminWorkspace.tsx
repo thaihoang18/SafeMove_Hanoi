@@ -295,7 +295,6 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
   const [savingAdminField, setSavingAdminField] = useState<string | null>(null);
   const [moderationLocation, setModerationLocation] = useState("all");
   const [moderationLocationMenuOpen, setModerationLocationMenuOpen] = useState(false);
-  const [showAllModerationComments, setShowAllModerationComments] = useState(true);
   const [showUnprocessed, setShowUnprocessed] = useState(true);
   const [showDeleted, setShowDeleted] = useState(false);
   const [showVietnameseViolations, setShowVietnameseViolations] = useState(true);
@@ -439,8 +438,7 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
     return moderationItemsList.filter((item) => {
       const status = moderationStatusById[item.id] ?? item.status;
       const locationMatch = moderationLocation === "all" ? true : item.locationId === moderationLocation;
-      const statusMatch =
-        showAllModerationComments || (status === "unprocessed" && showUnprocessed) || (status === "deleted" && showDeleted);
+      const statusMatch = (status === "unprocessed" && showUnprocessed) || (status === "deleted" && showDeleted);
       const languageMatch =
         (showVietnameseViolations && item.blockedLanguages.includes("vi")) ||
         (showJapaneseViolations && item.blockedLanguages.includes("ja"));
@@ -450,7 +448,6 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
   }, [
     moderationLocation,
     moderationStatusById,
-    showAllModerationComments,
     showDeleted,
     showJapaneseViolations,
     showUnprocessed,
@@ -1111,73 +1108,77 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
                 )}
               </div>
 
-              <div className="mt-4 flex flex-wrap gap-4 text-xs text-slate-600">
-                <label className="inline-flex items-center gap-2">
+              <div className="mt-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                ステータスで絞り込み
+              </div>
+              <div className="mt-2 flex flex-wrap gap-4 text-xs text-slate-600">
+                <label className="inline-flex items-center gap-2 text-[0px]">
                   <input
                     type="checkbox"
-                    checked={showAllModerationComments}
+                    checked={showUnprocessed && showDeleted}
                     onChange={(event) => {
                       const checked = event.target.checked;
-                      setShowAllModerationComments(checked);
                       if (checked) {
                         setShowUnprocessed(true);
                         setShowDeleted(true);
-                        setShowVietnameseViolations(true);
-                        setShowJapaneseViolations(true);
                       } else {
-                        setShowUnprocessed(true);
+                        setShowUnprocessed(false);
                         setShowDeleted(false);
                       }
                     }}
                     className="accent-emerald-600"
                   />
+                  <span className="text-xs">すべてのステータス</span>
                   すべてのコメント
                 </label>
-                <label className="inline-flex items-center gap-2">
+                <label className="inline-flex items-center gap-2 text-[0px]">
                   <input
                     type="checkbox"
                     checked={showUnprocessed}
-                    disabled={showAllModerationComments}
                     onChange={(event) => {
                       setShowUnprocessed(event.target.checked);
-                      setShowAllModerationComments(event.target.checked && showDeleted);
                     }}
-                    className="accent-emerald-600 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="accent-emerald-600"
                   />
+                  <span className="text-xs">未処理</span>
                   未処理
                 </label>
-                <label className="inline-flex items-center gap-2">
+                <label className="inline-flex items-center gap-2 text-[0px]">
                   <input
                     type="checkbox"
                     checked={showDeleted}
-                    disabled={showAllModerationComments}
                     onChange={(event) => {
                       setShowDeleted(event.target.checked);
-                      setShowAllModerationComments(showUnprocessed && event.target.checked);
                     }}
-                    className="accent-emerald-600 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="accent-emerald-600"
                   />
+                  <span className="text-xs">削除済み</span>
                   削除済み
                 </label>
               </div>
 
-              <div className="mt-3 flex flex-wrap gap-4 text-xs text-slate-600">
-                <label className="inline-flex items-center gap-2">
+              <div className="mt-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                違反言語で絞り込み
+              </div>
+              <div className="mt-2 flex flex-wrap gap-4 text-xs text-slate-600">
+                <label className="inline-flex items-center gap-2 text-[0px]">
                   <input
                     type="checkbox"
                     checked={showVietnameseViolations}
                     onChange={(event) => setShowVietnameseViolations(event.target.checked)}
                     className="accent-emerald-600"
                   />
+                  <span className="text-xs">ベトナム語</span>
                   ベトナム語
                 </label>
-                <label className="inline-flex items-center gap-2">
+                <label className="inline-flex items-center gap-2 text-[0px]">
                   <input
                     type="checkbox"
                     checked={showJapaneseViolations}
                     onChange={(event) => setShowJapaneseViolations(event.target.checked)}
                     className="accent-emerald-600"
                   />
+                  <span className="text-xs">日本語</span>
                   日本語
                 </label>
               </div>
