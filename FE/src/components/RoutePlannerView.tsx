@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, LocateFixed, Navigation } from "lucide-react";
 import { planRoutes } from "@/lib/api";
 import { RouteMapCanvas } from "./RouteMapCanvas";
@@ -50,25 +50,20 @@ export function RoutePlannerView({ locations, origin, destination, maxRatio, set
   const [planResult, setPlanResult] = useState<PlannedRoutesResponse | null>(null);
   const [planLoading, setPlanLoading] = useState(false);
   const [planError, setPlanError] = useState<string | null>(null);
-  const [originPosition, setOriginPosition] = useState<RouteCoords | null>(origin ?? null);
-  const [currentPosition, setCurrentPosition] = useState<RouteCoords | null>(origin ?? null);
+  const [originPosition, setOriginPosition] = useState<RouteCoords | null>(null);
+  const [currentPosition, setCurrentPosition] = useState<RouteCoords | null>(null);
   const [geoLoading, setGeoLoading] = useState(false);
+  const [centerRequestId, setCenterRequestId] = useState(0);
   const [navigationStarted, setNavigationStarted] = useState(false);
   const [trackingError, setTrackingError] = useState<string | null>(null);
   const [rerouteMessage, setRerouteMessage] = useState<string | null>(null);
   const [lastRerouteAt, setLastRerouteAt] = useState<number>(0);
+  const planRequestIdRef = useRef(0);
 
   const routeDestination = destination ?? locations[0] ?? null;
 
   useEffect(() => {
-    if (origin) {
-      setOriginPosition(origin);
-    }
-  }, [origin]);
-
-  useEffect(() => {
     const loadOriginPosition = async () => {
-      if (originPosition || origin) return;
       if (!navigator?.geolocation) {
         setPlanError("ブラウザは GPS 位置情報をサポートしていません。");
         return;
@@ -76,38 +71,57 @@ export function RoutePlannerView({ locations, origin, destination, maxRatio, set
 
       setGeoLoading(true);
       setPlanError(null);
+      let hasPosition = false;
+      let bestAccuracy = Number.POSITIVE_INFINITY;
 
       const getPosition = (options: PositionOptions) =>
         new Promise<GeolocationPosition>((resolve, reject) => {
           navigator.geolocation.getCurrentPosition(resolve, reject, options);
         });
 
-      try {
-        let position: GeolocationPosition;
-        try {
-          position = await getPosition({ enableHighAccuracy: true, timeout: 12000, maximumAge: 0 });
-        } catch (error) {
-          position = await getPosition({ enableHighAccuracy: false, timeout: 18000, maximumAge: 0 });
+      const applyPosition = (position: GeolocationPosition) => {
+        if (hasPosition && position.coords.accuracy >= bestAccuracy) {
+          return;
         }
-        setOriginPosition({
+
+        hasPosition = true;
+        bestAccuracy = position.coords.accuracy;
+        const nextPosition = {
           label: "現在地",
           lat: position.coords.latitude,
           lng: position.coords.longitude,
-        });
+          heading: position.coords.heading ?? null,
+        };
+        setOriginPosition(nextPosition);
+        setCurrentPosition(nextPosition);
+      };
+
+      try {
+        // A cached browser GPS fix makes the first route appear quickly.
+        try {
+          applyPosition(await getPosition({ enableHighAccuracy: false, timeout: 2500, maximumAge: 60000 }));
+        } catch {
+          // Continue to the fresh high-accuracy fix below.
+        }
+
+        applyPosition(await getPosition({ enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }));
       } catch (error) {
-        setPlanError("GPS 位置情報を取得できません。位置情報の許可を有効にして再試行してください。");
+        if (!hasPosition) {
+          setPlanError("GPS 位置情報を取得できません。位置情報の許可を有効にして再試行してください。");
+        }
       } finally {
         setGeoLoading(false);
       }
     };
 
     void loadOriginPosition();
-  }, [origin, originPosition]);
+  }, []);
 
   useEffect(() => {
     const fetchPlan = async () => {
       if (!originPosition || !routeDestination) return;
 
+      const requestId = ++planRequestIdRef.current;
       setPlanLoading(true);
       setPlanError(null);
       try {
@@ -120,14 +134,20 @@ export function RoutePlannerView({ locations, origin, destination, maxRatio, set
           },
           maxRatio,
         });
-        setPlanResult(plan);
+        if (requestId === planRequestIdRef.current) {
+          setPlanResult(plan);
+        }
       } catch (error) {
-        setPlanError(
-          error instanceof Error ? error.message : "ルート計画を作成できませんでした。"
-        );
-        setPlanResult(null);
+        if (requestId === planRequestIdRef.current) {
+          setPlanError(
+            error instanceof Error ? error.message : "ルート計画を作成できませんでした。"
+          );
+          setPlanResult(null);
+        }
       } finally {
-        setPlanLoading(false);
+        if (requestId === planRequestIdRef.current) {
+          setPlanLoading(false);
+        }
       }
     };
 
@@ -176,6 +196,20 @@ export function RoutePlannerView({ locations, origin, destination, maxRatio, set
 
   const selectedRoute = planResult?.recommendations.find((route) => route.kind === selectedRouteKind) ??
     planResult?.recommendations[0] ?? null;
+  const mapPlanResult = planResult ?? (
+    originPosition && routeDestination
+      ? {
+          origin: originPosition,
+          destination: {
+            label: routeDestination.name,
+            lat: routeDestination.lat,
+            lng: routeDestination.lng,
+          },
+          maxRatio,
+          recommendations: [],
+        }
+      : null
+  );
 
   useEffect(() => {
     if (
@@ -276,11 +310,32 @@ export function RoutePlannerView({ locations, origin, destination, maxRatio, set
     }
   }
 
-  function centerMapToUserLocation() {
-    if (!originPosition) {
-      return;
+  async function centerMapToUserLocation() {
+    const position = currentPosition ?? originPosition;
+    if (position) {
+      setCenterRequestId((current) => current + 1);
     }
-    alert(`位置を中心に移動: ${originPosition.label} (${originPosition.lat.toFixed(5)}, ${originPosition.lng.toFixed(5)})`);
+
+    if (!navigator?.geolocation) return;
+
+    try {
+      const freshPosition = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 5000,
+          maximumAge: 5000,
+        });
+      });
+      setCurrentPosition({
+        label: "現在地",
+        lat: freshPosition.coords.latitude,
+        lng: freshPosition.coords.longitude,
+        heading: freshPosition.coords.heading ?? null,
+      });
+      setCenterRequestId((current) => current + 1);
+    } catch {
+      // Keep the latest known position centered if a fresh GPS fix is unavailable.
+    }
   }
 
   function getDistanceKm(a: RouteCoords, b: { lat: number; lng: number }) {
@@ -369,7 +424,7 @@ export function RoutePlannerView({ locations, origin, destination, maxRatio, set
         <div className="h-full w-full overflow-hidden">
           <div className="route-map-layer relative z-0 h-full w-full">
             <RouteMapCanvas
-              planResult={planResult}
+              planResult={mapPlanResult}
               routes={planResult?.recommendations.map((recommendation) => ({
                 ...recommendation,
                 color:
@@ -382,6 +437,7 @@ export function RoutePlannerView({ locations, origin, destination, maxRatio, set
               selectedKind={selectedRouteKind}
               currentPosition={currentPosition}
               tracking={navigationStarted}
+              centerRequestId={centerRequestId}
               heightClassName="h-full"
             />
           </div>

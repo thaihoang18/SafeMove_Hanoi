@@ -31,6 +31,7 @@ type Props = {
   interactive?: boolean;
   currentPosition?: PositionCoords | null;
   tracking?: boolean;
+  centerRequestId?: number;
 };
 
 const tileUrl = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
@@ -43,6 +44,7 @@ export function RouteMapCanvas({
   interactive = true,
   currentPosition,
   tracking,
+  centerRequestId = 0,
 }: Props) {
   const selectedRoute = routes.find((route) => route.kind === selectedKind) ?? routes[0] ?? null;
 
@@ -115,6 +117,7 @@ export function RouteMapCanvas({
         <FitBounds points={allPoints} />
         <InvalidateMapSize />
         {tracking && currentPosition ? <FollowCurrentPosition position={currentPosition} /> : null}
+        {currentPosition ? <CenterOnRequest position={currentPosition} requestId={centerRequestId} /> : null}
 
         {routes.map((route) => {
           const positions = toLatLngs(route.route.geometry?.coordinates ?? []);
@@ -183,6 +186,20 @@ export function RouteMapCanvas({
     </div>
   </div>
   );
+}
+
+function CenterOnRequest({ position, requestId }: { position: PositionCoords; requestId: number }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (requestId <= 0) return;
+    map.flyTo([position.lat, position.lng], Math.max(map.getZoom(), 16), {
+      animate: true,
+      duration: 0.6,
+    });
+  }, [map, position.lat, position.lng, requestId]);
+
+  return null;
 }
 
 function FollowCurrentPosition({ position, tracking }: { position: PositionCoords; tracking?: boolean }) {

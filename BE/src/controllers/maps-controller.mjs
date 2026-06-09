@@ -1,6 +1,8 @@
 import { sql } from "../db.mjs";
 import { assert, isNonEmptyString } from "../utils/validation.mjs";
-import { fetchIqAirMeasurement } from "../services/iqair-service.mjs";
+
+const routePlanCache = new Map();
+const ROUTE_PLAN_CACHE_TTL_MS = 2 * 60 * 1000;
 
 function parseCoordinate(rawValue, fieldName, min, max) {
   const value = Number(rawValue);
@@ -117,22 +119,6 @@ function pickSampleCoordinates(routeGeometry) {
   return samples;
 }
 
-async function fetchAqiFromIqAir(lat, lng) {
-  try {
-    const measurement = await fetchIqAirMeasurement(lat, lng);
-    if (!Number.isFinite(measurement?.aqi)) {
-      return null;
-    }
-
-    return {
-      aqi: Number(measurement.aqi),
-      source: "IQAir",
-    };
-  } catch {
-    return null;
-  }
-}
-
 async function fetchAqiFromDatabase(lat, lng) {
   const row = (
     await sql`
@@ -170,36 +156,21 @@ async function estimateRouteAqi(routeGeometry, cache) {
     };
   }
 
-  const sampleValues = [];
-
-  for (const sample of samples) {
+  const sampleValues = await Promise.all(samples.map(async (sample) => {
     const cacheKey = `${sample.lat.toFixed(4)},${sample.lng.toFixed(4)}`;
     if (cache.has(cacheKey)) {
-      sampleValues.push(cache.get(cacheKey));
-      continue;
+      return cache.get(cacheKey);
     }
 
-    const iqAir = await fetchAqiFromIqAir(sample.lat, sample.lng);
-    if (iqAir?.aqi) {
-      cache.set(cacheKey, iqAir.aqi);
-      sampleValues.push(iqAir.aqi);
-      continue;
-    }
-
-    const dbAqi = await fetchAqiFromDatabase(sample.lat, sample.lng);
-    if (dbAqi?.aqi) {
-      cache.set(cacheKey, dbAqi.aqi);
-      sampleValues.push(dbAqi.aqi);
-      continue;
-    }
-
-    cache.set(cacheKey, 150);
-    sampleValues.push(150);
-  }
+    const promise = fetchAqiFromDatabase(sample.lat, sample.lng)
+      .then((dbAqi) => dbAqi?.aqi ?? 150);
+    cache.set(cacheKey, promise);
+    return promise;
+  }));
 
   return {
     avgAqi: Math.round(average(sampleValues) ?? 140),
-    aqiSource: "IQAir/DB",
+    aqiSource: "DB",
   };
 }
 
@@ -285,6 +256,18 @@ export async function planRoutesController(body) {
   const destinationLat = parseCoordinate(body.destination.lat, "destination.lat", -90, 90);
   const destinationLng = parseCoordinate(body.destination.lng, "destination.lng", -180, 180);
   const maxRatio = Number(body.maxRatio ?? 1.5);
+  const cacheKey = [
+    originLat.toFixed(5),
+    originLng.toFixed(5),
+    destinationLat.toFixed(5),
+    destinationLng.toFixed(5),
+    maxRatio.toFixed(2),
+  ].join("|");
+  const cachedPlan = routePlanCache.get(cacheKey);
+
+  if (cachedPlan?.expiresAt > Date.now()) {
+    return cachedPlan.plan;
+  }
 
   const osrmUrl = new URL(
     `https://router.project-osrm.org/route/v1/driving/${originLng},${originLat};${destinationLng},${destinationLat}`,
@@ -312,10 +295,7 @@ export async function planRoutesController(body) {
   assert(rawRoutes.length > 0, "No routes available for this request.");
 
   const aqiCache = new Map();
-  const enrichedRoutes = [];
-
-  for (let index = 0; index < rawRoutes.length; index += 1) {
-    const route = rawRoutes[index];
+  const enrichedRoutes = await Promise.all(rawRoutes.map(async (route, index) => {
     const routeName = `Route ${index + 1}`;
     const aqiEstimate = await estimateRouteAqi(route.geometry, aqiCache);
     const distanceM = Number(route.distance);
@@ -333,7 +313,7 @@ export async function planRoutesController(body) {
         }))
       : [];
 
-    enrichedRoutes.push({
+    return {
       routeId: `route-${index + 1}`,
       routeName,
       distanceM,
@@ -343,8 +323,8 @@ export async function planRoutesController(body) {
       exposureScore,
       steps,
       geometry: route.geometry,
-    });
-  }
+    };
+  }));
 
   const shortestDistance = Math.min(...enrichedRoutes.map((route) => route.distanceM));
   const shortestIdx = enrichedRoutes.findIndex((route) => route.distanceM === shortestDistance);
@@ -389,7 +369,7 @@ export async function planRoutesController(body) {
   const shortestRoute = mapRouteForClient(enrichedRoutes[shortestPickedIdx], maxRatio, shortestDistance);
   const balancedRoute = mapRouteForClient(enrichedRoutes[balancedIdx], maxRatio, shortestDistance);
 
-  return {
+  const plan = {
     origin: {
       label: body.origin.label,
       lat: originLat,
@@ -424,4 +404,11 @@ export async function planRoutesController(body) {
       },
     ],
   };
+
+  routePlanCache.set(cacheKey, {
+    expiresAt: Date.now() + ROUTE_PLAN_CACHE_TTL_MS,
+    plan,
+  });
+
+  return plan;
 }
