@@ -275,7 +275,7 @@ export async function sendEmail(to, subject, htmlBody, textBody) {
  * Build a styled AQI alert email HTML body.
  */
 export function buildAqiAlertEmailHtml({ title, body, aqi, aqiLabel, location, userName }) {
-  const color = aqi !== null && aqi > 150 ? "#dc2626" : aqi > 100 ? "#f59e0b" : "#10b981";
+  const color = "#dc2626";
 
   return `<!DOCTYPE html>
 <html>
@@ -292,8 +292,7 @@ export function buildAqiAlertEmailHtml({ title, body, aqi, aqiLabel, location, u
         <div style="font-size:13px;color:#64748b;margin-top:4px;">AQI · ${aqiLabel ?? ""}</div>
         <div style="font-size:12px;color:#94a3b8;margin-top:2px;">📍 ${location ?? ""}</div>
       </div>` : ""}
-      <p style="font-size:14px;line-height:1.7;color:#374151;margin:0 0 20px;">${body}</p>
-      <a href="#" style="display:inline-block;background:${color};color:white;text-decoration:none;padding:10px 24px;border-radius:8px;font-size:13px;font-weight:600;">アプリで詳細を見る</a>
+      <p style="font-size:14px;line-height:1.7;color:#374151;margin:0;">${body}</p>
     </div>
     <div style="padding:16px 28px;background:#f8fafc;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8;">
       ${userName ?? "お客様"} 様 - このメールは、SafeMove Hanoi の AQI アラート配信にご登録いただいているため送信されています。

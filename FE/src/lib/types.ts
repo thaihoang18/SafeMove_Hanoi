@@ -24,6 +24,11 @@ export type LocationRecord = {
   address: string | null;
   lat: number;
   lng: number;
+  is_japan_friendly: boolean;
+  metadata?: {
+    description?: string | null;
+    amenities?: string[];
+  };
   created_at?: string;
 };
 

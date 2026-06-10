@@ -10,6 +10,7 @@ type Props = {
   onForgotPassword: (email: string) => Promise<string>;
   isLoading?: boolean;
   error?: string;
+  success?: string;
 };
 
 type LoginMode = "user" | "admin";
@@ -22,6 +23,7 @@ export function LoginScreenDemo({
   onForgotPassword,
   isLoading = false,
   error,
+  success,
 }: Props) {
   const [mode, setMode] = useState<LoginMode>("user");
   const [email, setEmail] = useState("");
@@ -195,6 +197,7 @@ export function LoginScreenDemo({
 
             {/* Error Message */}
             {(formError || error) && <div className="error-text-auth">{formError || error}</div>}
+            {success && !formError && !error && <div className="success-text-auth">{success}</div>}
 
             {/* Submit Button */}
             <button type="submit" className="btn-primary-auth" disabled={isLoading}>

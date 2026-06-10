@@ -125,8 +125,20 @@ CREATE TABLE IF NOT EXISTS locations (
   address text,
   lat double precision NOT NULL CHECK (lat BETWEEN -90 AND 90),
   lng double precision NOT NULL CHECK (lng BETWEEN -180 AND 180),
+  is_japan_friendly boolean NOT NULL DEFAULT false,
+  metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
   created_at timestamptz NOT NULL DEFAULT now()
 );
+
+ALTER TABLE locations
+  ADD COLUMN IF NOT EXISTS is_japan_friendly boolean NOT NULL DEFAULT false;
+
+ALTER TABLE locations
+  ADD COLUMN IF NOT EXISTS metadata jsonb NOT NULL DEFAULT '{}'::jsonb;
+
+UPDATE locations
+SET is_japan_friendly = true
+WHERE metadata ->> 'is_japan_friendly' = 'true';
 
 CREATE TABLE IF NOT EXISTS aqi_measurements (
   id bigserial PRIMARY KEY,

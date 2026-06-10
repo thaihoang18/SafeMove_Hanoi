@@ -1,4 +1,4 @@
-import { User, Mail, Lock, ArrowRight } from "lucide-react";
+import { User, Mail, Lock, ArrowRight, Wind } from "lucide-react";
 import { useState } from "react";
 import "../styles/demo-auth.css";
 
@@ -66,9 +66,9 @@ export function RegisterScreenDemo({
       {/* Header */}
       <div className="auth-header">
         <div className="logo-area-auth">
-            <span className="logo-icon-auth">🌬️</span>
-            <span className="logo-text-auth">SafeMove ハノイ</span>
-          </div>
+          <Wind size={20} className="logo-icon-auth" />
+          <span className="logo-text-auth">SafeMove ハノイ</span>
+        </div>
       </div>
 
       {/* Main Content */}

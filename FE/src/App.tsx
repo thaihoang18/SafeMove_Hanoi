@@ -92,6 +92,10 @@ function normalizeText(value: string) {
     .trim();
 }
 
+function isUuid(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
 function getAqiTone(value: number | null): { tone: AqiTone; label: string; advice: string } {
   if (value === null) {
     return {
@@ -264,6 +268,7 @@ export default function App() {
   const [view, setView] = useState<View>("home");
   const [loadingAuth, setLoadingAuth] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [authSuccess, setAuthSuccess] = useState<string | null>(null);
   const [globalError, setGlobalError] = useState<string | null>(null);
 
   const [bootstrap, setBootstrap] = useState<{
@@ -435,6 +440,7 @@ export default function App() {
   async function handleUserLogin(email: string, password: string) {
     setLoadingAuth(true);
     setAuthError(null);
+    setAuthSuccess(null);
     try {
       const response = await login(email, password);
       if (response.user.role === "admin") {
@@ -463,6 +469,7 @@ export default function App() {
   async function handleAdminLogin(email: string, password: string) {
     setLoadingAuth(true);
     setAuthError(null);
+    setAuthSuccess(null);
     try {
       const response = await loginAdmin(email, password);
       if (response.user.role !== "admin") {
@@ -492,12 +499,9 @@ export default function App() {
     setLoadingAuth(true);
     setAuthError(null);
     try {
-      const response = await register(fullName, email, password);
-      setUser(response.user);
-      setRole("user");
-      setView("home");
-      applyBootstrapAqiSnapshot(bootstrap.aqiSnapshot);
-      hasAutoLoadedGpsAqiRef.current = false;
+      await register(fullName, email, password);
+      setShowRegister(false);
+      setAuthSuccess("登録が完了しました。ログインして SafeMove ハノイ を体験してください。");
     } catch (error) {
       setAuthError(error instanceof Error ? error.message : "新規登録に失敗しました。");
     } finally {
@@ -821,6 +825,13 @@ export default function App() {
   );
 
   const loadSelectedLocationReviews = useCallback(async (locationId: string) => {
+    if (!isUuid(locationId)) {
+      setSelectedLocationReviews([]);
+      setSelectedLocationReviewsError(null);
+      setSelectedLocationReviewsLoading(false);
+      return;
+    }
+
     setSelectedLocationReviewsLoading(true);
     setSelectedLocationReviewsError(null);
 
@@ -865,6 +876,10 @@ export default function App() {
     async ({ rating, content }: { rating: number; content: string }) => {
       if (!selectedBackendLocation || !user) {
         throw new Error("選択された地点またはユーザーが見つかりません。");
+      }
+
+      if (!isUuid(selectedBackendLocation.id)) {
+        throw new Error("このスポットではレビュー機能を利用できません。");
       }
 
       const blockedLanguages = getBlockedCommentLanguages(content);
@@ -913,7 +928,11 @@ export default function App() {
     return showRegister ? (
       <RegisterScreenDemo
         onRegister={handleRegister}
-        onLoginClick={() => setShowRegister(false)}
+        onLoginClick={() => {
+          setAuthError(null);
+          setAuthSuccess(null);
+          setShowRegister(false);
+        }}
         isLoading={loadingAuth}
         error={authError ?? undefined}
       />
@@ -921,11 +940,16 @@ export default function App() {
       <LoginScreenDemo
         onUserLogin={handleUserLogin}
         onAdminLogin={handleAdminLogin}
-        onRegisterClick={() => setShowRegister(true)}
+        onRegisterClick={() => {
+          setAuthError(null);
+          setAuthSuccess(null);
+          setShowRegister(true);
+        }}
         onGuestContinue={handleGuestContinue}
         onForgotPassword={handleForgotPassword}
         isLoading={loadingAuth}
         error={authError ?? undefined}
+        success={authSuccess ?? undefined}
       />
     );
   }

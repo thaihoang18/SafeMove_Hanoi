@@ -21,7 +21,7 @@ export type PlaceCatalogItem = {
   type: string;
   image_url: import("react/jsx-runtime").JSX.Element;
   distance_km: any;
-  is_japan_friendly: import("react/jsx-runtime").JSX.Element;
+  is_japan_friendly?: boolean;
   aqi_level: any;
   amenities: boolean;
   filter_type?: "park" | "gym" | "sports";
@@ -73,6 +73,7 @@ export function mergeExercisePlaces(basePlaces: PlaceCatalogItem[]) {
         ? {
             ...existing,
             ...place,
+            is_japan_friendly: place.is_japan_friendly === true,
             filter_type:
               existing.filter_type ??
               place.filter_type ??
@@ -80,6 +81,7 @@ export function mergeExercisePlaces(basePlaces: PlaceCatalogItem[]) {
           }
         : {
             ...place,
+            is_japan_friendly: place.is_japan_friendly === true,
             filter_type: place.filter_type ?? inferFilterType(place.name, place.location_type, place.categories, place.description),
           },
     );

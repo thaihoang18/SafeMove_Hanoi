@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import L from "leaflet";
 import { ArrowLeft, Building2, ChevronDown, CircleAlert, Edit3, MapPin, Plus, Trash2, Users, X } from "lucide-react";
@@ -76,11 +76,12 @@ const emptyForm: LocationFormState = {
   description: "",
 };
 
-const addFacilityAmenities = [
-  { value: "water", label: "給水所" },
-  { value: "shade", label: "日陰" },
-  { value: "toilet", label: "トイレ" },
-  { value: "bench", label: "ベンチ" },
+const locationTypeOptions = [
+  { value: "indoor_place", label: "屋内施設" },
+  { value: "poi", label: "スポット" },
+  { value: "station", label: "観測ステーション" },
+  { value: "district", label: "地区" },
+  { value: "road_point", label: "道路地点" },
 ];
 
 const hanoiMapBounds = {
@@ -109,10 +110,7 @@ function latLngToMapPoint(lat: number, lng: number) {
   const x = ((lng - hanoiMapBounds.lngMin) / (hanoiMapBounds.lngMax - hanoiMapBounds.lngMin)) * 100;
   const y = ((hanoiMapBounds.latMax - lat) / (hanoiMapBounds.latMax - hanoiMapBounds.latMin)) * 100;
 
-  return {
-    x: Math.min(100, Math.max(0, x)),
-    y: Math.min(100, Math.max(0, y)),
-  };
+  return { x, y };
 }
 
 function extractBlockedCommentLanguages(review: any) {
@@ -241,6 +239,18 @@ function HanoiMapZoomSync({
   return null;
 }
 
+function HanoiMapPositionSync({ mapPoint, zoom }: { mapPoint: MapPoint; zoom: number }) {
+  const map = useMap();
+  const position = useMemo(() => mapPointToLatLng(mapPoint), [mapPoint]);
+
+  useEffect(() => {
+    map.invalidateSize({ animate: false });
+    map.setView([position.lat, position.lng], zoom, { animate: true });
+  }, [map, position.lat, position.lng, zoom]);
+
+  return null;
+}
+
 const hanoiMapTileUrl = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
 
 const facilityPickerIcon = L.divIcon({
@@ -278,8 +288,8 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
   const [formState, setFormState] = useState<LocationFormState>(emptyForm);
   const [mapPoint, setMapPoint] = useState<MapPoint>(() => latLngToMapPoint(hanoiCenter.lat, hanoiCenter.lng));
   const [mapZoom, setMapZoom] = useState(14);
-  const [selectedAmenities, setSelectedAmenities] = useState<string[]>(["water"]);
   const [isJapanFriendly, setIsJapanFriendly] = useState(false);
+  const facilityPositionRequestId = useRef(0);
   const [formError, setFormError] = useState<string | null>(null);
   const [adminAvatarSelection, setAdminAvatarSelection] = useState<AvatarSelection>(() =>
     loadAvatarSelection(`admin_${userId}`),
@@ -518,7 +528,7 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
     }
 
     if (/(tayho|tay ho)/.test(normalized)) {
-      return "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=400&q=80";
+      return "https://static.vinwonders.com/production/cong-vien-1.jpg";
     }
 
     return "https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=400&q=80";
@@ -532,6 +542,8 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
   }
 
   function startEdit(location: LocationRecord) {
+    facilityPositionRequestId.current += 1;
+
     setEditingLocationId(location.id);
     setActionMessage(null);
     setFormError(null);
@@ -543,22 +555,80 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
       address: location.address ?? "",
       lat: String(location.lat),
       lng: String(location.lng),
-      description: "",
+      description: location.metadata?.description ?? "",
     });
     setMapPoint(latLngToMapPoint(location.lat, location.lng));
-    setSelectedAmenities(["water"]);
-    setIsJapanFriendly(false);
+    setIsJapanFriendly(location.is_japan_friendly === true);
     setView("facility-add");
   }
 
   function resetForm() {
+    facilityPositionRequestId.current += 1;
     setEditingLocationId(null);
-    setFormState(emptyForm);
+    setFormState({
+      ...emptyForm,
+      lat: String(hanoiCenter.lat),
+      lng: String(hanoiCenter.lng),
+    });
     setMapPoint(latLngToMapPoint(hanoiCenter.lat, hanoiCenter.lng));
     setMapZoom(14);
-    setSelectedAmenities(["water"]);
     setIsJapanFriendly(false);
     setFormError(null);
+  }
+
+  function openCreateLocationForm() {
+    resetForm();
+    setView("facility-add");
+
+    if (!navigator.geolocation) {
+      return;
+    }
+
+    const requestId = facilityPositionRequestId.current;
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        if (requestId !== facilityPositionRequestId.current) {
+          return;
+        }
+
+        const lat = Number(position.coords.latitude.toFixed(6));
+        const lng = Number(position.coords.longitude.toFixed(6));
+        setFormState((current) => ({ ...current, lat: String(lat), lng: String(lng) }));
+        setMapPoint(latLngToMapPoint(lat, lng));
+        setMapZoom(16);
+      },
+      () => {
+        // Keep Hanoi center as the fallback when GPS permission is unavailable.
+      },
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 },
+    );
+  }
+
+  async function toggleJapanFriendly(location: LocationRecord) {
+    if (location.is_japan_friendly) {
+      return;
+    }
+
+    setActionMessage(null);
+
+    try {
+      await updateLocation(location.id, {
+        name: location.name,
+        locationType: location.location_type,
+        city: location.city,
+        district: location.district,
+        address: location.address,
+        lat: location.lat,
+        lng: location.lng,
+        description: location.metadata?.description ?? null,
+        amenities: location.metadata?.amenities ?? [],
+        isJapanFriendly: true,
+      });
+      await refreshLocations();
+      setActionMessage("日本語対応設定を更新しました。");
+    } catch (error) {
+      setActionMessage(error instanceof Error ? error.message : "日本語対応設定を更新できませんでした。");
+    }
   }
 
   async function submitLocation() {
@@ -575,6 +645,11 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
       address: formState.address.trim() || null,
       lat: Number(formState.lat),
       lng: Number(formState.lng),
+      description: formState.description.trim() || null,
+      amenities: editingLocationId
+        ? locations.find((location) => location.id === editingLocationId)?.metadata?.amenities ?? []
+        : [],
+      isJapanFriendly,
     };
 
     if (Number.isNaN(payload.lat) || Number.isNaN(payload.lng)) {
@@ -773,7 +848,7 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
                 <div className="text-sm text-slate-500">施設一覧と公開設定をまとめて管理</div>
                 <h2 className="mt-1 text-2xl text-slate-900">施設管理</h2>
               </div>
-              <button onClick={() => { resetForm(); setView("facility-add"); }} className="inline-flex items-center rounded-full bg-emerald-600 px-4 py-2 text-sm text-white shadow-sm shadow-emerald-600/15">
+              <button onClick={openCreateLocationForm} className="inline-flex items-center rounded-full bg-emerald-600 px-4 py-2 text-sm text-white shadow-sm shadow-emerald-600/15">
                 <Plus className="mr-2 inline h-4 w-4" />
                 施設を追加
               </button>
@@ -836,7 +911,15 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
                           </span>
                         </div>
                         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
-                          <button onClick={() => toggleJapanFriendly(location.id)} className="text-xs text-slate-500 underline decoration-slate-300 underline-offset-4">日本語対応の切り替え</button>
+                          <button
+                            onClick={() => void toggleJapanFriendly(location)}
+                            disabled={location.is_japan_friendly}
+                            className={`text-xs underline decoration-slate-300 underline-offset-4 ${
+                              location.is_japan_friendly ? "cursor-default text-emerald-700 no-underline" : "text-slate-500"
+                            }`}
+                          >
+                            {location.is_japan_friendly ? "日本語対応済み" : "日本語対応に設定"}
+                          </button>
                           <div className="flex gap-2">
                             <button onClick={() => startEdit(location)} className="rounded-2xl bg-emerald-50 px-4 py-2 text-sm text-emerald-700 ring-1 ring-emerald-200">
                               <Edit3 className="mr-2 inline h-4 w-4" />
@@ -916,6 +999,7 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
                       attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                     />
                     <HanoiMapZoomSync zoom={mapZoom} onZoomChange={setMapZoom} />
+                    <HanoiMapPositionSync mapPoint={mapPoint} zoom={mapZoom} />
                     <HanoiFacilityPickerMap mapPoint={mapPoint} setMapPoint={setMapPoint} setFormState={setFormState} />
                   </MapContainer>
 
@@ -974,41 +1058,16 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
                         <div className="mt-1 text-xs text-slate-500">日本人ユーザー向けのおすすめ施設として表示</div>
                       </div>
                       <label className="relative inline-flex cursor-pointer items-center">
-                        <input type="checkbox" checked={isJapanFriendly} onChange={(event) => setIsJapanFriendly(event.target.checked)} className="peer sr-only" />
+                        <input
+                          type="checkbox"
+                          checked={isJapanFriendly}
+                          disabled={editingLocationId !== null && isJapanFriendly}
+                          onChange={(event) => setIsJapanFriendly(event.target.checked)}
+                          className="peer sr-only"
+                        />
                         <span className="h-6 w-11 rounded-full bg-slate-300 transition peer-checked:bg-emerald-500" />
                         <span className="absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow transition peer-checked:translate-x-5" />
                       </label>
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="text-sm font-medium text-slate-900">主要設備</div>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {addFacilityAmenities.map((amenity) => {
-                        const active = selectedAmenities.includes(amenity.value);
-
-                        return (
-                          <button
-                            key={amenity.value}
-                            type="button"
-                            onClick={() => {
-                              setSelectedAmenities((current) =>
-                                current.includes(amenity.value)
-                                  ? current.filter((item) => item !== amenity.value)
-                                  : [...current, amenity.value],
-                              );
-                            }}
-                            className={`rounded-full px-4 py-2 text-sm ring-1 transition ${
-                              active ? "bg-emerald-50 text-emerald-700 ring-emerald-200" : "bg-white text-slate-600 ring-slate-200 hover:bg-slate-50"
-                            }`}
-                          >
-                            {amenity.label}
-                          </button>
-                        );
-                      })}
-                      <button type="button" className="rounded-full bg-slate-900 px-4 py-2 text-sm text-white ring-1 ring-slate-900">
-                        + 設備を追加
-                      </button>
                     </div>
                   </div>
 
@@ -1023,9 +1082,12 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
                   </div>
 
                   <div className="grid gap-3 md:grid-cols-2">
-                    <Field label="施設種類" value={formState.locationType} onChange={(value) => setFormState((current) => ({ ...current, locationType: value }))} />
-                    <Field label="都市" value={formState.city} onChange={(value) => setFormState((current) => ({ ...current, city: value }))} />
-                    <Field label="地区 / 区" value={formState.district} onChange={(value) => setFormState((current) => ({ ...current, district: value }))} />
+                    <SelectField
+                      label="施設種類"
+                      value={formState.locationType}
+                      options={locationTypeOptions}
+                      onChange={(value) => setFormState((current) => ({ ...current, locationType: value }))}
+                    />
                     <Field label="Lat" value={formState.lat} onChange={(value) => setFormState((current) => ({ ...current, lat: value }))} />
                     <Field label="Lng" value={formState.lng} onChange={(value) => setFormState((current) => ({ ...current, lng: value }))} />
                   </div>
@@ -1477,6 +1539,35 @@ function Field({
           {value || "-"}
         </div>
       )}
+    </label>
+  );
+}
+
+function SelectField({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: Array<{ value: string; label: string }>;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="grid gap-1.5 text-sm">
+      <span className="text-xs uppercase tracking-[0.16em] text-slate-500">{label}</span>
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="rounded-2xl bg-white px-4 py-3 text-slate-900 ring-1 ring-slate-200 outline-none"
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
     </label>
   );
 }

@@ -47,7 +47,13 @@ export async function handleRoute(req, res, url) {
 
     notFound(res);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
+    const databaseErrorCode =
+      error && typeof error === "object" && "code" in error ? String(error.code) : null;
+    const message = databaseErrorCode?.startsWith("23")
+      ? "入力内容を確認して、もう一度お試しください。"
+      : error instanceof Error
+        ? error.message
+        : "Unknown error";
     sendJson(res, 400, { ok: false, error: message });
   }
 }

@@ -264,6 +264,11 @@ export async function fetchLocations() {
       district: string | null;
       lat: number;
       lng: number;
+      is_japan_friendly: boolean;
+      metadata?: {
+        description?: string | null;
+        amenities?: string[];
+      };
       aqi_level?: number | null;
     }>;
   }>("/api/locations");
@@ -277,6 +282,9 @@ export async function createLocation(payload: {
   address?: string | null;
   lat: number;
   lng: number;
+  description?: string | null;
+  amenities?: string[];
+  isJapanFriendly?: boolean;
 }) {
   return request<{ ok: true; location: Record<string, unknown> }>(
     "/api/locations",
@@ -297,6 +305,9 @@ export async function updateLocation(
     address?: string | null;
     lat: number;
     lng: number;
+    description?: string | null;
+    amenities?: string[];
+    isJapanFriendly?: boolean;
   },
 ) {
   return request<{ ok: true; location: Record<string, unknown> }>(
