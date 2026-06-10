@@ -271,7 +271,7 @@ export async function fetchLocations() {
       };
       aqi_level?: number | null;
     }>;
-  }>("/api/locations");
+  }>("/api/locations", { cache: "no-store" });
 }
 
 export async function createLocation(payload: {

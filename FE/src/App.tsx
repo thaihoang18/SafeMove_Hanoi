@@ -365,6 +365,11 @@ export default function App() {
     [],
   );
 
+  const reloadLocations = useCallback(async () => {
+    const data = await fetchLocations();
+    setLocations(data.locations);
+  }, []);
+
   useEffect(() => {
     fetchBootstrapData()
       .then((data) => {
@@ -377,10 +382,8 @@ export default function App() {
       })
       .catch((error) => setGlobalError(error.message));
 
-    fetchLocations()
-      .then((data) => setLocations(data.locations))
-      .catch((error) => setGlobalError(error.message));
-  }, []);
+    void reloadLocations().catch((error) => setGlobalError(error.message));
+  }, [reloadLocations]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -446,6 +449,7 @@ export default function App() {
       if (response.user.role === "admin") {
         throw new Error("Admin account cannot log in from the user login screen.");
       }
+      await reloadLocations().catch((error) => setGlobalError(error.message));
       setUser(response.user);
       setRole(response.user.role === "admin" ? "admin" : "user");
       setView(response.user.role === "admin" ? "dashboard" : "home");
@@ -955,7 +959,7 @@ export default function App() {
   }
 
   if (role === "admin") {
-    return <AdminWorkspace userId={user.id} userName={user.full_name || user.email} userEmail={user.email} onLogout={() => {
+    return <AdminWorkspace userId={user.id} userName={user.full_name || user.email} userEmail={user.email} onLocationsChanged={reloadLocations} onLogout={() => {
       setUser(null);
       setRole("user");
       setView("home");

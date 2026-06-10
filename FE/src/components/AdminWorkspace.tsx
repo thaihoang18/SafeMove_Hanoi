@@ -24,6 +24,7 @@ type Props = {
   userName: string;
   userEmail: string;
   bootstrapAqiSnapshot: GpsAqiMeasurement | null;
+  onLocationsChanged?: () => void | Promise<void>;
   onLogout: () => void;
 };
 
@@ -275,7 +276,7 @@ function getAqiTone(value: number) {
   return { label: "非常に悪い", badgeClass: "bg-rose-100 text-rose-700" };
 }
 
-export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapshot, onLogout }: Props) {
+export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapshot, onLocationsChanged, onLogout }: Props) {
   const [view, setView] = useState<View>("dashboard");
   const [locations, setLocations] = useState<LocationRecord[]>([]);
   const [overview, setOverview] = useState<AdminOverview | null>(null);
@@ -638,6 +639,7 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
         isJapanFriendly: true,
       });
       await refreshLocations();
+      await onLocationsChanged?.();
       setActionMessage("日本語対応設定を更新しました。");
     } catch (error) {
       setActionMessage(error instanceof Error ? error.message : "日本語対応設定を更新できませんでした。");
@@ -684,6 +686,7 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
       }
 
       await refreshLocations();
+      await onLocationsChanged?.();
       resetForm();
       setView("facilities");
     } catch (error) {
@@ -703,6 +706,7 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
     try {
       await deleteLocation(locationId);
       await refreshLocations();
+      await onLocationsChanged?.();
       if (editingLocationId === locationId) {
         resetForm();
       }
