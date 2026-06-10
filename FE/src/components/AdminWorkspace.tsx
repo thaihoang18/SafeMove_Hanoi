@@ -51,6 +51,8 @@ type MapPoint = {
 };
 
 type ModerationStatus = "unprocessed" | "deleted";
+type ModerationStatusFilter = "all" | ModerationStatus;
+type ModerationLanguageFilter = "all" | BlockedCommentLanguage;
 
 type ModerationItem = {
   id: string;
@@ -305,10 +307,10 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
   const [savingAdminField, setSavingAdminField] = useState<string | null>(null);
   const [moderationLocation, setModerationLocation] = useState("all");
   const [moderationLocationMenuOpen, setModerationLocationMenuOpen] = useState(false);
-  const [showUnprocessed, setShowUnprocessed] = useState(true);
-  const [showDeleted, setShowDeleted] = useState(false);
-  const [showVietnameseViolations, setShowVietnameseViolations] = useState(true);
-  const [showJapaneseViolations, setShowJapaneseViolations] = useState(true);
+  const [moderationStatusFilter, setModerationStatusFilter] = useState<ModerationStatusFilter>("all");
+  const [moderationStatusMenuOpen, setModerationStatusMenuOpen] = useState(false);
+  const [moderationLanguageFilter, setModerationLanguageFilter] = useState<ModerationLanguageFilter>("all");
+  const [moderationLanguageMenuOpen, setModerationLanguageMenuOpen] = useState(false);
   const [moderationStatusById, setModerationStatusById] = useState<Record<string, ModerationStatus>>({});
   const [moderationItemsList, setModerationItemsList] = useState<ModerationItem[]>([]);
   const [moderationUpdatingById, setModerationUpdatingById] = useState<Record<string, boolean>>({});
@@ -448,20 +450,17 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
     return moderationItemsList.filter((item) => {
       const status = moderationStatusById[item.id] ?? item.status;
       const locationMatch = moderationLocation === "all" ? true : item.locationId === moderationLocation;
-      const statusMatch = (status === "unprocessed" && showUnprocessed) || (status === "deleted" && showDeleted);
+      const statusMatch = moderationStatusFilter === "all" || status === moderationStatusFilter;
       const languageMatch =
-        (showVietnameseViolations && item.blockedLanguages.includes("vi")) ||
-        (showJapaneseViolations && item.blockedLanguages.includes("ja"));
+        moderationLanguageFilter === "all" || item.blockedLanguages.includes(moderationLanguageFilter);
 
       return locationMatch && statusMatch && languageMatch;
     });
   }, [
+    moderationLanguageFilter,
     moderationLocation,
+    moderationStatusFilter,
     moderationStatusById,
-    showDeleted,
-    showJapaneseViolations,
-    showUnprocessed,
-    showVietnameseViolations,
     moderationItemsList,
   ]);
 
@@ -472,6 +471,20 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
   }, [moderationItemsList]);
 
   const moderationLocationLabel = moderationLocations.find((location) => location.id === moderationLocation)?.label ?? "すべて";
+  const moderationStatusOptions: Array<{ id: ModerationStatusFilter; label: string }> = [
+    { id: "all", label: "すべてのコメント" },
+    { id: "unprocessed", label: "未処理" },
+    { id: "deleted", label: "削除済み" },
+  ];
+  const moderationLanguageOptions: Array<{ id: ModerationLanguageFilter; label: string }> = [
+    { id: "all", label: "すべてのコメント" },
+    { id: "vi", label: "ベトナム語" },
+    { id: "ja", label: "日本語" },
+  ];
+  const moderationStatusFilterLabel =
+    moderationStatusOptions.find((option) => option.id === moderationStatusFilter)?.label ?? "すべてのコメント";
+  const moderationLanguageFilterLabel =
+    moderationLanguageOptions.find((option) => option.id === moderationLanguageFilter)?.label ?? "すべてのコメント";
 
   async function handleAdminAvatarSave() {
     setAdminAvatarSelection(pendingAvatarSelection);
@@ -1138,7 +1151,11 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
               <div className="relative mt-3 max-w-md">
                 <button
                   type="button"
-                  onClick={() => setModerationLocationMenuOpen((current) => !current)}
+                  onClick={() => {
+                    setModerationLocationMenuOpen((current) => !current);
+                    setModerationStatusMenuOpen(false);
+                    setModerationLanguageMenuOpen(false);
+                  }}
                   className="flex w-full items-center justify-between gap-3 rounded-2xl bg-white px-4 py-3 text-left text-sm text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50"
                 >
                   <span className="min-w-0">
@@ -1174,79 +1191,88 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
                 )}
               </div>
 
-              <div className="mt-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                ステータスで絞り込み
-              </div>
-              <div className="mt-2 flex flex-wrap gap-4 text-xs text-slate-600">
-                <label className="inline-flex items-center gap-2 text-[0px]">
-                  <input
-                    type="checkbox"
-                    checked={showUnprocessed && showDeleted}
-                    onChange={(event) => {
-                      const checked = event.target.checked;
-                      if (checked) {
-                        setShowUnprocessed(true);
-                        setShowDeleted(true);
-                      } else {
-                        setShowUnprocessed(false);
-                        setShowDeleted(false);
-                      }
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setModerationStatusMenuOpen((current) => !current);
+                      setModerationLocationMenuOpen(false);
+                      setModerationLanguageMenuOpen(false);
                     }}
-                    className="accent-emerald-600"
-                  />
-                  <span className="text-xs">すべてのステータス</span>
-                  すべてのコメント
-                </label>
-                <label className="inline-flex items-center gap-2 text-[0px]">
-                  <input
-                    type="checkbox"
-                    checked={showUnprocessed}
-                    onChange={(event) => {
-                      setShowUnprocessed(event.target.checked);
-                    }}
-                    className="accent-emerald-600"
-                  />
-                  <span className="text-xs">未処理</span>
-                  未処理
-                </label>
-                <label className="inline-flex items-center gap-2 text-[0px]">
-                  <input
-                    type="checkbox"
-                    checked={showDeleted}
-                    onChange={(event) => {
-                      setShowDeleted(event.target.checked);
-                    }}
-                    className="accent-emerald-600"
-                  />
-                  <span className="text-xs">削除済み</span>
-                  削除済み
-                </label>
-              </div>
+                    className="flex w-full items-center justify-between gap-3 rounded-2xl bg-white px-4 py-3 text-left text-sm text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50"
+                  >
+                    <span className="min-w-0">
+                      <span className="block text-xs uppercase tracking-[0.16em] text-slate-500">ステータスで絞り込み</span>
+                      <span className="mt-1 block truncate font-medium text-slate-900">{moderationStatusFilterLabel}</span>
+                    </span>
+                    <ChevronDown className={`h-4 w-4 shrink-0 text-slate-500 transition ${moderationStatusMenuOpen ? "rotate-180" : ""}`} />
+                  </button>
 
-              <div className="mt-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                違反言語で絞り込み
-              </div>
-              <div className="mt-2 flex flex-wrap gap-4 text-xs text-slate-600">
-                <label className="inline-flex items-center gap-2 text-[0px]">
-                  <input
-                    type="checkbox"
-                    checked={showVietnameseViolations}
-                    onChange={(event) => setShowVietnameseViolations(event.target.checked)}
-                    className="accent-emerald-600"
-                  />
-                  <span className="text-xs">ベトナム語</span>
-                  ベトナム語
-                </label>
-                <label className="inline-flex items-center gap-2 text-[0px]">
-                  <input
-                    type="checkbox"
-                    checked={showJapaneseViolations}
-                    onChange={(event) => setShowJapaneseViolations(event.target.checked)}
-                    className="accent-emerald-600"
-                  />
-                  <span className="text-xs">日本語</span>
-                  日本語
-                </label>
+                  {moderationStatusMenuOpen && (
+                    <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-20 rounded-2xl bg-white p-2 shadow-lg ring-1 ring-slate-200">
+                      {moderationStatusOptions.map((option) => {
+                        const active = moderationStatusFilter === option.id;
+                        return (
+                          <button
+                            key={option.id}
+                            type="button"
+                            onClick={() => {
+                              setModerationStatusFilter(option.id);
+                              setModerationStatusMenuOpen(false);
+                            }}
+                            className={`flex w-full items-center rounded-xl px-3 py-2 text-left text-sm transition ${
+                              active ? "bg-emerald-50 text-emerald-700" : "text-slate-700 hover:bg-slate-50"
+                            }`}
+                          >
+                            {option.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setModerationLanguageMenuOpen((current) => !current);
+                      setModerationLocationMenuOpen(false);
+                      setModerationStatusMenuOpen(false);
+                    }}
+                    className="flex w-full items-center justify-between gap-3 rounded-2xl bg-white px-4 py-3 text-left text-sm text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50"
+                  >
+                    <span className="min-w-0">
+                      <span className="block text-xs uppercase tracking-[0.16em] text-slate-500">違反言語で絞り込み</span>
+                      <span className="mt-1 block truncate font-medium text-slate-900">{moderationLanguageFilterLabel}</span>
+                    </span>
+                    <ChevronDown className={`h-4 w-4 shrink-0 text-slate-500 transition ${moderationLanguageMenuOpen ? "rotate-180" : ""}`} />
+                  </button>
+
+                  {moderationLanguageMenuOpen && (
+                    <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-20 rounded-2xl bg-white p-2 shadow-lg ring-1 ring-slate-200">
+                      {moderationLanguageOptions.map((option) => {
+                        const active = moderationLanguageFilter === option.id;
+                        return (
+                          <button
+                            key={option.id}
+                            type="button"
+                            onClick={() => {
+                              setModerationLanguageFilter(option.id);
+                              setModerationLanguageMenuOpen(false);
+                            }}
+                            className={`flex w-full items-center rounded-xl px-3 py-2 text-left text-sm transition ${
+                              active ? "bg-emerald-50 text-emerald-700" : "text-slate-700 hover:bg-slate-50"
+                            }`}
+                          >
+                            {option.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
