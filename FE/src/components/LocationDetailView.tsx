@@ -159,7 +159,7 @@ export function LocationDetailView({
       {/* Stats Grid */}
       <div className="stats-grid">
         <div className="stat-circle-box">
-          <div className="small-aqi-circle">
+          <div className={`small-aqi-circle ${getAqiColorClass(apiAqi)}`}>
             <div className="circle-value">{smallCircleValue ?? "..."}</div>
             <div className="circle-label">{smallCircleLabel}</div>
           </div>
@@ -326,6 +326,15 @@ export function LocationDetailView({
       </button>
     </div>
   );
+}
+
+function getAqiColorClass(value: number | null): string {
+  if (value === null) return "aqi-unknown";
+  if (value <= 50) return "aqi-good";
+  if (value <= 100) return "aqi-moderate";
+  if (value <= 150) return "aqi-sensitive";
+  if (value <= 200) return "aqi-bad";
+  return "aqi-very-bad";
 }
 
 function formatRelativeTime(value: string) {

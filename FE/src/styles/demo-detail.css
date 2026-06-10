@@ -116,6 +116,13 @@
   background: white;
 }
 
+.small-aqi-circle.aqi-unknown    { border-color: #64748b; }
+.small-aqi-circle.aqi-good       { border-color: #16a34a; }
+.small-aqi-circle.aqi-moderate   { border-color: #f59e0b; }
+.small-aqi-circle.aqi-sensitive  { border-color: #f97316; }
+.small-aqi-circle.aqi-bad        { border-color: #ef4444; }
+.small-aqi-circle.aqi-very-bad   { border-color: #b91c1c; }
+
 .circle-value {
   font-size: 32px;
   font-weight: bold;
@@ -523,6 +530,13 @@
     height: 80px;
     border-width: 6px;
   }
+
+  .small-aqi-circle.aqi-unknown,
+  .small-aqi-circle.aqi-good,
+  .small-aqi-circle.aqi-moderate,
+  .small-aqi-circle.aqi-sensitive,
+  .small-aqi-circle.aqi-bad,
+  .small-aqi-circle.aqi-very-bad { border-width: 6px; }
 
   .circle-value {
     font-size: 28px;
