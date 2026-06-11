@@ -1,23 +1,53 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import L from "leaflet";
-import { ArrowLeft, Building2, ChevronDown, CircleAlert, Edit3, MapPin, Plus, Trash2, Users, X } from "lucide-react";
-import { fetchAdminDashboard, fetchAdminHiddenReviews, fetchIqAirAqiByCoordinates, updateReview } from "@/lib/api";
+import {
+  ArrowLeft,
+  Building2,
+  ChevronDown,
+  CircleAlert,
+  Edit3,
+  MapPin,
+  Plus,
+  Trash2,
+  Users,
+  X,
+} from "lucide-react";
+import {
+  fetchAdminDashboard,
+  fetchAdminHiddenReviews,
+  fetchIqAirAqiByCoordinates,
+  updateReview,
+} from "@/lib/api";
 import { Shell, type View } from "./Shell";
 import {
   avatarFrames,
   avatarPresets,
-   defaultAvatarSelection,
-   getAvatarSelectionStyle,
-   type AvatarSelection,
-   loadAvatarSelection,
-   saveAvatarSelection,
+  defaultAvatarSelection,
+  getAvatarSelectionStyle,
+  type AvatarSelection,
+  loadAvatarSelection,
+  saveAvatarSelection,
 } from "@/lib/avatar-presets";
 import "../styles/demo-profile.css";
-import { createLocation, deleteLocation, fetchLocations, updateLocation } from "@/lib/api";
+import {
+  createLocation,
+  deleteLocation,
+  fetchLocations,
+  updateLocation,
+} from "@/lib/api";
 import type { GpsAqiMeasurement, LocationRecord } from "@/lib/types";
-import { getBlockedCommentLanguages, type BlockedCommentLanguage } from "@/lib/comment-blocklist";
-import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from "react-leaflet";
+import {
+  getBlockedCommentLanguages,
+  type BlockedCommentLanguage,
+} from "@/lib/comment-blocklist";
+import {
+  MapContainer,
+  Marker,
+  TileLayer,
+  useMap,
+  useMapEvents,
+} from "react-leaflet";
 
 type Props = {
   userId: string;
@@ -100,8 +130,12 @@ const hanoiCenter = {
 };
 
 function mapPointToLatLng(point: MapPoint) {
-  const lat = hanoiMapBounds.latMax - (point.y / 100) * (hanoiMapBounds.latMax - hanoiMapBounds.latMin);
-  const lng = hanoiMapBounds.lngMin + (point.x / 100) * (hanoiMapBounds.lngMax - hanoiMapBounds.lngMin);
+  const lat =
+    hanoiMapBounds.latMax -
+    (point.y / 100) * (hanoiMapBounds.latMax - hanoiMapBounds.latMin);
+  const lng =
+    hanoiMapBounds.lngMin +
+    (point.x / 100) * (hanoiMapBounds.lngMax - hanoiMapBounds.lngMin);
 
   return {
     lat: Number(lat.toFixed(6)),
@@ -110,8 +144,14 @@ function mapPointToLatLng(point: MapPoint) {
 }
 
 function latLngToMapPoint(lat: number, lng: number) {
-  const x = ((lng - hanoiMapBounds.lngMin) / (hanoiMapBounds.lngMax - hanoiMapBounds.lngMin)) * 100;
-  const y = ((hanoiMapBounds.latMax - lat) / (hanoiMapBounds.latMax - hanoiMapBounds.latMin)) * 100;
+  const x =
+    ((lng - hanoiMapBounds.lngMin) /
+      (hanoiMapBounds.lngMax - hanoiMapBounds.lngMin)) *
+    100;
+  const y =
+    ((hanoiMapBounds.latMax - lat) /
+      (hanoiMapBounds.latMax - hanoiMapBounds.latMin)) *
+    100;
 
   return { x, y };
 }
@@ -120,7 +160,10 @@ function extractBlockedCommentLanguages(review: any) {
   const metadataLanguages = review?.metadata?.moderation?.blocked_languages;
 
   if (Array.isArray(metadataLanguages)) {
-    const allowedLanguages = metadataLanguages.filter((language): language is BlockedCommentLanguage => language === "vi" || language === "ja");
+    const allowedLanguages = metadataLanguages.filter(
+      (language): language is BlockedCommentLanguage =>
+        language === "vi" || language === "ja",
+    );
     if (allowedLanguages.length) {
       return allowedLanguages;
     }
@@ -139,7 +182,10 @@ function getAdminProfileStorageKey(userId: string) {
   return `safemove-admin-profile:${userId}`;
 }
 
-function loadAdminProfileDraft(userId: string, fallback: AdminProfileDraft): AdminProfileDraft {
+function loadAdminProfileDraft(
+  userId: string,
+  fallback: AdminProfileDraft,
+): AdminProfileDraft {
   if (typeof window === "undefined") {
     return fallback;
   }
@@ -152,12 +198,19 @@ function loadAdminProfileDraft(userId: string, fallback: AdminProfileDraft): Adm
 
     const parsed = JSON.parse(raw) as Partial<AdminProfileDraft>;
     return {
-      name: typeof parsed.name === "string" && parsed.name.trim() ? parsed.name : fallback.name,
-      email: typeof parsed.email === "string" && parsed.email.trim() ? parsed.email : fallback.email,
+      name:
+        typeof parsed.name === "string" && parsed.name.trim()
+          ? parsed.name
+          : fallback.name,
+      email:
+        typeof parsed.email === "string" && parsed.email.trim()
+          ? parsed.email
+          : fallback.email,
       password:
         typeof parsed.password === "string" && parsed.password.trim()
           ? parsed.password
-          : typeof (parsed as { phone?: string }).phone === "string" && (parsed as { phone?: string }).phone.trim()
+          : typeof (parsed as { phone?: string }).phone === "string" &&
+              (parsed as { phone?: string }).phone.trim()
             ? (parsed as { phone?: string }).phone
             : fallback.password,
     };
@@ -172,7 +225,10 @@ function saveAdminProfileDraft(userId: string, draft: AdminProfileDraft) {
   }
 
   try {
-    window.localStorage.setItem(getAdminProfileStorageKey(userId), JSON.stringify(draft));
+    window.localStorage.setItem(
+      getAdminProfileStorageKey(userId),
+      JSON.stringify(draft),
+    );
   } catch {
     // Ignore storage failures and keep the in-memory state.
   }
@@ -189,8 +245,10 @@ function HanoiFacilityPickerMap({
 }) {
   const markerLatLng = useMemo<[number, number]>(() => {
     return [
-      hanoiMapBounds.latMax - (mapPoint.y / 100) * (hanoiMapBounds.latMax - hanoiMapBounds.latMin),
-      hanoiMapBounds.lngMin + (mapPoint.x / 100) * (hanoiMapBounds.lngMax - hanoiMapBounds.lngMin),
+      hanoiMapBounds.latMax -
+        (mapPoint.y / 100) * (hanoiMapBounds.latMax - hanoiMapBounds.latMin),
+      hanoiMapBounds.lngMin +
+        (mapPoint.x / 100) * (hanoiMapBounds.lngMax - hanoiMapBounds.lngMin),
     ];
   }, [mapPoint]);
 
@@ -206,16 +264,25 @@ function HanoiFacilityPickerMap({
     },
   });
 
-  return <Marker position={markerLatLng} icon={facilityPickerIcon} draggable eventHandlers={{ dragend: (event) => {
-    const latLng = event.target.getLatLng();
-    const nextPoint = latLngToMapPoint(latLng.lat, latLng.lng);
-    setMapPoint(nextPoint);
-    setFormState((current) => ({
-      ...current,
-      lat: String(Number(latLng.lat.toFixed(6))),
-      lng: String(Number(latLng.lng.toFixed(6))),
-    }));
-  } }} />;
+  return (
+    <Marker
+      position={markerLatLng}
+      icon={facilityPickerIcon}
+      draggable
+      eventHandlers={{
+        dragend: (event) => {
+          const latLng = event.target.getLatLng();
+          const nextPoint = latLngToMapPoint(latLng.lat, latLng.lng);
+          setMapPoint(nextPoint);
+          setFormState((current) => ({
+            ...current,
+            lat: String(Number(latLng.lat.toFixed(6))),
+            lng: String(Number(latLng.lng.toFixed(6))),
+          }));
+        },
+      }}
+    />
+  );
 }
 
 function HanoiMapZoomSync({
@@ -242,7 +309,13 @@ function HanoiMapZoomSync({
   return null;
 }
 
-function HanoiMapPositionSync({ mapPoint, zoom }: { mapPoint: MapPoint; zoom: number }) {
+function HanoiMapPositionSync({
+  mapPoint,
+  zoom,
+}: {
+  mapPoint: MapPoint;
+  zoom: number;
+}) {
   const map = useMap();
   const position = useMemo(() => mapPointToLatLng(mapPoint), [mapPoint]);
 
@@ -270,13 +343,23 @@ const facilityPickerIcon = L.divIcon({
 // moderation items will be loaded from backend hidden reviews
 
 function getAqiTone(value: number) {
-  if (value <= 50) return { label: "良好", badgeClass: "bg-emerald-100 text-emerald-700" };
-  if (value <= 100) return { label: "普通", badgeClass: "bg-amber-100 text-amber-700" };
-  if (value <= 150) return { label: "悪い", badgeClass: "bg-orange-100 text-orange-700" };
+  if (value <= 50)
+    return { label: "良好", badgeClass: "bg-emerald-100 text-emerald-700" };
+  if (value <= 100)
+    return { label: "普通", badgeClass: "bg-amber-100 text-amber-700" };
+  if (value <= 150)
+    return { label: "悪い", badgeClass: "bg-orange-100 text-orange-700" };
   return { label: "非常に悪い", badgeClass: "bg-rose-100 text-rose-700" };
 }
 
-export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapshot, onLocationsChanged, onLogout }: Props) {
+export function AdminWorkspace({
+  userId,
+  userName,
+  userEmail,
+  bootstrapAqiSnapshot,
+  onLocationsChanged,
+  onLogout,
+}: Props) {
   const [view, setView] = useState<View>("dashboard");
   const [locations, setLocations] = useState<LocationRecord[]>([]);
   const [overview, setOverview] = useState<AdminOverview | null>(null);
@@ -287,35 +370,76 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
   const [loadingLocations, setLoadingLocations] = useState(false);
   const [locationsError, setLocationsError] = useState<string | null>(null);
   const [savingLocation, setSavingLocation] = useState(false);
-  const [editingLocationId, setEditingLocationId] = useState<string | null>(null);
+  const [editingLocationId, setEditingLocationId] = useState<string | null>(
+    null,
+  );
   const [formState, setFormState] = useState<LocationFormState>(emptyForm);
-  const [mapPoint, setMapPoint] = useState<MapPoint>(() => latLngToMapPoint(hanoiCenter.lat, hanoiCenter.lng));
+  const [mapPoint, setMapPoint] = useState<MapPoint>(() =>
+    latLngToMapPoint(hanoiCenter.lat, hanoiCenter.lng),
+  );
   const [mapZoom, setMapZoom] = useState(14);
   const [isJapanFriendly, setIsJapanFriendly] = useState(false);
   const facilityPositionRequestId = useRef(0);
   const [formError, setFormError] = useState<string | null>(null);
-  const [adminAvatarSelection, setAdminAvatarSelection] = useState<AvatarSelection>(() =>
-    loadAvatarSelection(`admin_${userId}`),
-  );
+  const [adminAvatarSelection, setAdminAvatarSelection] =
+    useState<AvatarSelection>(() => loadAvatarSelection(`admin_${userId}`));
   const [avatarModalOpen, setAvatarModalOpen] = useState(false);
-  const [pendingAvatarSelection, setPendingAvatarSelection] = useState<AvatarSelection>(adminAvatarSelection);
+  const [pendingAvatarSelection, setPendingAvatarSelection] =
+    useState<AvatarSelection>(adminAvatarSelection);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
-  const [adminName, setAdminName] = useState(() => loadAdminProfileDraft(userId, { name: userName, email: userEmail, password: "adminsmhn" }).name);
-  const [adminEmail, setAdminEmail] = useState(() => loadAdminProfileDraft(userId, { name: userName, email: userEmail, password: "adminsmhn" }).email);
-  const [adminPassword, setAdminPassword] = useState(() => loadAdminProfileDraft(userId, { name: userName, email: userEmail, password: "adminsmhn" }).password);
-  const [editingAdminField, setEditingAdminField] = useState<string | null>(null);
+  const [adminName, setAdminName] = useState(
+    () =>
+      loadAdminProfileDraft(userId, {
+        name: userName,
+        email: userEmail,
+        password: "adminsmhn",
+      }).name,
+  );
+  const [adminEmail, setAdminEmail] = useState(
+    () =>
+      loadAdminProfileDraft(userId, {
+        name: userName,
+        email: userEmail,
+        password: "adminsmhn",
+      }).email,
+  );
+  const [adminPassword, setAdminPassword] = useState(
+    () =>
+      loadAdminProfileDraft(userId, {
+        name: userName,
+        email: userEmail,
+        password: "adminsmhn",
+      }).password,
+  );
+  const [editingAdminField, setEditingAdminField] = useState<string | null>(
+    null,
+  );
   const [adminEditValue, setAdminEditValue] = useState("");
   const [savingAdminField, setSavingAdminField] = useState<string | null>(null);
   const [moderationLocation, setModerationLocation] = useState("all");
-  const [moderationLocationMenuOpen, setModerationLocationMenuOpen] = useState(false);
-  const [moderationStatusFilter, setModerationStatusFilter] = useState<ModerationStatusFilter>("all");
-  const [moderationStatusMenuOpen, setModerationStatusMenuOpen] = useState(false);
-  const [moderationLanguageFilter, setModerationLanguageFilter] = useState<ModerationLanguageFilter>("all");
-  const [moderationLanguageMenuOpen, setModerationLanguageMenuOpen] = useState(false);
-  const [moderationStatusById, setModerationStatusById] = useState<Record<string, ModerationStatus>>({});
-  const [moderationItemsList, setModerationItemsList] = useState<ModerationItem[]>([]);
-  const [moderationUpdatingById, setModerationUpdatingById] = useState<Record<string, boolean>>({});
-  const adminAvatarPreset = avatarPresets.find((preset) => preset.id === adminAvatarSelection.avatarId) ?? avatarPresets[0];
+  const [moderationLocationMenuOpen, setModerationLocationMenuOpen] =
+    useState(false);
+  const [moderationStatusFilter, setModerationStatusFilter] =
+    useState<ModerationStatusFilter>("all");
+  const [moderationStatusMenuOpen, setModerationStatusMenuOpen] =
+    useState(false);
+  const [moderationLanguageFilter, setModerationLanguageFilter] =
+    useState<ModerationLanguageFilter>("all");
+  const [moderationLanguageMenuOpen, setModerationLanguageMenuOpen] =
+    useState(false);
+  const [moderationStatusById, setModerationStatusById] = useState<
+    Record<string, ModerationStatus>
+  >({});
+  const [moderationItemsList, setModerationItemsList] = useState<
+    ModerationItem[]
+  >([]);
+  const [moderationUpdatingById, setModerationUpdatingById] = useState<
+    Record<string, boolean>
+  >({});
+  const adminAvatarPreset =
+    avatarPresets.find(
+      (preset) => preset.id === adminAvatarSelection.avatarId,
+    ) ?? avatarPresets[0];
 
   const loadModerationItems = async () => {
     try {
@@ -330,7 +454,12 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
         content: String(r.content || ""),
         timestamp: r.created_at ? new Date(r.created_at).toLocaleString() : "",
         blockedLanguages: extractBlockedCommentLanguages(r),
-        status: r.metadata && r.metadata.moderation && r.metadata.moderation.status === "deleted" ? "deleted" : "unprocessed",
+        status:
+          r.metadata &&
+          r.metadata.moderation &&
+          r.metadata.moderation.status === "deleted"
+            ? "deleted"
+            : "unprocessed",
       }));
       setModerationItemsList(items);
       // Initialize statuses only for items we just loaded, but preserve existing manual overrides
@@ -362,9 +491,13 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
     }
 
     try {
-      const permission = await navigator.permissions?.query?.({ name: "geolocation" as PermissionName });
+      const permission = await navigator.permissions?.query?.({
+        name: "geolocation" as PermissionName,
+      });
       if (permission?.state === "denied") {
-        setSystemAqiError("ブラウザが GPS 位置情報をブロックしています。ブラウザ設定で許可してください。");
+        setSystemAqiError(
+          "ブラウザが GPS 位置情報をブロックしています。ブラウザ設定で許可してください。",
+        );
         return;
       }
     } catch {
@@ -380,10 +513,18 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
       });
 
     try {
-      const position = await getPosition({ enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }).catch(async (error) => {
+      const position = await getPosition({
+        enableHighAccuracy: true,
+        timeout: 12000,
+        maximumAge: 0,
+      }).catch(async (error) => {
         const errorValue = error as GeolocationPositionError;
         if (errorValue.code === 3) {
-          return await getPosition({ enableHighAccuracy: false, timeout: 18000, maximumAge: 0 });
+          return await getPosition({
+            enableHighAccuracy: false,
+            timeout: 18000,
+            maximumAge: 0,
+          });
         }
         throw error;
       });
@@ -393,7 +534,11 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
       setSystemAqi(data.measurement);
     } catch (error) {
       setSystemAqi(null);
-      setSystemAqiError(error instanceof Error ? error.message : "IQAir からシステム AQI を取得できませんでした。");
+      setSystemAqiError(
+        error instanceof Error
+          ? error.message
+          : "IQAir からシステム AQI を取得できませんでした。",
+      );
     } finally {
       setSystemAqiLoading(false);
     }
@@ -407,7 +552,11 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
       const response = await fetchLocations();
       setLocations(response.locations as LocationRecord[]);
     } catch (error) {
-      setLocationsError(error instanceof Error ? error.message : "施設一覧を読み込めませんでした。");
+      setLocationsError(
+        error instanceof Error
+          ? error.message
+          : "施設一覧を読み込めませんでした。",
+      );
     } finally {
       setLoadingLocations(false);
     }
@@ -427,7 +576,11 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
   }, [adminAvatarSelection]);
 
   useEffect(() => {
-    const draft = loadAdminProfileDraft(userId, { name: userName, email: userEmail, password: "adminsmhn" });
+    const draft = loadAdminProfileDraft(userId, {
+      name: userName,
+      email: userEmail,
+      password: "adminsmhn",
+    });
     setAdminName(draft.name);
     setAdminEmail(draft.email);
     setAdminPassword(draft.password);
@@ -437,7 +590,10 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
     const entries = new Map<string, string>();
     for (const item of moderationItemsList) {
       if (!entries.has(item.locationId)) {
-        entries.set(item.locationId, item.locationName.trim() || "未設定の施設");
+        entries.set(
+          item.locationId,
+          item.locationName.trim() || "未設定の施設",
+        );
       }
     }
 
@@ -450,10 +606,15 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
   const moderationItems = useMemo(() => {
     return moderationItemsList.filter((item) => {
       const status = moderationStatusById[item.id] ?? item.status;
-      const locationMatch = moderationLocation === "all" ? true : item.locationId === moderationLocation;
-      const statusMatch = moderationStatusFilter === "all" || status === moderationStatusFilter;
+      const locationMatch =
+        moderationLocation === "all"
+          ? true
+          : item.locationId === moderationLocation;
+      const statusMatch =
+        moderationStatusFilter === "all" || status === moderationStatusFilter;
       const languageMatch =
-        moderationLanguageFilter === "all" || item.blockedLanguages.includes(moderationLanguageFilter);
+        moderationLanguageFilter === "all" ||
+        item.blockedLanguages.includes(moderationLanguageFilter);
 
       return locationMatch && statusMatch && languageMatch;
     });
@@ -467,25 +628,37 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
 
   const moderationLocationLabels = useMemo<Record<string, string>>(() => {
     return Object.fromEntries(
-      moderationItemsList.map((item) => [item.locationId, item.locationName])
+      moderationItemsList.map((item) => [item.locationId, item.locationName]),
     );
   }, [moderationItemsList]);
 
-  const moderationLocationLabel = moderationLocations.find((location) => location.id === moderationLocation)?.label ?? "すべて";
-  const moderationStatusOptions: Array<{ id: ModerationStatusFilter; label: string }> = [
+  const moderationLocationLabel =
+    moderationLocations.find((location) => location.id === moderationLocation)
+      ?.label ?? "すべて";
+  const moderationStatusOptions: Array<{
+    id: ModerationStatusFilter;
+    label: string;
+  }> = [
     { id: "all", label: "すべてのコメント" },
     { id: "unprocessed", label: "未処理" },
     { id: "deleted", label: "削除済み" },
   ];
-  const moderationLanguageOptions: Array<{ id: ModerationLanguageFilter; label: string }> = [
+  const moderationLanguageOptions: Array<{
+    id: ModerationLanguageFilter;
+    label: string;
+  }> = [
     { id: "all", label: "すべてのコメント" },
     { id: "vi", label: "ベトナム語" },
     { id: "ja", label: "日本語" },
   ];
   const moderationStatusFilterLabel =
-    moderationStatusOptions.find((option) => option.id === moderationStatusFilter)?.label ?? "すべてのコメント";
+    moderationStatusOptions.find(
+      (option) => option.id === moderationStatusFilter,
+    )?.label ?? "すべてのコメント";
   const moderationLanguageFilterLabel =
-    moderationLanguageOptions.find((option) => option.id === moderationLanguageFilter)?.label ?? "すべてのコメント";
+    moderationLanguageOptions.find(
+      (option) => option.id === moderationLanguageFilter,
+    )?.label ?? "すべてのコメント";
 
   async function handleAdminAvatarSave() {
     setAdminAvatarSelection(pendingAvatarSelection);
@@ -549,9 +722,14 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
   }
 
   function getModerationAvatarLabel(item: ModerationItem) {
-    const base = item.author.trim() || item.userId.trim() || item.locationName.trim() || "A";
+    const base =
+      item.author.trim() ||
+      item.userId.trim() ||
+      item.locationName.trim() ||
+      "A";
     const parts = base.split(/\s+/).filter(Boolean);
-    const initials = parts.length >= 2 ? `${parts[0][0]}${parts[1][0]}` : base.slice(0, 1);
+    const initials =
+      parts.length >= 2 ? `${parts[0][0]}${parts[1][0]}` : base.slice(0, 1);
     return initials.toUpperCase();
   }
 
@@ -607,7 +785,11 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
 
         const lat = Number(position.coords.latitude.toFixed(6));
         const lng = Number(position.coords.longitude.toFixed(6));
-        setFormState((current) => ({ ...current, lat: String(lat), lng: String(lng) }));
+        setFormState((current) => ({
+          ...current,
+          lat: String(lat),
+          lng: String(lng),
+        }));
         setMapPoint(latLngToMapPoint(lat, lng));
         setMapZoom(16);
       },
@@ -642,7 +824,11 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
       await onLocationsChanged?.();
       setActionMessage("日本語対応設定を更新しました。");
     } catch (error) {
-      setActionMessage(error instanceof Error ? error.message : "日本語対応設定を更新できませんでした。");
+      setActionMessage(
+        error instanceof Error
+          ? error.message
+          : "日本語対応設定を更新できませんでした。",
+      );
     }
   }
 
@@ -662,7 +848,8 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
       lng: Number(formState.lng),
       description: formState.description.trim() || null,
       amenities: editingLocationId
-        ? locations.find((location) => location.id === editingLocationId)?.metadata?.amenities ?? []
+        ? (locations.find((location) => location.id === editingLocationId)
+            ?.metadata?.amenities ?? [])
         : [],
       isJapanFriendly,
     };
@@ -690,7 +877,9 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
       resetForm();
       setView("facilities");
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : "施設を保存できませんでした。");
+      setFormError(
+        error instanceof Error ? error.message : "施設を保存できませんでした。",
+      );
     } finally {
       setSavingLocation(false);
     }
@@ -712,7 +901,9 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
       }
       setActionMessage("施設を削除しました。");
     } catch (error) {
-      setActionMessage(error instanceof Error ? error.message : "施設を削除できませんでした。");
+      setActionMessage(
+        error instanceof Error ? error.message : "施設を削除できませんでした。",
+      );
     }
   }
 
@@ -720,13 +911,26 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
     // mark local state immediately
     setModerationStatusById((current) => ({ ...current, [commentId]: status }));
 
-    const payload: { is_hidden?: boolean; metadata?: Record<string, unknown> } = {};
+    const payload: { is_hidden?: boolean; metadata?: Record<string, unknown> } =
+      {};
     if (status === "deleted") {
       payload.is_hidden = true;
-      payload.metadata = { moderation: { status: "deleted", processed_by: "admin", processed_at: new Date().toISOString() } };
+      payload.metadata = {
+        moderation: {
+          status: "deleted",
+          processed_by: "admin",
+          processed_at: new Date().toISOString(),
+        },
+      };
     } else {
       payload.is_hidden = false;
-      payload.metadata = { moderation: { status: "approved", processed_by: "admin", processed_at: new Date().toISOString() } };
+      payload.metadata = {
+        moderation: {
+          status: "approved",
+          processed_by: "admin",
+          processed_at: new Date().toISOString(),
+        },
+      };
     }
 
     setModerationUpdatingById((cur) => ({ ...cur, [commentId]: true }));
@@ -736,7 +940,9 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
         // update local list based on result without full reload
         if (payload.is_hidden === false) {
           // approved/unhidden: remove from hidden list
-          setModerationItemsList((cur) => cur.filter((it) => it.id !== commentId));
+          setModerationItemsList((cur) =>
+            cur.filter((it) => it.id !== commentId),
+          );
           setModerationStatusById((cur) => {
             const next = { ...cur };
             delete next[commentId];
@@ -744,14 +950,28 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
           });
         } else {
           // marked deleted: update item's status in list
-          setModerationItemsList((cur) => cur.map((it) => (it.id === commentId ? { ...it, status: "deleted" } : it)));
-          setModerationStatusById((cur) => ({ ...cur, [commentId]: "deleted" }));
+          setModerationItemsList((cur) =>
+            cur.map((it) =>
+              it.id === commentId ? { ...it, status: "deleted" } : it,
+            ),
+          );
+          setModerationStatusById((cur) => ({
+            ...cur,
+            [commentId]: "deleted",
+          }));
         }
       })
       .catch((err) => {
         // revert status on error
-        setModerationStatusById((cur) => ({ ...cur, [commentId]: status === "deleted" ? "unprocessed" : "deleted" }));
-        window.alert(err instanceof Error ? err.message : "コメントを更新できませんでした。");
+        setModerationStatusById((cur) => ({
+          ...cur,
+          [commentId]: status === "deleted" ? "unprocessed" : "deleted",
+        }));
+        window.alert(
+          err instanceof Error
+            ? err.message
+            : "コメントを更新できませんでした。",
+        );
       })
       .finally(() => {
         setModerationUpdatingById((cur) => ({ ...cur, [commentId]: false }));
@@ -780,10 +1000,14 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
           <section className="rounded-4xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <div className="text-sm text-slate-500">おかえりなさい、管理者</div>
+                <div className="text-sm text-slate-500">
+                  おかえりなさい、管理者
+                </div>
                 <h2 className="mt-1 text-2xl text-slate-900">システム概要</h2>
               </div>
-              <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs text-emerald-700 ring-1 ring-emerald-200">Admin</span>
+              <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs text-emerald-700 ring-1 ring-emerald-200">
+                Admin
+              </span>
             </div>
 
             <div className="mt-5 grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
@@ -793,26 +1017,45 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
                     <CircleAlert className="h-4 w-4 text-emerald-600" />
                     システム AQI
                   </div>
-                  <span className={`rounded-full px-3 py-1 text-xs font-medium ring-1 ${getAqiTone(systemAqi?.aqi ?? overview?.systemAqi ?? 42).badgeClass}`}>
-                    {getAqiTone(systemAqi?.aqi ?? overview?.systemAqi ?? 42).label}
+                  <span
+                    className={`rounded-full px-3 py-1 text-xs font-medium ring-1 ${getAqiTone(systemAqi?.aqi ?? overview?.systemAqi ?? 42).badgeClass}`}
+                  >
+                    {
+                      getAqiTone(systemAqi?.aqi ?? overview?.systemAqi ?? 42)
+                        .label
+                    }
                   </span>
                 </div>
                 <div className="mt-4 flex items-end gap-2">
-                  <div className="text-5xl font-semibold text-slate-900">{systemAqiLoading ? "--" : systemAqi?.aqi ?? overview?.systemAqi ?? 42}</div>
+                  <div className="text-5xl font-semibold text-slate-900">
+                    {systemAqiLoading
+                      ? "--"
+                      : (systemAqi?.aqi ?? overview?.systemAqi ?? 42)}
+                  </div>
                   <div className="pb-1 text-sm text-slate-500">AQI</div>
                 </div>
                 <div className="mt-5">
                   <div className="mb-2 flex items-center justify-between text-xs text-slate-500">
-                    <span>{systemAqi?.source === "iqair" ? "出典: IQAir" : "出典: システム / IQAir"}</span>
+                    <span>
+                      {systemAqi?.source === "iqair"
+                        ? "出典: IQAir"
+                        : "出典: システム / IQAir"}
+                    </span>
                     <span>{systemAqi?.location_name ?? "ハノイ"}</span>
                   </div>
                   <div className="h-2 overflow-hidden rounded-full bg-slate-100">
                     <div
                       className="h-full rounded-full bg-emerald-500"
-                      style={{ width: `${Math.min((((systemAqi?.aqi ?? overview?.systemAqi ?? 42) / 50) * 100), 100)}%` }}
+                      style={{
+                        width: `${Math.min(((systemAqi?.aqi ?? overview?.systemAqi ?? 42) / 50) * 100, 100)}%`,
+                      }}
                     />
                   </div>
-                  {systemAqiError && <div className="mt-2 text-xs text-rose-600">{systemAqiError}</div>}
+                  {systemAqiError && (
+                    <div className="mt-2 text-xs text-rose-600">
+                      {systemAqiError}
+                    </div>
+                  )}
                 </div>
               </article>
 
@@ -823,14 +1066,26 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
                 </div>
                 <div className="mt-4 flex items-end justify-between gap-4">
                   <div>
-                    <div className="text-4xl font-semibold text-emerald-700">{demoActiveUsers}</div>
-                    <div className="mt-1 text-xs text-slate-500">過去7日間のアクティブユーザー</div>
+                    <div className="text-4xl font-semibold text-emerald-700">
+                      {demoActiveUsers}
+                    </div>
+                    <div className="mt-1 text-xs text-slate-500">
+                      過去7日間のアクティブユーザー
+                    </div>
                   </div>
                   <div className="flex -space-x-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-emerald-50 bg-white text-[10px] text-slate-500">A</div>
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-emerald-50 bg-white text-[10px] text-slate-500">B</div>
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-emerald-50 bg-white text-[10px] text-slate-500">C</div>
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-emerald-50 bg-emerald-600 text-[10px] text-white">+{demoActiveUsers - 3}</div>
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-emerald-50 bg-white text-[10px] text-slate-500">
+                      A
+                    </div>
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-emerald-50 bg-white text-[10px] text-slate-500">
+                      B
+                    </div>
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-emerald-50 bg-white text-[10px] text-slate-500">
+                      C
+                    </div>
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-emerald-50 bg-emerald-600 text-[10px] text-white">
+                      +{demoActiveUsers - 3}
+                    </div>
                   </div>
                 </div>
               </article>
@@ -844,12 +1099,16 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
                   <CircleAlert className="h-5 w-5" />
                 </div>
                 <div>
-                  <div className="text-sm font-medium text-slate-900">処理が必要な違反コンテンツがあります</div>
-                  <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600">
-                  </p>
+                  <div className="text-sm font-medium text-slate-900">
+                    処理が必要な違反コンテンツがあります
+                  </div>
+                  <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600"></p>
                 </div>
               </div>
-              <button onClick={() => setView("moderation")} className="rounded-[1.25rem] bg-rose-600 px-4 py-3 text-sm text-white shadow-sm shadow-rose-600/15">
+              <button
+                onClick={() => setView("moderation")}
+                className="rounded-[1.25rem] bg-rose-600 px-4 py-3 text-sm text-white shadow-sm shadow-rose-600/15"
+              >
                 違反コンテンツを審査
               </button>
             </div>
@@ -862,10 +1121,15 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
           <section className="rounded-4xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <div className="text-sm text-slate-500">施設一覧と公開設定をまとめて管理</div>
+                <div className="text-sm text-slate-500">
+                  施設一覧と公開設定をまとめて管理
+                </div>
                 <h2 className="mt-1 text-2xl text-slate-900">施設管理</h2>
               </div>
-              <button onClick={openCreateLocationForm} className="inline-flex items-center rounded-full bg-emerald-600 px-4 py-2 text-sm text-white shadow-sm shadow-emerald-600/15">
+              <button
+                onClick={openCreateLocationForm}
+                className="inline-flex items-center rounded-full bg-emerald-600 px-4 py-2 text-sm text-white shadow-sm shadow-emerald-600/15"
+              >
                 <Plus className="mr-2 inline h-4 w-4" />
                 施設を追加
               </button>
@@ -878,21 +1142,35 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
                     <Building2 className="h-6 w-6" />
                   </div>
                   <div>
-                    <div className="text-xs uppercase tracking-[0.16em] text-slate-500">施設概要</div>
-                    <div className="mt-1 text-lg text-slate-900">登録済み施設</div>
+                    <div className="text-xs uppercase tracking-[0.16em] text-slate-500">
+                      施設概要
+                    </div>
+                    <div className="mt-1 text-lg text-slate-900">
+                      登録済み施設
+                    </div>
                   </div>
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="rounded-2xl bg-white p-4 ring-1 ring-slate-200">
-                    <div className="text-xs uppercase tracking-[0.16em] text-slate-500">件数</div>
-                    <div className="mt-2 text-2xl text-slate-900">{locations.length}</div>
-                    <div className="mt-1 text-sm text-slate-500">公開中の施設</div>
+                    <div className="text-xs uppercase tracking-[0.16em] text-slate-500">
+                      件数
+                    </div>
+                    <div className="mt-2 text-2xl text-slate-900">
+                      {locations.length}
+                    </div>
+                    <div className="mt-1 text-sm text-slate-500">
+                      公開中の施設
+                    </div>
                   </div>
                   <div className="rounded-2xl bg-white p-4 ring-1 ring-slate-200">
-                    <div className="text-xs uppercase tracking-[0.16em] text-slate-500">状態</div>
+                    <div className="text-xs uppercase tracking-[0.16em] text-slate-500">
+                      状態
+                    </div>
                     <div className="mt-2 text-2xl text-slate-900">安定</div>
-                    <div className="mt-1 text-sm text-slate-500">更新・公開を確認</div>
+                    <div className="mt-1 text-sm text-slate-500">
+                      更新・公開を確認
+                    </div>
                   </div>
                 </div>
 
@@ -902,19 +1180,31 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
               </div>
               <div className="space-y-3">
                 {loadingLocations ? (
-                  <div className="rounded-[1.7rem] bg-white p-5 text-sm text-slate-500 ring-1 ring-slate-200">施設を読み込み中...</div>
+                  <div className="rounded-[1.7rem] bg-white p-5 text-sm text-slate-500 ring-1 ring-slate-200">
+                    施設を読み込み中...
+                  </div>
                 ) : locationsError ? (
-                  <div className="rounded-[1.7rem] bg-rose-50 p-5 text-sm text-rose-700 ring-1 ring-rose-200">{locationsError}</div>
+                  <div className="rounded-[1.7rem] bg-rose-50 p-5 text-sm text-rose-700 ring-1 ring-rose-200">
+                    {locationsError}
+                  </div>
                 ) : locations.length ? (
                   locations.map((location) => (
-                    <article key={location.id} className="rounded-[1.7rem] bg-white p-4 ring-1 ring-slate-200">
+                    <article
+                      key={location.id}
+                      className="rounded-[1.7rem] bg-white p-4 ring-1 ring-slate-200"
+                    >
                       <div className="flex flex-col gap-4">
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
-                            <div className="mt-2 text-lg text-slate-900">{location.name}</div>
-                            <div className="mt-2 text-sm text-slate-600">{location.address ?? "住所未設定"}</div>
+                            <div className="mt-2 text-lg text-slate-900">
+                              {location.name}
+                            </div>
+                            <div className="mt-2 text-sm text-slate-600">
+                              {location.address ?? "住所未設定"}
+                            </div>
                             <div className="mt-2 text-xs text-slate-500">
-                              {location.city ?? "-"} · {location.district ?? "-"}
+                              {location.city ?? "-"} ·{" "}
+                              {location.district ?? "-"}
                             </div>
                           </div>
                           <MapPin className="h-5 w-5 shrink-0 text-emerald-600" />
@@ -924,7 +1214,8 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
                             <i className="fa-regular fa-clock"></i> 更新: 数分前
                           </span>
                           <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2.5 py-1 ring-1 ring-slate-200 battery-status">
-                            <i className="fa-solid fa-battery-half"></i> {50 + (location.name.length % 50)}%
+                            <i className="fa-solid fa-battery-half"></i>{" "}
+                            {50 + (location.name.length % 50)}%
                           </span>
                         </div>
                         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
@@ -932,17 +1223,27 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
                             onClick={() => void toggleJapanFriendly(location)}
                             disabled={location.is_japan_friendly}
                             className={`text-xs underline decoration-slate-300 underline-offset-4 ${
-                              location.is_japan_friendly ? "cursor-default text-emerald-700 no-underline" : "text-slate-500"
+                              location.is_japan_friendly
+                                ? "cursor-default text-emerald-700 no-underline"
+                                : "text-slate-500"
                             }`}
                           >
-                            {location.is_japan_friendly ? "日本語対応済み" : "日本語対応に設定"}
+                            {location.is_japan_friendly
+                              ? "日本語対応済み"
+                              : "日本語対応に設定"}
                           </button>
                           <div className="flex gap-2">
-                            <button onClick={() => startEdit(location)} className="rounded-2xl bg-emerald-50 px-4 py-2 text-sm text-emerald-700 ring-1 ring-emerald-200">
+                            <button
+                              onClick={() => startEdit(location)}
+                              className="rounded-2xl bg-emerald-50 px-4 py-2 text-sm text-emerald-700 ring-1 ring-emerald-200"
+                            >
                               <Edit3 className="mr-2 inline h-4 w-4" />
                               編集
                             </button>
-                            <button onClick={() => void handleDelete(location.id)} className="rounded-2xl bg-rose-50 px-4 py-2 text-sm text-rose-700 ring-1 ring-rose-200">
+                            <button
+                              onClick={() => void handleDelete(location.id)}
+                              className="rounded-2xl bg-rose-50 px-4 py-2 text-sm text-rose-700 ring-1 ring-rose-200"
+                            >
                               <Trash2 className="mr-2 inline h-4 w-4" />
                               削除
                             </button>
@@ -972,7 +1273,9 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
                     <Building2 className="h-3.5 w-3.5" />
                     新しい施設を追加
                   </div>
-                  <h2 className="mt-3 text-2xl text-slate-900">新しい施設を追加</h2>
+                  <h2 className="mt-3 text-2xl text-slate-900">
+                    新しい施設を追加
+                  </h2>
                   <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
                     施設情報を入力し、地図上で位置を選んで保存すると新しい施設を登録できます。
                   </p>
@@ -994,8 +1297,12 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
               <div className="overflow-hidden rounded-[1.7rem] bg-slate-50 ring-1 ring-slate-200 lg:sticky lg:top-4 lg:h-[calc(100vh-12rem)] lg:min-h-[620px]">
                 <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-white px-5 py-4">
                   <div>
-                    <div className="text-sm font-semibold text-slate-900">地図で位置を選択</div>
-                    <div className="mt-1 text-xs text-slate-500">ハノイ市内の位置をクリック、またはピンをドラッグしてください。</div>
+                    <div className="text-sm font-semibold text-slate-900">
+                      地図で位置を選択
+                    </div>
+                    <div className="mt-1 text-xs text-slate-500">
+                      ハノイ市内の位置をクリック、またはピンをドラッグしてください。
+                    </div>
                   </div>
                   <MapPin className="h-5 w-5 shrink-0 text-emerald-600" />
                 </div>
@@ -1015,9 +1322,16 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
                       url={hanoiMapTileUrl}
                       attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                     />
-                    <HanoiMapZoomSync zoom={mapZoom} onZoomChange={setMapZoom} />
+                    <HanoiMapZoomSync
+                      zoom={mapZoom}
+                      onZoomChange={setMapZoom}
+                    />
                     <HanoiMapPositionSync mapPoint={mapPoint} zoom={mapZoom} />
-                    <HanoiFacilityPickerMap mapPoint={mapPoint} setMapPoint={setMapPoint} setFormState={setFormState} />
+                    <HanoiFacilityPickerMap
+                      mapPoint={mapPoint}
+                      setMapPoint={setMapPoint}
+                      setFormState={setFormState}
+                    />
                   </MapContainer>
 
                   <div className="pointer-events-none absolute bottom-5 left-5 rounded-2xl bg-slate-900/85 px-4 py-3 text-xs text-white shadow-lg shadow-slate-900/10 backdrop-blur">
@@ -1030,15 +1344,21 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
                   <div className="absolute right-5 top-5 flex items-center gap-2 rounded-full bg-white/95 px-2 py-2 shadow-sm ring-1 ring-slate-200">
                     <button
                       type="button"
-                      onClick={() => setMapZoom((current) => Math.max(12, current - 1))}
+                      onClick={() =>
+                        setMapZoom((current) => Math.max(12, current - 1))
+                      }
                       className="flex h-8 w-8 items-center justify-center rounded-full text-slate-700 hover:bg-slate-100"
                     >
                       −
                     </button>
-                    <div className="min-w-12 text-center text-xs font-medium text-slate-700">Zoom {mapZoom}</div>
+                    <div className="min-w-12 text-center text-xs font-medium text-slate-700">
+                      Zoom {mapZoom}
+                    </div>
                     <button
                       type="button"
-                      onClick={() => setMapZoom((current) => Math.min(17, current + 1))}
+                      onClick={() =>
+                        setMapZoom((current) => Math.min(17, current + 1))
+                      }
                       className="flex h-8 w-8 items-center justify-center rounded-full text-slate-700 hover:bg-slate-100"
                     >
                       +
@@ -1056,30 +1376,57 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
                     <div className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1 text-xs text-slate-500 ring-1 ring-slate-200">
                       {editingLocationId ? "編集中" : "新規作成"}
                     </div>
-                    <div className="mt-3 text-lg text-slate-900">{editingLocationId ? "施設を編集" : "新しい施設を作成"}</div>
-                    <div className="mt-1 text-sm text-slate-500">基本情報、公開設定、設備をまとめて入力します。</div>
+                    <div className="mt-3 text-lg text-slate-900">
+                      {editingLocationId ? "施設を編集" : "新しい施設を作成"}
+                    </div>
+                    <div className="mt-1 text-sm text-slate-500">
+                      基本情報、公開設定、設備をまとめて入力します。
+                    </div>
                   </div>
                 </div>
 
                 <div className="mt-5 grid gap-4">
-                  <Field label="施設名" value={formState.name} onChange={(value) => setFormState((current) => ({ ...current, name: value }))} />
-                  <Field label="住所" value={formState.address} onChange={(value) => setFormState((current) => ({ ...current, address: value }))} />
+                  <Field
+                    label="施設名"
+                    value={formState.name}
+                    onChange={(value) =>
+                      setFormState((current) => ({ ...current, name: value }))
+                    }
+                  />
+                  <Field
+                    label="住所"
+                    value={formState.address}
+                    onChange={(value) =>
+                      setFormState((current) => ({
+                        ...current,
+                        address: value,
+                      }))
+                    }
+                  />
 
                   <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <div className="flex items-center gap-2 text-sm font-medium text-slate-900">
-                          <span className="inline-flex h-6 items-center rounded-full bg-emerald-50 px-2 text-xs text-emerald-700 ring-1 ring-emerald-200">JP</span>
+                          <span className="inline-flex h-6 items-center rounded-full bg-emerald-50 px-2 text-xs text-emerald-700 ring-1 ring-emerald-200">
+                            JP
+                          </span>
                           日本語対応施設
                         </div>
-                        <div className="mt-1 text-xs text-slate-500">日本人ユーザー向けのおすすめ施設として表示</div>
+                        <div className="mt-1 text-xs text-slate-500">
+                          日本人ユーザー向けのおすすめ施設として表示
+                        </div>
                       </div>
                       <label className="relative inline-flex cursor-pointer items-center">
                         <input
                           type="checkbox"
                           checked={isJapanFriendly}
-                          disabled={editingLocationId !== null && isJapanFriendly}
-                          onChange={(event) => setIsJapanFriendly(event.target.checked)}
+                          disabled={
+                            editingLocationId !== null && isJapanFriendly
+                          }
+                          onChange={(event) =>
+                            setIsJapanFriendly(event.target.checked)
+                          }
                           className="peer sr-only"
                         />
                         <span className="h-6 w-11 rounded-full bg-slate-300 transition peer-checked:bg-emerald-500" />
@@ -1089,10 +1436,17 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
                   </div>
 
                   <div>
-                    <div className="text-sm font-medium text-slate-900">説明</div>
+                    <div className="text-sm font-medium text-slate-900">
+                      説明
+                    </div>
                     <textarea
                       value={formState.description}
-                      onChange={(event) => setFormState((current) => ({ ...current, description: event.target.value }))}
+                      onChange={(event) =>
+                        setFormState((current) => ({
+                          ...current,
+                          description: event.target.value,
+                        }))
+                      }
                       placeholder="施設の特徴や推奨利用時間を入力してください..."
                       className="mt-3 min-h-32 w-full rounded-2xl bg-white px-4 py-3 text-slate-900 ring-1 ring-slate-200 outline-none placeholder:text-slate-400"
                     />
@@ -1103,19 +1457,52 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
                       label="施設種類"
                       value={formState.locationType}
                       options={locationTypeOptions}
-                      onChange={(value) => setFormState((current) => ({ ...current, locationType: value }))}
+                      onChange={(value) =>
+                        setFormState((current) => ({
+                          ...current,
+                          locationType: value,
+                        }))
+                      }
                     />
-                    <Field label="Lat" value={formState.lat} onChange={(value) => setFormState((current) => ({ ...current, lat: value }))} />
-                    <Field label="Lng" value={formState.lng} onChange={(value) => setFormState((current) => ({ ...current, lng: value }))} />
+                    <Field
+                      label="Lat"
+                      value={formState.lat}
+                      onChange={(value) =>
+                        setFormState((current) => ({ ...current, lat: value }))
+                      }
+                    />
+                    <Field
+                      label="Lng"
+                      value={formState.lng}
+                      onChange={(value) =>
+                        setFormState((current) => ({ ...current, lng: value }))
+                      }
+                    />
                   </div>
                 </div>
 
-                {formError && <div className="mt-4 rounded-2xl bg-rose-50 px-4 py-3 text-sm text-rose-700 ring-1 ring-rose-200">{formError}</div>}
-                {actionMessage && <div className="mt-4 rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700 ring-1 ring-emerald-200">{actionMessage}</div>}
+                {formError && (
+                  <div className="mt-4 rounded-2xl bg-rose-50 px-4 py-3 text-sm text-rose-700 ring-1 ring-rose-200">
+                    {formError}
+                  </div>
+                )}
+                {actionMessage && (
+                  <div className="mt-4 rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700 ring-1 ring-emerald-200">
+                    {actionMessage}
+                  </div>
+                )}
 
                 <div className="mt-5 flex gap-3">
-                  <button onClick={() => void submitLocation()} disabled={savingLocation} className="flex-1 rounded-[1.2rem] bg-emerald-600 px-4 py-3 text-sm text-white disabled:opacity-60">
-                    {savingLocation ? "保存中..." : editingLocationId ? "更新" : "保存"}
+                  <button
+                    onClick={() => void submitLocation()}
+                    disabled={savingLocation}
+                    className="flex-1 rounded-[1.2rem] bg-emerald-600 px-4 py-3 text-sm text-white disabled:opacity-60"
+                  >
+                    {savingLocation
+                      ? "保存中..."
+                      : editingLocationId
+                        ? "更新"
+                        : "保存"}
                   </button>
                   <button
                     onClick={() => {
@@ -1138,7 +1525,9 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
           <section className="rounded-4xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <h2 className="mt-1 text-2xl text-slate-900">不適切コメント管理</h2>
+                <h2 className="mt-1 text-2xl text-slate-900">
+                  不適切コメント管理
+                </h2>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
                   違反コメントを確認します
                 </p>
@@ -1148,8 +1537,12 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
             <div className="mt-5 rounded-3xl bg-slate-50 p-4 ring-1 ring-slate-200">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <h4 className="text-sm font-medium text-slate-900">施設別フィルター</h4>
-                  <p className="mt-1 text-xs leading-5 text-slate-500">ブロックリスト入りのコメントがある施設を選ぶと素早く絞り込めます。</p>
+                  <h4 className="text-sm font-medium text-slate-900">
+                    施設別フィルター
+                  </h4>
+                  <p className="mt-1 text-xs leading-5 text-slate-500">
+                    ブロックリスト入りのコメントがある施設を選ぶと素早く絞り込めます。
+                  </p>
                 </div>
               </div>
               <div className="relative mt-3 max-w-md">
@@ -1163,10 +1556,16 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
                   className="flex w-full items-center justify-between gap-3 rounded-2xl bg-white px-4 py-3 text-left text-sm text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50"
                 >
                   <span className="min-w-0">
-                    <span className="block text-xs uppercase tracking-[0.16em] text-slate-500">施設</span>
-                    <span className="mt-1 block truncate font-medium text-slate-900">{moderationLocationLabel}</span>
+                    <span className="block text-xs uppercase tracking-[0.16em] text-slate-500">
+                      施設
+                    </span>
+                    <span className="mt-1 block truncate font-medium text-slate-900">
+                      {moderationLocationLabel}
+                    </span>
                   </span>
-                  <ChevronDown className={`h-4 w-4 shrink-0 text-slate-500 transition ${moderationLocationMenuOpen ? "rotate-180" : ""}`} />
+                  <ChevronDown
+                    className={`h-4 w-4 shrink-0 text-slate-500 transition ${moderationLocationMenuOpen ? "rotate-180" : ""}`}
+                  />
                 </button>
 
                 {moderationLocationMenuOpen && (
@@ -1183,11 +1582,13 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
                             setModerationLocationMenuOpen(false);
                           }}
                           className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm transition ${
-                            active ? "bg-emerald-50 text-emerald-700" : "text-slate-700 hover:bg-slate-50"
+                            active
+                              ? "bg-emerald-50 text-emerald-700"
+                              : "text-slate-700 hover:bg-slate-50"
                           }`}
                         >
                           <span className="truncate">{location.label}</span>
-                          {active }
+                          {active}
                         </button>
                       );
                     })}
@@ -1207,10 +1608,16 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
                     className="flex w-full items-center justify-between gap-3 rounded-2xl bg-white px-4 py-3 text-left text-sm text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50"
                   >
                     <span className="min-w-0">
-                      <span className="block text-xs uppercase tracking-[0.16em] text-slate-500">ステータスで絞り込み</span>
-                      <span className="mt-1 block truncate font-medium text-slate-900">{moderationStatusFilterLabel}</span>
+                      <span className="block text-xs uppercase tracking-[0.16em] text-slate-500">
+                        ステータスで絞り込み
+                      </span>
+                      <span className="mt-1 block truncate font-medium text-slate-900">
+                        {moderationStatusFilterLabel}
+                      </span>
                     </span>
-                    <ChevronDown className={`h-4 w-4 shrink-0 text-slate-500 transition ${moderationStatusMenuOpen ? "rotate-180" : ""}`} />
+                    <ChevronDown
+                      className={`h-4 w-4 shrink-0 text-slate-500 transition ${moderationStatusMenuOpen ? "rotate-180" : ""}`}
+                    />
                   </button>
 
                   {moderationStatusMenuOpen && (
@@ -1226,7 +1633,9 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
                               setModerationStatusMenuOpen(false);
                             }}
                             className={`flex w-full items-center rounded-xl px-3 py-2 text-left text-sm transition ${
-                              active ? "bg-emerald-50 text-emerald-700" : "text-slate-700 hover:bg-slate-50"
+                              active
+                                ? "bg-emerald-50 text-emerald-700"
+                                : "text-slate-700 hover:bg-slate-50"
                             }`}
                           >
                             {option.label}
@@ -1248,10 +1657,16 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
                     className="flex w-full items-center justify-between gap-3 rounded-2xl bg-white px-4 py-3 text-left text-sm text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50"
                   >
                     <span className="min-w-0">
-                      <span className="block text-xs uppercase tracking-[0.16em] text-slate-500">違反言語で絞り込み</span>
-                      <span className="mt-1 block truncate font-medium text-slate-900">{moderationLanguageFilterLabel}</span>
+                      <span className="block text-xs uppercase tracking-[0.16em] text-slate-500">
+                        違反言語で絞り込み
+                      </span>
+                      <span className="mt-1 block truncate font-medium text-slate-900">
+                        {moderationLanguageFilterLabel}
+                      </span>
                     </span>
-                    <ChevronDown className={`h-4 w-4 shrink-0 text-slate-500 transition ${moderationLanguageMenuOpen ? "rotate-180" : ""}`} />
+                    <ChevronDown
+                      className={`h-4 w-4 shrink-0 text-slate-500 transition ${moderationLanguageMenuOpen ? "rotate-180" : ""}`}
+                    />
                   </button>
 
                   {moderationLanguageMenuOpen && (
@@ -1267,7 +1682,9 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
                               setModerationLanguageMenuOpen(false);
                             }}
                             className={`flex w-full items-center rounded-xl px-3 py-2 text-left text-sm transition ${
-                              active ? "bg-emerald-50 text-emerald-700" : "text-slate-700 hover:bg-slate-50"
+                              active
+                                ? "bg-emerald-50 text-emerald-700"
+                                : "text-slate-700 hover:bg-slate-50"
                             }`}
                           >
                             {option.label}
@@ -1286,7 +1703,10 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
                   const status = moderationStatusById[item.id] ?? item.status;
 
                   return (
-                    <article key={item.id} className="overflow-hidden rounded-[1.2rem] bg-white shadow-sm ring-1 ring-slate-200">
+                    <article
+                      key={item.id}
+                      className="overflow-hidden rounded-[1.2rem] bg-white shadow-sm ring-1 ring-slate-200"
+                    >
                       <img
                         src={getModerationLocationImage(item.locationId)}
                         alt={item.locationName}
@@ -1300,13 +1720,21 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
                               {getModerationAvatarLabel(item)}
                             </span>
                             <div className="min-w-0">
-                              <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">{item.author}</div>
-                              <div className="mt-1 text-base font-semibold text-slate-900">{item.locationName}</div>
+                              <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                                {item.author}
+                              </div>
+                              <div className="mt-1 text-base font-semibold text-slate-900">
+                                {item.locationName}
+                              </div>
                             </div>
                           </div>
 
-                          <span className={`rounded-full px-3 py-1 text-xs font-semibold ring-1 ${status === "unprocessed" ? "bg-rose-50 text-rose-700 ring-rose-200" : "bg-slate-100 text-slate-600 ring-slate-200"}`}>
-                            {status === "unprocessed" ? `違反 ${item.violationCount} 回` : "削除済み"}
+                          <span
+                            className={`rounded-full px-3 py-1 text-xs font-semibold ring-1 ${status === "unprocessed" ? "bg-rose-50 text-rose-700 ring-rose-200" : "bg-slate-100 text-slate-600 ring-slate-200"}`}
+                          >
+                            {status === "unprocessed"
+                              ? `違反 ${item.violationCount} 回`
+                              : "削除済み"}
                           </span>
                         </div>
 
@@ -1328,15 +1756,28 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
                         </div>
 
                         <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                          <span className="rounded-full bg-slate-50 px-3 py-1 ring-1 ring-slate-200">{moderationLocationLabels[item.locationId] ?? item.locationId}</span>
-                          <span className="rounded-full bg-slate-50 px-3 py-1 ring-1 ring-slate-200">{item.timestamp}</span>
+                          <span className="rounded-full bg-slate-50 px-3 py-1 ring-1 ring-slate-200">
+                            {moderationLocationLabels[item.locationId] ??
+                              item.locationId}
+                          </span>
+                          <span className="rounded-full bg-slate-50 px-3 py-1 ring-1 ring-slate-200">
+                            {item.timestamp}
+                          </span>
                         </div>
 
                         <div className="mt-4 flex gap-3">
-                          <button onClick={() => setCommentStatus(item.id, "deleted")} className="flex-1 rounded-[0.9rem] bg-rose-600 px-4 py-3 text-sm font-semibold text-white shadow-sm shadow-rose-600/10">
+                          <button
+                            onClick={() => setCommentStatus(item.id, "deleted")}
+                            className="flex-1 rounded-[0.9rem] bg-rose-600 px-4 py-3 text-sm font-semibold text-white shadow-sm shadow-rose-600/10"
+                          >
                             削除
                           </button>
-                          <button onClick={() => setCommentStatus(item.id, "unprocessed")} className="flex-1 rounded-[0.9rem] bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700 ring-1 ring-slate-200">
+                          <button
+                            onClick={() =>
+                              setCommentStatus(item.id, "unprocessed")
+                            }
+                            className="flex-1 rounded-[0.9rem] bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700 ring-1 ring-slate-200"
+                          >
                             復元
                           </button>
                         </div>
@@ -1359,7 +1800,9 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
           <section className="rounded-4xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <h2 className="mt-1 text-2xl text-slate-900">管理者プロフィール</h2>
+                <h2 className="mt-1 text-2xl text-slate-900">
+                  管理者プロフィール
+                </h2>
               </div>
             </div>
 
@@ -1379,7 +1822,8 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
                         alt="アバター"
                         className="h-full w-full rounded-full object-cover"
                         onError={(event) => {
-                          event.currentTarget.src = adminAvatarPreset.fallbackSrc;
+                          event.currentTarget.src =
+                            adminAvatarPreset.fallbackSrc;
                         }}
                       />
                     </button>
@@ -1394,9 +1838,11 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
                   </div>
                 </div>
 
-                  <div className="mt-5 text-center">
+                <div className="mt-5 text-center">
                   <div className="text-2xl font-semibold">{adminName}</div>
-                  <div className="mt-1 text-sm text-white/70">システム管理者</div>
+                  <div className="mt-1 text-sm text-white/70">
+                    システム管理者
+                  </div>
                 </div>
 
                 <div className="mt-6 rounded-2xl bg-white/10 p-4 text-sm leading-6 ring-1 ring-white/15">
@@ -1407,7 +1853,9 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
               </div>
 
               <div className="rounded-[1.8rem] bg-slate-50 p-5 ring-1 ring-slate-200">
-                <h3 className="text-sm font-medium uppercase tracking-[0.16em] text-slate-500">個人情報</h3>
+                <h3 className="text-sm font-medium uppercase tracking-[0.16em] text-slate-500">
+                  個人情報
+                </h3>
                 <div className="mt-4 space-y-3 rounded-[1.4rem] bg-white p-4 ring-1 ring-slate-200">
                   <AdminProfileRow
                     label="氏名"
@@ -1446,7 +1894,7 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
                 </div>
 
                 <div className="mt-4 rounded-2xl bg-emerald-50 p-4 text-sm leading-6 text-emerald-800 ring-1 ring-emerald-200">
-                    <div className="flex items-center gap-2 font-medium">
+                  <div className="flex items-center gap-2 font-medium">
                     <span>✅</span>
                     管理者は認証済みです
                   </div>
@@ -1458,13 +1906,28 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
             </div>
 
             {avatarModalOpen && (
-              <div className="avatar-modal-backdrop" onClick={() => setAvatarModalOpen(false)} role="presentation">
-                <div className="avatar-modal-card" role="dialog" aria-modal="true" aria-labelledby="avatar-modal-title" onClick={(event) => event.stopPropagation()}>
+              <div
+                className="avatar-modal-backdrop"
+                onClick={() => setAvatarModalOpen(false)}
+                role="presentation"
+              >
+                <div
+                  className="avatar-modal-card"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="avatar-modal-title"
+                  onClick={(event) => event.stopPropagation()}
+                >
                   <div className="avatar-modal-header">
                     <div>
                       <h3 id="avatar-modal-title">アバターを選択</h3>
                     </div>
-                    <button className="avatar-modal-close" type="button" onClick={() => setAvatarModalOpen(false)} aria-label="アバター選択を閉じる">
+                    <button
+                      className="avatar-modal-close"
+                      type="button"
+                      onClick={() => setAvatarModalOpen(false)}
+                      aria-label="アバター選択を閉じる"
+                    >
                       <X size={16} />
                     </button>
                   </div>
@@ -1477,11 +1940,22 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
                           key={frame.id}
                           type="button"
                           className={`avatar-choice-chip ${pendingAvatarSelection.frameId === frame.id ? "is-selected" : ""}`}
-                          onClick={() => setPendingAvatarSelection((current) => ({ ...current, frameId: frame.id }))}
+                          onClick={() =>
+                            setPendingAvatarSelection((current) => ({
+                              ...current,
+                              frameId: frame.id,
+                            }))
+                          }
                           aria-label={frame.label}
                           title={frame.label}
                         >
-                          <span className="avatar-choice-swatch" style={{ background: frame.color, boxShadow: `0 0 0 3px ${frame.color}` }} />
+                          <span
+                            className="avatar-choice-swatch"
+                            style={{
+                              background: frame.color,
+                              boxShadow: `0 0 0 3px ${frame.color}`,
+                            }}
+                          />
                         </button>
                       ))}
                     </div>
@@ -1491,13 +1965,19 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
                     <div className="avatar-section-title">アバター</div>
                     <div className="avatar-preset-grid">
                       {avatarPresets.map((preset) => {
-                        const isSelected = pendingAvatarSelection.avatarId === preset.id;
+                        const isSelected =
+                          pendingAvatarSelection.avatarId === preset.id;
                         return (
                           <button
                             key={preset.id}
                             type="button"
                             className={`avatar-preset-card ${isSelected ? "is-selected" : ""}`}
-                            onClick={() => setPendingAvatarSelection((current) => ({ ...current, avatarId: preset.id }))}
+                            onClick={() =>
+                              setPendingAvatarSelection((current) => ({
+                                ...current,
+                                avatarId: preset.id,
+                              }))
+                            }
                             aria-label={preset.label}
                             title={preset.label}
                           >
@@ -1517,10 +1997,18 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
                   </div>
 
                   <div className="avatar-modal-actions">
-                    <button type="button" className="avatar-modal-secondary" onClick={() => setAvatarModalOpen(false)}>
+                    <button
+                      type="button"
+                      className="avatar-modal-secondary"
+                      onClick={() => setAvatarModalOpen(false)}
+                    >
                       キャンセル
                     </button>
-                    <button type="button" className="avatar-modal-primary" onClick={() => void handleAdminAvatarSave()}>
+                    <button
+                      type="button"
+                      className="avatar-modal-primary"
+                      onClick={() => void handleAdminAvatarSave()}
+                    >
                       保存 avatar
                     </button>
                   </div>
@@ -1536,7 +2024,9 @@ export function AdminWorkspace({ userId, userName, userEmail, bootstrapAqiSnapsh
               ログアウト
             </button>
 
-            <div className="mt-4 text-center text-xs text-slate-400">バージョン 2.4.0 - SAFEMOVE HANOI 2024</div>
+            <div className="mt-4 text-center text-xs text-slate-400">
+              バージョン 2.4.0 - SAFEMOVE HANOI 2026
+            </div>
           </section>
         </div>
       )}
@@ -1557,7 +2047,9 @@ function Field({
 }) {
   return (
     <label className="grid gap-1.5 text-sm">
-      <span className="text-xs uppercase tracking-[0.16em] text-slate-500">{label}</span>
+      <span className="text-xs uppercase tracking-[0.16em] text-slate-500">
+        {label}
+      </span>
       {onChange && !readOnly ? (
         <input
           value={value}
@@ -1586,7 +2078,9 @@ function SelectField({
 }) {
   return (
     <label className="grid gap-1.5 text-sm">
-      <span className="text-xs uppercase tracking-[0.16em] text-slate-500">{label}</span>
+      <span className="text-xs uppercase tracking-[0.16em] text-slate-500">
+        {label}
+      </span>
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
@@ -1612,12 +2106,19 @@ function ProfileRow({
   noBorder?: boolean;
 }) {
   return (
-    <div className={`flex items-center justify-between gap-3 py-3 ${noBorder ? "" : "border-b border-slate-100"}`}>
+    <div
+      className={`flex items-center justify-between gap-3 py-3 ${noBorder ? "" : "border-b border-slate-100"}`}
+    >
       <div>
-        <div className="text-xs uppercase tracking-[0.16em] text-slate-500">{label}</div>
+        <div className="text-xs uppercase tracking-[0.16em] text-slate-500">
+          {label}
+        </div>
         <div className="mt-1 text-sm text-slate-900">{value || "-"}</div>
       </div>
-      <button type="button" className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-50 text-slate-500 ring-1 ring-slate-200">
+      <button
+        type="button"
+        className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-50 text-slate-500 ring-1 ring-slate-200"
+      >
         <span className="text-sm">✎</span>
       </button>
     </div>
@@ -1650,9 +2151,13 @@ function AdminProfileRow({
   const isEditing = editingField === field;
 
   return (
-    <div className={`flex items-center justify-between gap-3 py-3 ${noBorder ? "" : "border-b border-slate-100"}`}>
+    <div
+      className={`flex items-center justify-between gap-3 py-3 ${noBorder ? "" : "border-b border-slate-100"}`}
+    >
       <div className="min-w-0 flex-1">
-        <div className="text-xs uppercase tracking-[0.16em] text-slate-500">{label}</div>
+        <div className="text-xs uppercase tracking-[0.16em] text-slate-500">
+          {label}
+        </div>
         {isEditing ? (
           <input
             value={editValue}
