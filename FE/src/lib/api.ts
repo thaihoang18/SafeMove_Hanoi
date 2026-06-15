@@ -506,6 +506,17 @@ export async function searchPlaces(query: string, limit = 6) {
   );
 }
 
+export async function reverseGeocode(lat: number, lng: number) {
+  const params = new URLSearchParams({
+    lat: String(lat),
+    lng: String(lng),
+  });
+
+  return request<{ ok: true; address: string | null; lat: number; lng: number }>(
+    `/api/maps/reverse?${params.toString()}`,
+  );
+}
+
 export async function planRoutes(payload: {
   origin: {
     label: string;

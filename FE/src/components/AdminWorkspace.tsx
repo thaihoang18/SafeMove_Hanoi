@@ -17,6 +17,7 @@ import {
   fetchAdminDashboard,
   fetchAdminHiddenReviews,
   fetchIqAirAqiByCoordinates,
+  reverseGeocode,
   updateReview,
 } from "@/lib/api";
 import { Shell, type View } from "./Shell";
@@ -254,13 +255,21 @@ function HanoiFacilityPickerMap({
 
   useMapEvents({
     click(event) {
-      const nextPoint = latLngToMapPoint(event.latlng.lat, event.latlng.lng);
+      const { lat, lng } = event.latlng;
+      const nextPoint = latLngToMapPoint(lat, lng);
       setMapPoint(nextPoint);
+      const latStr = String(Number(lat.toFixed(6)));
+      const lngStr = String(Number(lng.toFixed(6)));
       setFormState((current) => ({
         ...current,
-        lat: String(Number(event.latlng.lat.toFixed(6))),
-        lng: String(Number(event.latlng.lng.toFixed(6))),
+        lat: latStr,
+        lng: lngStr,
       }));
+      reverseGeocode(lat, lng).then((res) => {
+        if (res.address) {
+          setFormState((current) => ({ ...current, address: res.address! }));
+        }
+      });
     },
   });
 
@@ -272,13 +281,21 @@ function HanoiFacilityPickerMap({
       eventHandlers={{
         dragend: (event) => {
           const latLng = event.target.getLatLng();
-          const nextPoint = latLngToMapPoint(latLng.lat, latLng.lng);
+          const { lat, lng } = latLng;
+          const nextPoint = latLngToMapPoint(lat, lng);
           setMapPoint(nextPoint);
+          const latStr = String(Number(lat.toFixed(6)));
+          const lngStr = String(Number(lng.toFixed(6)));
           setFormState((current) => ({
             ...current,
-            lat: String(Number(latLng.lat.toFixed(6))),
-            lng: String(Number(latLng.lng.toFixed(6))),
+            lat: latStr,
+            lng: lngStr,
           }));
+          reverseGeocode(lat, lng).then((res) => {
+            if (res.address) {
+              setFormState((current) => ({ ...current, address: res.address! }));
+            }
+          });
         },
       }}
     />

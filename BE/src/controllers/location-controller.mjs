@@ -65,7 +65,7 @@ export async function listLocationsController(searchParams) {
     where (${city}::text is null or city = ${city})
       and (${district}::text is null or district = ${district})
       and (${type}::text is null or location_type = ${type})
-    order by city asc nulls last, district asc nulls last, name asc
+    order by l.created_at desc, city asc nulls last, district asc nulls last, name asc
     limit 100
   `;
 

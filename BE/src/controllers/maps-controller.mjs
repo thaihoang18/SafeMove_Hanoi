@@ -247,6 +247,36 @@ export async function searchPlacesController(searchParams) {
   return { places };
 }
 
+export async function reverseGeocodeController(searchParams) {
+  const lat = parseCoordinate(searchParams.get("lat"), "lat", -90, 90);
+  const lng = parseCoordinate(searchParams.get("lng"), "lng", -180, 180);
+
+  const nominatimUrl = new URL("https://nominatim.openstreetmap.org/reverse");
+  nominatimUrl.searchParams.set("lat", String(lat));
+  nominatimUrl.searchParams.set("lon", String(lng));
+  nominatimUrl.searchParams.set("format", "jsonv2");
+  nominatimUrl.searchParams.set("addressdetails", "1");
+  nominatimUrl.searchParams.set("accept-language", "vi,en");
+
+  const response = await fetch(nominatimUrl, {
+    headers: {
+      Accept: "application/json",
+      "User-Agent": "SafeMove HaNoi/1.0",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Reverse geocode failed: ${response.status}`);
+  }
+
+  const payload = await response.json();
+  return {
+    address: payload.display_name ?? null,
+    lat: lat,
+    lng: lng,
+  };
+}
+
 export async function planRoutesController(body) {
   assert(isNonEmptyString(body?.origin?.label), "origin.label is required.");
   assert(isNonEmptyString(body?.destination?.label), "destination.label is required.");
