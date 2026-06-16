@@ -91,7 +91,7 @@ export async function createLocationReviewController(locationId, body) {
           description
         ) values (
           ${body.userId.trim()},
-          'review_flagged',
+          'system',
           'あなたのコメントは審査待ちです',
           ${`内容: ${body.content.trim()}`}
         )
@@ -191,4 +191,14 @@ export async function updateLocationReviewController(reviewId, body) {
   if (!updated) throw new Error('Review not found');
 
   return { review: toReview(updated) };
+}
+
+export async function deleteLocationReviewController(reviewId) {
+  const [deleted] = await sql`
+    delete from airpath.location_reviews
+    where id = ${reviewId}
+    returning id
+  `;
+  if (!deleted) throw new Error('Review not found');
+  return { id: deleted.id };
 }

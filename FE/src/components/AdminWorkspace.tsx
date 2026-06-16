@@ -19,6 +19,7 @@ import {
   fetchIqAirAqiByCoordinates,
   reverseGeocode,
   updateReview,
+  deleteReview,
 } from "@/lib/api";
 import { Shell, type View } from "./Shell";
 import {
@@ -925,37 +926,56 @@ export function AdminWorkspace({
   }
 
   function setCommentStatus(commentId: string, status: ModerationStatus) {
+    if (moderationUpdatingById[commentId]) {
+      return;
+    }
+
     // mark local state immediately
     setModerationStatusById((current) => ({ ...current, [commentId]: status }));
 
-    const payload: { is_hidden?: boolean; metadata?: Record<string, unknown> } =
-      {};
-    if (status === "deleted") {
-      payload.is_hidden = true;
-      payload.metadata = {
-        moderation: {
-          status: "deleted",
-          processed_by: "admin",
-          processed_at: new Date().toISOString(),
-        },
-      };
-    } else {
-      payload.is_hidden = false;
-      payload.metadata = {
-        moderation: {
-          status: "approved",
-          processed_by: "admin",
-          processed_at: new Date().toISOString(),
-        },
-      };
-    }
-
     setModerationUpdatingById((cur) => ({ ...cur, [commentId]: true }));
 
-    updateReview(commentId, payload)
-      .then((resp) => {
-        // update local list based on result without full reload
-        if (payload.is_hidden === false) {
+    if (status === "deleted") {
+      deleteReview(commentId)
+        .then(() => {
+          // approved/deleted: remove from list
+          setModerationItemsList((cur) =>
+            cur.filter((it) => it.id !== commentId),
+          );
+          setModerationStatusById((cur) => {
+            const next = { ...cur };
+            delete next[commentId];
+            return next;
+          });
+        })
+        .catch((err) => {
+          // revert status on error
+          setModerationStatusById((cur) => ({
+            ...cur,
+            [commentId]: "unprocessed",
+          }));
+          window.alert(
+            err instanceof Error
+              ? err.message
+              : "コメントを削除できませんでした。",
+          );
+        })
+        .finally(() => {
+          setModerationUpdatingById((cur) => ({ ...cur, [commentId]: false }));
+        });
+    } else {
+      const payload = {
+        is_hidden: false,
+        metadata: {
+          moderation: {
+            status: "approved",
+            processed_by: "admin",
+            processed_at: new Date().toISOString(),
+          },
+        },
+      };
+      updateReview(commentId, payload)
+        .then(() => {
           // approved/unhidden: remove from hidden list
           setModerationItemsList((cur) =>
             cur.filter((it) => it.id !== commentId),
@@ -965,34 +985,23 @@ export function AdminWorkspace({
             delete next[commentId];
             return next;
           });
-        } else {
-          // marked deleted: update item's status in list
-          setModerationItemsList((cur) =>
-            cur.map((it) =>
-              it.id === commentId ? { ...it, status: "deleted" } : it,
-            ),
-          );
+        })
+        .catch((err) => {
+          // revert status on error
           setModerationStatusById((cur) => ({
             ...cur,
             [commentId]: "deleted",
           }));
-        }
-      })
-      .catch((err) => {
-        // revert status on error
-        setModerationStatusById((cur) => ({
-          ...cur,
-          [commentId]: status === "deleted" ? "unprocessed" : "deleted",
-        }));
-        window.alert(
-          err instanceof Error
-            ? err.message
-            : "コメントを更新できませんでした。",
-        );
-      })
-      .finally(() => {
-        setModerationUpdatingById((cur) => ({ ...cur, [commentId]: false }));
-      });
+          window.alert(
+            err instanceof Error
+              ? err.message
+              : "コメントを更新できませんでした。",
+          );
+        })
+        .finally(() => {
+          setModerationUpdatingById((cur) => ({ ...cur, [commentId]: false }));
+        });
+    }
   }
 
   useEffect(() => {
@@ -1196,6 +1205,15 @@ export function AdminWorkspace({
                 </div>
               </div>
               <div className="space-y-3">
+                {actionMessage && (
+                  <div className={`rounded-[1.7rem] p-4 text-sm ring-1 ${
+                    actionMessage.includes("失敗") || actionMessage.includes("でき") 
+                      ? "bg-rose-50 text-rose-700 ring-rose-200" 
+                      : "bg-emerald-50 text-emerald-700 ring-emerald-200"
+                  }`}>
+                    {actionMessage}
+                  </div>
+                )}
                 {loadingLocations ? (
                   <div className="rounded-[1.7rem] bg-white p-5 text-sm text-slate-500 ring-1 ring-slate-200">
                     施設を読み込み中...
@@ -1784,16 +1802,18 @@ export function AdminWorkspace({
 
                         <div className="mt-4 flex gap-3">
                           <button
+                            disabled={moderationUpdatingById[item.id]}
                             onClick={() => setCommentStatus(item.id, "deleted")}
-                            className="flex-1 rounded-[0.9rem] bg-rose-600 px-4 py-3 text-sm font-semibold text-white shadow-sm shadow-rose-600/10"
+                            className="flex-1 rounded-[0.9rem] bg-rose-600 px-4 py-3 text-sm font-semibold text-white shadow-sm shadow-rose-600/10 disabled:opacity-50"
                           >
-                            削除
+                            {moderationUpdatingById[item.id] ? "処理中..." : "削除"}
                           </button>
                           <button
+                            disabled={moderationUpdatingById[item.id]}
                             onClick={() =>
                               setCommentStatus(item.id, "unprocessed")
                             }
-                            className="flex-1 rounded-[0.9rem] bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700 ring-1 ring-slate-200"
+                            className="flex-1 rounded-[0.9rem] bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700 ring-1 ring-slate-200 disabled:opacity-50"
                           >
                             復元
                           </button>

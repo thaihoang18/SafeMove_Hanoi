@@ -283,7 +283,6 @@ export async function getAdminDashboardController() {
       select count(*)::int as active_users
       from airpath.users
       where updated_at >= now() - interval '7 days'
-        and role = 'user'
     `,
     sql`
       select count(*)::int as total_locations

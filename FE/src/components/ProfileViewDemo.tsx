@@ -1,5 +1,5 @@
 import { Bell, Edit2, Eye, EyeOff, AlertCircle, LogOut, X, Mail } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   avatarFrames,
   avatarPresets,
@@ -52,6 +52,22 @@ export function ProfileViewDemo({
   const [showPassword, setShowPassword] = useState(false);
   const selectedAvatarPreset = avatarPresets.find((preset) => preset.id === avatarSelection.avatarId) ?? avatarPresets[0];
 
+  const thresholdRef = useRef(aqiThreshold);
+  const lastSavedThresholdRef = useRef(currentAqiThreshold);
+  const onUpdateProfileRef = useRef(onUpdateProfile);
+
+  useEffect(() => {
+    thresholdRef.current = aqiThreshold;
+  }, [aqiThreshold]);
+
+  useEffect(() => {
+    lastSavedThresholdRef.current = currentAqiThreshold;
+  }, [currentAqiThreshold]);
+
+  useEffect(() => {
+    onUpdateProfileRef.current = onUpdateProfile;
+  }, [onUpdateProfile]);
+
   useEffect(() => {
     setPendingAvatarSelection(avatarSelection ?? defaultAvatarSelection);
   }, [avatarSelection]);
@@ -66,11 +82,19 @@ export function ProfileViewDemo({
     }
 
     const timer = window.setTimeout(() => {
-      void onUpdateProfile("alertThreshold", String(aqiThreshold));
-    }, 2000);
+      void onUpdateProfileRef.current("alertThreshold", String(aqiThreshold));
+    }, 500);
 
     return () => window.clearTimeout(timer);
-  }, [aqiThreshold, currentAqiThreshold, onUpdateProfile]);
+  }, [aqiThreshold, currentAqiThreshold]);
+
+  useEffect(() => {
+    return () => {
+      if (thresholdRef.current !== lastSavedThresholdRef.current) {
+        void onUpdateProfileRef.current("alertThreshold", String(thresholdRef.current));
+      }
+    };
+  }, []);
 
   const handleEditClick = (field: string, currentValue: string) => {
     setEditingField(field);

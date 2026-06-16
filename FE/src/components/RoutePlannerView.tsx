@@ -260,11 +260,13 @@ export function RoutePlannerView({ locations, origin, destination, maxRatio, set
       };
 
   const currentStep = selectedRoute?.route.steps?.[0] ?? null;
-  const currentInstruction = currentStep
-    ? `ルートに沿って進んでください (${Math.round(currentStep.distanceM)} m)`
-    : selectedRoute
-      ? "ナビゲーションの準備ができました。開始すると次の案内を表示します。"
-      : "ルートを待機中です。";
+  const currentInstruction = navigationStarted
+    ? (currentStep
+        ? `ルートに沿って進んでください (${Math.round(currentStep.distanceM)} m)`
+        : "目的地に近づいています。")
+    : (selectedRoute
+        ? "ナビゲーションの準備ができました。開始すると次の案内を表示します。"
+        : "ルートを待機中です。");
   const routeAqiLabel = routeData.averageAqi > 0 ? `${Math.round(routeData.averageAqi)}` : "読み込み中";
 
   async function startRealTimeNavigation() {

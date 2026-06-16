@@ -97,8 +97,9 @@ export async function loginUserController(body) {
   const rows = await sql`
     select id, email, full_name, birth_year, home_lat, home_lng, created_at
     from airpath.users
-    where email = ${identifier}
+    where (email = ${identifier} or lower(full_name) = lower(${identifier}) or email like ${identifier + '@%'})
       and password_hash = ${passwordHash}
+    order by (email = ${identifier}) desc, (lower(full_name) = lower(${identifier})) desc
     limit 1
   `;
 

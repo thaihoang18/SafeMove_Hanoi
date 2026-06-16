@@ -369,6 +369,12 @@ export async function updateReview(
   );
 }
 
+export async function deleteReview(reviewId: string) {
+  return request<{ ok: true }>(`/api/reviews/${reviewId}`, {
+    method: "DELETE",
+  });
+}
+
 export async function createRouteRequest(payload: {
   userId: string;
   originLabel: string;

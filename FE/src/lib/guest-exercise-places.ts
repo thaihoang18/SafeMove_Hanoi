@@ -42,6 +42,7 @@ export type PlaceCatalogItem = {
   featured_image?: string | null;
   description?: string | null;
   source?: "backend" | "asset";
+  created_at?: string;
 };
 
 const assetPlaces = (rawPlaces as AssetPlaceRecord[])
@@ -87,7 +88,14 @@ export function mergeExercisePlaces(basePlaces: PlaceCatalogItem[]) {
     );
   }
 
-  return Array.from(mergedByKey.values());
+  return Array.from(mergedByKey.values()).sort((a, b) => {
+    const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
+    const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
+    if (aTime !== bTime) {
+      return bTime - aTime;
+    }
+    return 0;
+  });
 }
 
 function normalizeAssetPlace(record: AssetPlaceRecord): PlaceCatalogItem | null {

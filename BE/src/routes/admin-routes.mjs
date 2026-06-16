@@ -1,4 +1,4 @@
-import { listHiddenLocationReviewsController, updateLocationReviewController } from "../controllers/location-review-controller.mjs";
+import { listHiddenLocationReviewsController, updateLocationReviewController, deleteLocationReviewController } from "../controllers/location-review-controller.mjs";
 import { methodNotAllowed, readJsonBody, sendJson } from "../utils/http.mjs";
 
 export async function handleAdminRoutes(req, res, pathname) {
@@ -13,6 +13,10 @@ export async function handleAdminRoutes(req, res, pathname) {
     if (req.method === "PATCH") {
       const body = await readJsonBody(req);
       sendJson(res, 200, { ok: true, ...(await updateLocationReviewController(reviewId, body)) });
+      return true;
+    }
+    if (req.method === "DELETE") {
+      sendJson(res, 200, { ok: true, ...(await deleteLocationReviewController(reviewId)) });
       return true;
     }
     methodNotAllowed(res);
