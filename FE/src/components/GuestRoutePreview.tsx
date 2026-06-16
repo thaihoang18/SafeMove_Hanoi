@@ -49,7 +49,7 @@ export function GuestRoutePreview({ locations, onShowLogin, onBack }: Props) {
       {/* Featured destinations preview */}
       <div className="grp-section-label">人気スポット</div>
       <div className="grp-cards">
-        {featured.map((place, idx) => (
+        {featured.map((place) => (
           <div key={place.id} className="grp-card">
             <div className="grp-card-icon">
               <MapPin size={16} />
@@ -60,9 +60,17 @@ export function GuestRoutePreview({ locations, onShowLogin, onBack }: Props) {
                 {place.address ?? place.district ?? "ハノイ"}
               </div>
               <div className="grp-card-meta">
-                <span className={`grp-aqi-badge ${idx % 2 === 0 ? "good" : "moderate"}`}>
-                  AQI {40 + idx * 8}
-                </span>
+                {(() => {
+                  const aqi = typeof place.aqi_level === "number"
+                    ? place.aqi_level
+                    : 35 + (place.name.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0) % 40);
+                  const aqiClass = aqi <= 50 ? "good" : "moderate";
+                  return (
+                    <span className={`grp-aqi-badge ${aqiClass}`}>
+                      AQI {aqi}
+                    </span>
+                  );
+                })()}
                 {place.rating != null && (
                   <span className="grp-rating">
                     ★ {place.rating.toFixed(1)}

@@ -166,7 +166,7 @@ export function LoginScreenDemo({
                 <input
                   type="text"
                   className="auth-input"
-                  placeholder={isAdminMode ? "admin または you@example.com" : "メールアドレスを入力"}
+                  placeholder="email@example.com または ユーザー名"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={isLoading}

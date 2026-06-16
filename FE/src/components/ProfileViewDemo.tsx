@@ -151,8 +151,6 @@ export function ProfileViewDemo({
     return date.toLocaleDateString("ja-JP", { month: "2-digit", year: "numeric" });
   };
 
-  const joinDateLabel = formatJoinDate(user.joinDate);
-
   if (!user) {
     return (
       <div className="profile-container">
@@ -163,6 +161,8 @@ export function ProfileViewDemo({
       </div>
     );
   }
+
+  const joinDateLabel = formatJoinDate(user.joinDate);
 
   return (
     <div className="profile-container">

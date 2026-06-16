@@ -276,8 +276,13 @@ body {
 .route-main-content-demo {
   position: relative;
   height: 100%;
-  overflow: hidden;
   padding-bottom: 0;
+}
+
+/* Offset Leaflet zoom controls so they are not hidden by the bottom nav */
+.route-map-inner .leaflet-bottom.leaflet-right {
+  bottom: 76px !important;
+  right: 12px !important;
 }
 
 .main-content-demo::-webkit-scrollbar {

@@ -912,8 +912,9 @@ export default function App() {
       } else {
         setSelectedLocationReviews((current) => [response.review, ...current]);
       }
+      void reloadLocations().catch(() => {});
     },
-    [selectedBackendLocation, user, view],
+    [selectedBackendLocation, user, view, reloadLocations],
   );
 
   const handleUpdateAvatarSelection = useCallback(

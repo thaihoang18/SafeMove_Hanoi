@@ -18,12 +18,12 @@ type AssetPlaceRecord = {
 };
 
 export type PlaceCatalogItem = {
-  type: string;
-  image_url: import("react/jsx-runtime").JSX.Element;
-  distance_km: any;
+  type?: string;
+  image_url?: import("react/jsx-runtime").JSX.Element;
+  distance_km?: any;
   is_japan_friendly?: boolean;
-  aqi_level: any;
-  amenities: boolean;
+  aqi_level?: any;
+  amenities?: boolean | any;
   filter_type?: "park" | "gym" | "sports";
   id: string;
   name: string;
@@ -74,6 +74,8 @@ export function mergeExercisePlaces(basePlaces: PlaceCatalogItem[]) {
         ? {
             ...existing,
             ...place,
+            rating: (place.rating !== null && place.rating !== undefined && Number(place.rating) > 0) ? Number(place.rating) : existing.rating,
+            reviews: (place.reviews !== null && place.reviews !== undefined && Number(place.reviews) > 0) ? Number(place.reviews) : existing.reviews,
             is_japan_friendly: place.is_japan_friendly === true,
             filter_type:
               existing.filter_type ??
@@ -82,6 +84,8 @@ export function mergeExercisePlaces(basePlaces: PlaceCatalogItem[]) {
           }
         : {
             ...place,
+            rating: (place.rating !== null && place.rating !== undefined) ? Number(place.rating) : null,
+            reviews: (place.reviews !== null && place.reviews !== undefined) ? Number(place.reviews) : null,
             is_japan_friendly: place.is_japan_friendly === true,
             filter_type: place.filter_type ?? inferFilterType(place.name, place.location_type, place.categories, place.description),
           },
@@ -188,7 +192,7 @@ function pickDistrict(parts: string[]) {
 
 function pickCity(parts: string[]) {
   const city = parts.find((part) => /ha noi/i.test(part));
-  return city ?? parts.at(-1) ?? null;
+  return city ?? parts[parts.length - 1] ?? null;
 }
 
 function createKey(place: PlaceCatalogItem) {

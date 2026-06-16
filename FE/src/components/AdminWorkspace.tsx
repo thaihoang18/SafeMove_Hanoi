@@ -212,9 +212,9 @@ function loadAdminProfileDraft(
         typeof parsed.password === "string" && parsed.password.trim()
           ? parsed.password
           : typeof (parsed as { phone?: string }).phone === "string" &&
-              (parsed as { phone?: string }).phone.trim()
-            ? (parsed as { phone?: string }).phone
-            : fallback.password,
+            ((parsed as { phone: string }).phone).trim()
+              ? (parsed as { phone: string }).phone
+              : fallback.password,
     };
   } catch {
     return fallback;
@@ -396,6 +396,8 @@ export function AdminWorkspace({
     latLngToMapPoint(hanoiCenter.lat, hanoiCenter.lng),
   );
   const [mapZoom, setMapZoom] = useState(14);
+  const [deletingLocationId, setDeletingLocationId] = useState<string | null>(null);
+  const [mapInteractive, setMapInteractive] = useState(true);
   const [isJapanFriendly, setIsJapanFriendly] = useState(false);
   const facilityPositionRequestId = useRef(0);
   const [formError, setFormError] = useState<string | null>(null);
@@ -603,6 +605,30 @@ export function AdminWorkspace({
     setAdminEmail(draft.email);
     setAdminPassword(draft.password);
   }, [userId, userName, userEmail]);
+
+  useEffect(() => {
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length >= 2) {
+        setMapInteractive(true);
+      } else {
+        setMapInteractive(false);
+      }
+    };
+
+    const handleTouchEnd = () => {
+      setMapInteractive(true);
+    };
+
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchend", handleTouchEnd, { passive: true });
+    window.addEventListener("touchcancel", handleTouchEnd, { passive: true });
+
+    return () => {
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchend", handleTouchEnd);
+      window.removeEventListener("touchcancel", handleTouchEnd);
+    };
+  }, []);
 
   const moderationLocations = useMemo(() => {
     const entries = new Map<string, string>();
@@ -903,12 +929,9 @@ export function AdminWorkspace({
     }
   }
 
-  async function handleDelete(locationId: string) {
-    if (!window.confirm("この施設を削除しますか？")) {
-      return;
-    }
-
+  async function handleDeleteConfirm(locationId: string) {
     setActionMessage(null);
+    setDeletingLocationId(null);
 
     try {
       await deleteLocation(locationId);
@@ -1275,13 +1298,30 @@ export function AdminWorkspace({
                               <Edit3 className="mr-2 inline h-4 w-4" />
                               編集
                             </button>
-                            <button
-                              onClick={() => void handleDelete(location.id)}
-                              className="rounded-2xl bg-rose-50 px-4 py-2 text-sm text-rose-700 ring-1 ring-rose-200"
-                            >
-                              <Trash2 className="mr-2 inline h-4 w-4" />
-                              削除
-                            </button>
+                            {deletingLocationId === location.id ? (
+                              <div className="flex gap-1.5">
+                                <button
+                                  onClick={() => void handleDeleteConfirm(location.id)}
+                                  className="rounded-2xl bg-rose-600 px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-rose-700"
+                                >
+                                  確認: 削除
+                                </button>
+                                <button
+                                  onClick={() => setDeletingLocationId(null)}
+                                  className="rounded-2xl bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-200"
+                                >
+                                  キャンセル
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => setDeletingLocationId(location.id)}
+                                className="rounded-2xl bg-rose-50 px-4 py-2 text-sm text-rose-700 ring-1 ring-rose-200 hover:bg-rose-100"
+                              >
+                                <Trash2 className="mr-2 inline h-4 w-4" />
+                                削除
+                              </button>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -1348,7 +1388,9 @@ export function AdminWorkspace({
                     zoom={mapZoom}
                     minZoom={12}
                     maxZoom={17}
-                    scrollWheelZoom
+                    scrollWheelZoom={mapInteractive}
+                    dragging={mapInteractive}
+                    touchZoom={mapInteractive}
                     zoomControl={false}
                     className="h-full w-full z-0"
                     style={{ background: "#eef4ea" }}

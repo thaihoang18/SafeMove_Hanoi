@@ -143,17 +143,15 @@ export function LocationDetailView({
             {location.address || "ハノイ、ベトナム"}
           </p>
         </div>
-        {!isGuest && (
-          <div className="detail-actions">
-            <button
-              type="button"
-              className="btn-directions"
-              onClick={() => onOpenRoute?.()}
-            >
-              ルート案内
-            </button>
-          </div>
-        )}
+        <div className="detail-actions">
+          <button
+            type="button"
+            className="btn-directions"
+            onClick={() => onOpenRoute?.()}
+          >
+            ルート案内
+          </button>
+        </div>
       </div>
 
       {/* Stats Grid */}

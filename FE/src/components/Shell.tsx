@@ -1,6 +1,7 @@
 import { Building2, Home, Map, Search, Settings2, UserCircle2, Wind } from "lucide-react";
 import type { ReactNode } from "react";
 import { getAvatarPreset, getAvatarSelectionStyle, type AvatarSelection } from "@/lib/avatar-presets";
+import "../styles/demo-shell.css";
 
 export type Role = "guest" | "user" | "admin";
 export type View =
@@ -25,6 +26,7 @@ type Props = {
   avatarSelection?: AvatarSelection;
   unreadCount: number;
   onRequireLogin: () => void;
+  onLogout?: () => void;
   children: ReactNode;
 };
 
@@ -49,6 +51,7 @@ export function Shell({
   avatarSelection,
   unreadCount,
   onRequireLogin,
+  onLogout,
   children,
 }: Props) {
   const navItems = role === "admin" ? adminNavItems : guestNavItems;
@@ -67,14 +70,12 @@ export function Shell({
     <div className="min-h-screen bg-[#edf1ec] pb-40 md:pb-44">
       <header className="mx-auto w-full max-w-107.5 px-4 pt-4">
         <div className="flex items-center justify-between rounded-[1.6rem] bg-white px-4 py-3 shadow-sm ring-1 ring-slate-200/70">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-linear-to-br from-emerald-600 to-emerald-400 text-white shadow-sm">
-              <Wind className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="text-sm font-medium text-emerald-700">SafeMove Hanoi</div>
-              <div className="text-xs text-slate-500">AQIルート案内と健康アシスタント</div>
-            </div>
+          <div
+            onClick={() => setView(role === "admin" ? "dashboard" : "home")}
+            className="flex cursor-pointer items-center gap-2 font-semibold text-emerald-600 transition hover:opacity-80"
+          >
+            <Wind className="h-6 w-6" />
+            <span className="text-sm">SafeMove ハノイ</span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -111,21 +112,20 @@ export function Shell({
 
       <main className="mx-auto w-full max-w-107.5 px-4 py-4">{children}</main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-20 bg-transparent px-4 pb-4">
-        <div className={`mx-auto grid max-w-107.5 gap-2 rounded-[1.6rem] bg-white p-2 shadow-xl shadow-slate-900/10 ring-1 ring-slate-200/70 ${navItems.length === 3 ? "grid-cols-3" : "grid-cols-4"}`}>
-          {navItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => handleNavigate(item.id)}
-              className={`flex flex-col items-center gap-1 rounded-[1.15rem] py-2 text-[11px] ${
-                view === item.id ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200" : "text-slate-500"
-              }`}
-            >
-              <item.icon className="h-4 w-4" />
-              {item.label}
-            </button>
-          ))}
-        </div>
+      <nav className="bottom-nav-demo">
+        {navItems.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => handleNavigate(item.id)}
+            className={`nav-item-demo ${view === item.id ? "active" : ""}`}
+            title={item.label}
+          >
+            <span className="nav-icon">
+              <item.icon size={18} />
+            </span>
+            <span className="nav-label-demo">{item.label}</span>
+          </button>
+        ))}
       </nav>
     </div>
   );

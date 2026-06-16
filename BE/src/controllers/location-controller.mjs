@@ -51,7 +51,9 @@ export async function listLocationsController(searchParams) {
       l.is_japan_friendly,
       l.metadata,
       l.created_at,
-      nearest_aqi.aqi as aqi_level
+      nearest_aqi.aqi as aqi_level,
+      avg_reviews.avg_rating::numeric(2,1) as rating,
+      coalesce(avg_reviews.total_reviews, 0)::integer as reviews
     from airpath.locations l
     left join lateral (
       select m.aqi
@@ -62,6 +64,15 @@ export async function listLocationsController(searchParams) {
         m.measured_at desc
       limit 1
     ) nearest_aqi on true
+    left join (
+      select
+        location_id,
+        avg(rating) as avg_rating,
+        count(*) as total_reviews
+      from airpath.location_reviews
+      where is_hidden = false
+      group by location_id
+    ) avg_reviews on avg_reviews.location_id = l.id
     where (${city}::text is null or city = ${city})
       and (${district}::text is null or district = ${district})
       and (${type}::text is null or location_type = ${type})

@@ -74,33 +74,37 @@ export function AqiAlertScreen({ gpsAqi, gpsCoords, locations, onBack, onOpenSug
         </div>
 
         <div className="spot-suggestion-card">
-          {suggestion?.featured_image ? (
-            <img
-              src={suggestion.featured_image}
-              alt={suggestion.name}
-              className="spot-card-img"
-              onError={(e) => {
-                const haystack = [
-                  suggestion.name,
-                  suggestion.location_type,
-                  suggestion.categories,
-                  suggestion.description
-                ]
-                  .filter(Boolean)
-                  .join(" ")
-                  .toLowerCase();
-                let fallback = "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=600&q=80"; // gym
-                if (/(cong vien|park|garden|outdoor)/.test(haystack)) {
-                  fallback = "https://static.vinwonders.com/production/cong-vien-1.jpg";
-                } else if (/(stadium|court|track|arena|sports complex|sport|gymnastics|boxing|martial arts|badminton|tennis|basketball|football|futsal|swimming|pool)/.test(haystack)) {
-                  fallback = "https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=600&q=80";
-                }
-                e.currentTarget.src = fallback;
-              }}
-            />
-          ) : (
-            <div className="spot-card-img placeholder">画像なし</div>
-          )}
+          {(() => {
+            const haystack = [
+              suggestion?.name,
+              suggestion?.location_type,
+              suggestion?.categories,
+              suggestion?.description
+            ]
+              .filter(Boolean)
+              .join(" ")
+              .toLowerCase();
+            
+            let fallbackImg = "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=600&q=80"; // gym
+            if (/(cong vien|park|garden|outdoor)/.test(haystack)) {
+              fallbackImg = "https://static.vinwonders.com/production/cong-vien-1.jpg";
+            } else if (/(stadium|court|track|arena|sports complex|sport|gymnastics|boxing|martial arts|badminton|tennis|basketball|football|futsal|swimming|pool)/.test(haystack)) {
+              fallbackImg = "https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=600&q=80";
+            }
+
+            const imgSrc = suggestion?.featured_image || fallbackImg;
+
+            return (
+              <img
+                src={imgSrc}
+                alt={suggestion?.name || "spot"}
+                className="spot-card-img"
+                onError={(e) => {
+                  e.currentTarget.src = fallbackImg;
+                }}
+              />
+            );
+          })()}
 
           <div className="spot-card-body">
             <div className="spot-card-info">

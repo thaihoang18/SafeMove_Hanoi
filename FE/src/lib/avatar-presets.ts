@@ -1,6 +1,6 @@
 export type AvatarPresetId = "gym" | "yoga" | "park" | "fresh-air" | "running" | "meadow";
 
-export type AvatarFrameId = "emerald" | "sky" | "amber" | "rose" | "teal" | "mint";
+export type AvatarFrameId = "emerald" | "sky" | "yellow" | "rose" | "purple" | "orange";
 
 export type AvatarSelection = {
   avatarId: AvatarPresetId;
@@ -204,7 +204,7 @@ export function loadAvatarSelection(userId: string): AvatarSelection {
     const parsed = JSON.parse(raw) as Partial<AvatarSelection>;
     if (
       (parsed.avatarId === "gym" || parsed.avatarId === "yoga" || parsed.avatarId === "park" || parsed.avatarId === "fresh-air" || parsed.avatarId === "running" || parsed.avatarId === "meadow") &&
-      (parsed.frameId === "emerald" || parsed.frameId === "sky" || parsed.frameId === "amber" || parsed.frameId === "rose" || parsed.frameId === "teal" || parsed.frameId === "mint")
+      (parsed.frameId === "emerald" || parsed.frameId === "sky" || parsed.frameId === "yellow" || parsed.frameId === "rose" || parsed.frameId === "purple" || parsed.frameId === "orange")
     ) {
       return { avatarId: parsed.avatarId, frameId: parsed.frameId };
     }

@@ -8,6 +8,7 @@ import {
   Popup,
   TileLayer,
   useMap,
+  ZoomControl,
 } from "react-leaflet";
 import type { LatLngExpression, LatLngTuple } from "leaflet";
 import type { PlannedRoutesResponse, RouteRecommendation } from "@/lib/types";
@@ -106,7 +107,7 @@ export function RouteMapCanvas({
           dragging={interactive}
           doubleClickZoom={interactive}
           touchZoom={interactive}
-          zoomControl={interactive}
+          zoomControl={false}
           attributionControl={false}
           className="route-map-inner h-full w-full"
         >
@@ -114,6 +115,7 @@ export function RouteMapCanvas({
           url={tileUrl}
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         />
+        {interactive && <ZoomControl position="bottomright" />}
         <FitBounds points={allPoints} />
         <InvalidateMapSize />
         {tracking && currentPosition ? <FollowCurrentPosition position={currentPosition} /> : null}

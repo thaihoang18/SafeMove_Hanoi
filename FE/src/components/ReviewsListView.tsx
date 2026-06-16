@@ -10,8 +10,8 @@ type Props = {
   onBack: () => void;
   reviewsLoading?: boolean;
   reviewsError?: string | null;
-  currentUserId: string;
-  currentUserAvatarSelection: AvatarSelection;
+  currentUserId?: string;
+  currentUserAvatarSelection?: AvatarSelection;
 };
 
 export function ReviewsListView({
@@ -42,7 +42,9 @@ export function ReviewsListView({
 
   // Sort reviews
   let sortedReviews = [...reviews];
-  if (sortBy === "rating-high") {
+  if (sortBy === "recent") {
+    sortedReviews.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  } else if (sortBy === "rating-high") {
     sortedReviews.sort((a, b) => b.rating - a.rating);
   } else if (sortBy === "rating-low") {
     sortedReviews.sort((a, b) => a.rating - b.rating);
@@ -120,7 +122,7 @@ export function ReviewsListView({
             sortedReviews.map((review) => (
               <div key={review.id} className="review-card-full">
                 <div className="review-header-row">
-                  {review.user_id === currentUserId ? (
+                  {review.user_id === currentUserId && currentUserAvatarSelection ? (
                     <span className="review-avatar review-avatar-custom" style={getAvatarSelectionStyle(currentUserAvatarSelection)}>
                       <img
                         src={getAvatarPreset(currentUserAvatarSelection.avatarId).src}

@@ -499,7 +499,7 @@ export function RoutePlannerView({ locations, origin, destination, maxRatio, set
         </div>
       ) : (
         <div className="absolute inset-x-0 bottom-16 z-50 px-4 pb-4 sm:bottom-20 sm:pb-5">
-          <div className="mx-auto max-w-6xl overflow-hidden rounded-[2rem] bg-white/95 shadow-[0_40px_100px_rgba(15,23,42,0.22)] ring-1 ring-slate-200/80 backdrop-blur-sm">
+          <div className="mx-auto max-w-6xl overflow-y-auto max-h-[50vh] rounded-[2rem] bg-white/95 shadow-[0_40px_100px_rgba(15,23,42,0.22)] ring-1 ring-slate-200/80 backdrop-blur-sm">
             <div className="px-4 py-4 sm:px-5 sm:py-4">
               <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
                 <div>
