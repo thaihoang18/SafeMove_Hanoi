@@ -33,6 +33,17 @@ export function AqiAlertScreen({ gpsAqi, gpsCoords, locations, onBack, onOpenSug
       ? "空気の質が悪化しています。屋外活動の強度を下げ、より清潔な場所を選びましょう。"
       : "空気の状態は許容範囲です。必要に応じて、より安全な運動場所を検討できます。";
 
+  const expertAdviceText =
+    aqiValue === null
+      ? "AQIデータを取得できません。後ほど再試行してください。"
+      : aqiValue > 150
+      ? "外出が必要な場合はN95マスクを使用し、空気清浄設備のある場所を選んでください。AQIが150を超えるときは屋内運動が最も安全です。"
+      : aqiValue > 100
+      ? "長時間の激しい屋外運動は避けてください。特に呼吸器系に敏感な方は、屋内のスポーツ施設を利用することをお勧めします。"
+      : aqiValue > 50
+      ? "空気の質は概ね良好ですが、敏感な方は異常を感じた場合、運動の強度を下げてください。"
+      : "空気の質は非常に良好です。屋外での運動やアクティビティを最大限に楽しむことができます。";
+
   const suggestion = locations
     .filter((location) => typeof location.aqi_level === "number")
     .sort((a, b) => (a.aqi_level ?? 999) - (b.aqi_level ?? 999))[0] ?? locations[0];
@@ -135,7 +146,7 @@ export function AqiAlertScreen({ gpsAqi, gpsCoords, locations, onBack, onOpenSug
             <h4>専門家のアドバイス</h4>
           </div>
           <p className="expert-text">
-            外出が必要な場合はN95マスクを使用し、空気清浄設備のある場所を選んでください。AQIが150を超えるときは屋内運動が最も安全です。
+            {expertAdviceText}
           </p>
         </div>
       </main>
