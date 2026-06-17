@@ -8,6 +8,8 @@ export function cleanAddress(address: string | null | undefined): string | null 
     .replace(/ベトナム/g, "")
     .replace(/Vietnam/ig, "")
     .replace(/,\s*\d{4,6}\b/g, "")
+    // Remove all Japanese characters (Hiragana, Katakana, Kanji)
+    .replace(/[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/g, "")
     .trim();
 
   const parts = cleaned.split(",").map(p => p.trim()).filter(Boolean);
