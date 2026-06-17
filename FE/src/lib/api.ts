@@ -468,9 +468,29 @@ export async function fetchIqAirAqiByCoordinates(
     : wrappedPromise;
 }
 
-export async function fetchAqicnAqi(lat: number, lng: number): Promise<{ ok: true; measurement: GpsAqiMeasurement }> {
+export async function fetchAqicnAqi(lat: number, lng: number, options?: RequestInit): Promise<{ ok: true; measurement: GpsAqiMeasurement }> {
   const params = new URLSearchParams({ lat: String(lat), lng: String(lng) });
-  return request<{ ok: true; measurement: GpsAqiMeasurement }>(`/api/aqi/aqicn?${params.toString()}`);
+  return request<{ ok: true; measurement: GpsAqiMeasurement }>(`/api/aqi/aqicn?${params.toString()}`, options);
+}
+
+export async function fetchGpsAqiWithFallback(
+  lat: number,
+  lng: number,
+  options?: RequestInit,
+) {
+  try {
+    return await fetchIqAirAqiByCoordinates(lat, lng, options);
+  } catch (error) {
+    if (
+      options?.signal?.aborted ||
+      (error instanceof Error && error.name === "AbortError") ||
+      (typeof error === "object" && error !== null && "name" in error && (error as any).name === "AbortError")
+    ) {
+      throw error;
+    }
+    console.warn("IQAir fetch failed, falling back to AQICN", error);
+    return await fetchAqicnAqi(lat, lng, options);
+  }
 }
 
 function raceWithAbortSignal<T>(promise: Promise<T>, signal: AbortSignal) {

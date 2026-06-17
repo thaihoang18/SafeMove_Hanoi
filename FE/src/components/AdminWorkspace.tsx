@@ -16,7 +16,7 @@ import {
 import {
   fetchAdminDashboard,
   fetchAdminHiddenReviews,
-  fetchIqAirAqiByCoordinates,
+  fetchGpsAqiWithFallback,
   reverseGeocode,
   updateReview,
   deleteReview,
@@ -25,7 +25,6 @@ import { Shell, type View } from "./Shell";
 import {
   avatarFrames,
   avatarPresets,
-  defaultAvatarSelection,
   getAvatarSelectionStyle,
   type AvatarSelection,
   loadAvatarSelection,
@@ -550,7 +549,7 @@ export function AdminWorkspace({
       });
 
       const { latitude, longitude } = position.coords;
-      const data = await fetchIqAirAqiByCoordinates(latitude, longitude);
+      const data = await fetchGpsAqiWithFallback(latitude, longitude);
       setSystemAqi(data.measurement);
     } catch (error) {
       setSystemAqi(null);

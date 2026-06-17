@@ -153,9 +153,9 @@ export function HomeViewDemo({
     <div className="demo-home-container">
       {/* AQI Circle */}
       <div className="aqi-section">
-        <div className={`aqi-circle-border ${getAqiColorClass(aqi)}`} onClick={onOpenAqiAlert}>
-          <div className="aqi-value">{aqi ?? "--"}</div>
-          <div className="aqi-label">AQI・{getAqiLabel(aqi)}</div>
+        <div className={`aqi-circle-border ${isLoading ? "aqi-unknown" : getAqiColorClass(aqi)}`} onClick={onOpenAqiAlert}>
+          <div className="aqi-value">{isLoading ? "--" : (aqi ?? "--")}</div>
+          <div className="aqi-label">{isLoading ? "情報を取得中..." : `AQI・${getAqiLabel(aqi)}`}</div>
         </div>
       </div>
 
@@ -169,6 +169,7 @@ export function HomeViewDemo({
           <span className={`dot ${activeSource === "iqair" ? "green" : ""}`} />
           主な情報源: IQAir
           {activeSource === "iqair" && gpsLoading && <span className="source-loading">更新中...</span>}
+          {gpsAqi && activeSource !== "iqair" && <span className="source-loaded-badge">取得済</span>}
         </button>
         <button
           className={`source-btn ${activeSource === "aqicn" ? "active" : ""}`}
@@ -182,13 +183,7 @@ export function HomeViewDemo({
         </button>
       </div>
 
-      {/* Air Quality Status */}
-      <div className="status-box">
-        <div className="status-headline">
-          <h2>{getAqiLabel(aqi)} - 空気品質</h2>
-        </div>
-        <p>{aqi === null ? "空気品質を判定できません" : aqi <= 50 ? "屋外活動に適しています" : "屋外活動は控えめにすることをおすすめします"}</p>
-      </div>
+
 
       {/* Advice Card */}
       <div className="advice-card">

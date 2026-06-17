@@ -4,7 +4,7 @@ import {
   createLocationReview,
   fetchBootstrapData,
   fetchDashboard,
-  fetchIqAirAqiByCoordinates,
+  fetchGpsAqiWithFallback,
   fetchLocationReviews,
   fetchLocations,
   fetchNotifications,
@@ -328,7 +328,7 @@ export default function App() {
     setSelectedLocationAqiError(null);
 
     try {
-      const response = await fetchIqAirAqiByCoordinates(location.lat, location.lng, {
+      const response = await fetchGpsAqiWithFallback(location.lat, location.lng, {
         signal: controller.signal,
       });
 
@@ -656,7 +656,7 @@ export default function App() {
       // No geolocation support — silently use B1 fallback
       setGpsCoords({ lat: 21.0041, lng: 105.8428 });
       try {
-        const data = await fetchIqAirAqiByCoordinates(21.0041, 105.8428);
+        const data = await fetchGpsAqiWithFallback(21.0041, 105.8428);
         setGpsAqi(data.measurement);
       } catch { /* ignore */ }
       return;
@@ -668,7 +668,7 @@ export default function App() {
         // Permission denied — silently fall back to B1
         setGpsCoords({ lat: 21.0041, lng: 105.8428 });
         try {
-          const data = await fetchIqAirAqiByCoordinates(21.0041, 105.8428);
+          const data = await fetchGpsAqiWithFallback(21.0041, 105.8428);
           setGpsAqi(data.measurement);
         } catch { /* ignore */ }
         return;
@@ -704,7 +704,7 @@ export default function App() {
       setGpsAqi(null);
 
       try {
-        const data = await fetchIqAirAqiByCoordinates(latitude, longitude);
+        const data = await fetchGpsAqiWithFallback(latitude, longitude);
         setGpsAqi(data.measurement);
 
         const nextAqi = data.measurement.aqi;
@@ -740,7 +740,7 @@ export default function App() {
       setGpsCoords({ lat: fallbackLat, lng: fallbackLng });
       
       try {
-        const data = await fetchIqAirAqiByCoordinates(fallbackLat, fallbackLng);
+        const data = await fetchGpsAqiWithFallback(fallbackLat, fallbackLng);
         setGpsAqi(data.measurement);
       } catch { /* ignore */ }
     } finally {
