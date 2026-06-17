@@ -1248,15 +1248,7 @@ export function AdminWorkspace({
                   )}
                 </div>
 
-                {actionMessage && (
-                  <div className={`rounded-[1.7rem] p-4 text-sm ring-1 ${
-                    actionMessage.includes("失敗") || actionMessage.includes("でき") 
-                      ? "bg-rose-50 text-rose-700 ring-rose-200" 
-                      : "bg-emerald-50 text-emerald-700 ring-emerald-200"
-                  }`}>
-                    {actionMessage}
-                  </div>
-                )}
+
                 {loadingLocations ? (
                   <div className="rounded-[1.7rem] bg-white p-5 text-sm text-slate-500 ring-1 ring-slate-200">
                     施設を読み込み中...
@@ -1356,13 +1348,15 @@ export function AdminWorkspace({
                 <div className="min-w-0">
                   <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs text-emerald-700 ring-1 ring-emerald-100">
                     <Building2 className="h-3.5 w-3.5" />
-                    新しい施設を追加
+                    {editingLocationId ? "施設を編集" : "新しい施設を追加"}
                   </div>
                   <h2 className="mt-3 text-2xl text-slate-900">
-                    新しい施設を追加
+                    {editingLocationId ? "施設を編集" : "新しい施設を追加"}
                   </h2>
                   <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                    施設情報を入力し、地図上で位置を選んで保存すると新しい施設を登録できます。
+                    {editingLocationId
+                      ? "施設情報を変更し、保存して更新します。"
+                      : "施設情報を入力し、地図上で位置を選んで保存すると新しい施設を登録できます。"}
                   </p>
                 </div>
                 <button

@@ -78,6 +78,24 @@ function storeCachedIqAirMeasurement(cacheKey: string, measurement: GpsAqiMeasur
   }
 }
 
+export function translateError(error: unknown): string {
+  const msg = error instanceof Error ? error.message : String(error);
+  const lower = msg.toLowerCase();
+  
+  if (lower.includes("failed to fetch") || lower.includes("network error")) return "サーバーとの通信に失敗しました。ネットワーク接続を確認してください。";
+  if (lower.includes("timeout") || lower.includes("aborted")) return "リクエストがタイムアウトしました。";
+  if (lower.includes("invalid email or password") || lower.includes("invalid admin credentials") || lower.includes("401")) return "ユーザー名またはパスワードが正しくありません。";
+  if (lower.includes("email is required") || lower.includes("password is required") || lower.includes("missing required fields")) return "必要な情報をすべて入力してください。";
+  if (lower.includes("admin account cannot log in from the user login screen")) return "管理者アカウントはユーザー用ログイン画面からログインできません。管理者ログイン画面を使用してください。";
+  if (lower.includes("user account cannot log in from the admin login screen")) return "ユーザーアカウントは管理者用ログイン画面からログインできません。ユーザーログイン画面を使用してください。";
+  if (lower.includes("account with this email already exists")) return "このメールアドレスは既に登録されています。";
+  if (lower.includes("user denied geolocation")) return "GPS 位置情報を取得できません。位置情報の許可を有効にしてください。";
+  if (lower.includes("routing service failed") || lower.includes("did not return a valid route")) return "ルート計画を作成できませんでした。別の地点をお試しください。";
+  if (lower.includes("request failed") || lower.includes("internal server error")) return "システムエラーが発生しました。しばらくしてからもう一度お試しください。";
+  
+  return msg;
+}
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const controller = new AbortController();
   const timeoutId = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
@@ -87,7 +105,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   if (externalSignal) {
     if (externalSignal.aborted) {
       window.clearTimeout(timeoutId);
-      throw new DOMException("The operation was aborted.", "AbortError");
+      throw new Error(translateError("The operation was aborted."));
     }
 
     externalSignal.addEventListener("abort", onAbort, { once: true });
@@ -107,16 +125,16 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     const data = await response.json();
 
     if (!response.ok || data.ok === false) {
-      throw new Error(data.error || `Request failed: ${response.status}`);
+      throw new Error(translateError(data.error || `Request failed: ${response.status}`));
     }
 
     return data as T;
   } catch (error) {
     if (controller.signal.aborted) {
-      throw new Error("リクエストがタイムアウトしました。しばらくしてからもう一度お試しください。");
+      throw new Error(translateError("リクエストがタイムアウトしました。"));
     }
 
-    throw error;
+    throw new Error(translateError(error));
   } finally {
     if (externalSignal) {
       externalSignal.removeEventListener("abort", onAbort);

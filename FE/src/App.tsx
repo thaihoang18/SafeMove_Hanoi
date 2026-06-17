@@ -586,7 +586,15 @@ export default function App() {
 
   async function handleSaveProfileField(field: string, value: string) {
     if (!user) return;
-    const payload: Record<string, unknown> = {};
+    
+    // Pass existing profile fields to prevent the backend from resetting them to default values (e.g. alertThreshold -> 140)
+    const payload: Record<string, unknown> = {
+      alertThreshold: profile?.profile?.alert_threshold ?? 140,
+      defaultMaxRouteRatio: profile?.profile?.default_max_route_ratio ?? 1.5,
+      phone: profile?.profile?.phone,
+      primaryActivityId: profile?.profile?.primary_activity_id,
+      maskPreference: profile?.profile?.mask_preference,
+    };
 
     if (field === "name") {
       payload.fullName = value;

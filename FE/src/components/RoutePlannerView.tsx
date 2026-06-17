@@ -139,9 +139,17 @@ export function RoutePlannerView({ locations, origin, destination, maxRatio, set
         }
       } catch (error) {
         if (requestId === planRequestIdRef.current) {
-          setPlanError(
-            error instanceof Error ? error.message : "ルート計画を作成できませんでした。"
-          );
+          let msg = error instanceof Error ? error.message : "ルート計画を作成できませんでした。";
+          if (/failed to fetch/i.test(msg) || /network error/i.test(msg)) {
+            msg = "サーバーとの通信に失敗しました。ネットワーク接続を確認してください。";
+          } else if (/timeout/i.test(msg) || /aborted/i.test(msg)) {
+            msg = "リクエストがタイムアウトしました。";
+          } else if (/request failed/i.test(msg) || /internal server error/i.test(msg)) {
+            msg = "システムエラーが発生しました。しばらくしてからもう一度お試しください。";
+          } else if (/user denied geolocation/i.test(msg)) {
+            msg = "GPS 位置情報を取得できません。位置情報の許可を有効にしてください。";
+          }
+          setPlanError(msg);
           setPlanResult(null);
         }
       } finally {
@@ -260,14 +268,16 @@ export function RoutePlannerView({ locations, origin, destination, maxRatio, set
       };
 
   const currentStep = selectedRoute?.route.steps?.[0] ?? null;
-  const currentInstruction = navigationStarted
+  const currentInstruction = planError
+    ? planError
+    : navigationStarted
     ? (currentStep
         ? `ルートに沿って進んでください (${Math.round(currentStep.distanceM)} m)`
         : "目的地に近づいています。")
     : (selectedRoute
         ? "ナビゲーションの準備ができました。開始すると次の案内を表示します。"
         : "ルートを待機中です。");
-  const routeAqiLabel = routeData.averageAqi > 0 ? `${Math.round(routeData.averageAqi)}` : "読み込み中";
+  const routeAqiLabel = planError ? "エラー" : routeData.averageAqi > 0 ? `${Math.round(routeData.averageAqi)}` : "読み込み中";
 
   async function startRealTimeNavigation() {
     if (!planResult || !selectedRoute || !originPosition || !routeDestination) {
@@ -478,7 +488,7 @@ export function RoutePlannerView({ locations, origin, destination, maxRatio, set
             <div className="flex flex-col gap-3 px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
               <div className="min-w-0">
                 <div className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{routeStatus}</div>
-                <div className="mt-1 truncate text-sm font-semibold text-slate-950">{currentInstruction}</div>
+                <div className={`mt-1 text-sm font-semibold ${planError ? "text-red-600" : "text-slate-950 truncate"}`}>{currentInstruction}</div>
               </div>
               <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                 <div className="rounded-2xl bg-slate-50 px-3 py-2 text-center text-[11px] uppercase tracking-[0.18em] text-slate-500">
@@ -504,7 +514,7 @@ export function RoutePlannerView({ locations, origin, destination, maxRatio, set
               <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <div className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{routeStatus}</div>
-                  <div className="mt-1.5 text-base font-semibold text-slate-950">{currentInstruction}</div>
+                  <div className={`mt-1.5 text-base font-semibold ${planError ? "text-red-600" : "text-slate-950"}`}>{currentInstruction}</div>
                 </div>
               </div>
 

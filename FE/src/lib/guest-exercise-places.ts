@@ -1,4 +1,4 @@
-import rawPlaces from "../../../assets/address/hanoi-gym-overview.json";
+import rawPlaces from "../assets/address/hanoi-gym-overview.json";
 
 export function cleanAddress(address: string | null | undefined): string | null {
   if (!address) return null;
