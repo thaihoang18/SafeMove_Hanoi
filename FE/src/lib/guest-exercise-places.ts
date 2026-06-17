@@ -1,5 +1,25 @@
 import rawPlaces from "../../../assets/address/hanoi-gym-overview.json";
 
+export function cleanAddress(address: string | null | undefined): string | null {
+  if (!address) return null;
+  
+  let cleaned = address
+    .replace(/ハノイ/g, "Hà Nội")
+    .replace(/ベトナム/g, "")
+    .replace(/Vietnam/ig, "")
+    .replace(/,\s*\d{4,6}\b/g, "")
+    .trim();
+
+  const parts = cleaned.split(",").map(p => p.trim()).filter(Boolean);
+  
+  const hnIndex = parts.findIndex(p => p.toLowerCase().includes("hà nội") || p.toLowerCase().includes("hanoi"));
+  if (hnIndex !== -1) {
+    return parts.slice(0, hnIndex).concat("TP Hà Nội").join(", ");
+  }
+
+  return parts.join(", ");
+}
+
 type AssetPlaceRecord = {
   place_id: string;
   name: string;
@@ -92,7 +112,10 @@ export function mergeExercisePlaces(basePlaces: PlaceCatalogItem[]) {
     );
   }
 
-  return Array.from(mergedByKey.values()).sort((a, b) => {
+  return Array.from(mergedByKey.values()).map(place => ({
+    ...place,
+    address: cleanAddress(place.address)
+  })).sort((a, b) => {
     const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
     const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
     if (aTime !== bTime) {
@@ -117,7 +140,7 @@ function normalizeAssetPlace(record: AssetPlaceRecord): PlaceCatalogItem | null 
     id: record.place_id,
     name: record.name,
     location_type: record.main_category ?? record.categories ?? "Exercise",
-    address: record.address,
+    address: cleanAddress(record.address),
     city: pickCity(addressParts),
     district: pickDistrict(addressParts),
     lat: coordinates.lat,

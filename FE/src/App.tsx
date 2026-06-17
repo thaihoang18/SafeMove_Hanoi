@@ -266,6 +266,7 @@ export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [role, setRole] = useState<Role>("user");
   const [view, setView] = useState<View>("home");
+  const [redirectAfterLogin, setRedirectAfterLogin] = useState<View | null>(null);
   const [loadingAuth, setLoadingAuth] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [authSuccess, setAuthSuccess] = useState<string | null>(null);
@@ -452,7 +453,8 @@ export default function App() {
       await reloadLocations().catch((error) => setGlobalError(error.message));
       setUser(response.user);
       setRole(response.user.role === "admin" ? "admin" : "user");
-      setView(response.user.role === "admin" ? "dashboard" : "home");
+      setView(response.user.role === "admin" ? "dashboard" : (redirectAfterLogin || "home"));
+      setRedirectAfterLogin(null);
       applyBootstrapAqiSnapshot(bootstrap.aqiSnapshot);
       hasAutoLoadedGpsAqiRef.current = false;
     } catch (error) {
@@ -481,7 +483,8 @@ export default function App() {
       }
       setUser(response.user);
       setRole(response.user.role === "admin" ? "admin" : "user");
-      setView(response.user.role === "admin" ? "dashboard" : "home");
+      setView(response.user.role === "admin" ? "dashboard" : (redirectAfterLogin || "home"));
+      setRedirectAfterLogin(null);
       applyBootstrapAqiSnapshot(bootstrap.aqiSnapshot);
       hasAutoLoadedGpsAqiRef.current = false;
     } catch (error) {
@@ -528,6 +531,7 @@ export default function App() {
     setUser(guestUser);
     setRole("guest");
     setView("home");
+    setRedirectAfterLogin(null);
     setAuthError(null);
     setGlobalError(null);
     hasAutoLoadedGpsAqiRef.current = false;
@@ -988,9 +992,9 @@ export default function App() {
         }}
       onShowLogin={() => {
         // Navigate to login screen by clearing current user (will render LoginScreenDemo)
+        setRedirectAfterLogin(view);
         setUser(null);
         setGlobalError(null);
-        setView("home");
       }}
       aqiAlerts={aqiAlerts}
       aqiUnreadCount={aqiUnreadCount}
@@ -1083,9 +1087,9 @@ export default function App() {
             setGlobalError("レビューを書いたり詳細を見るにはログインしてください。");
           }}
             onShowLogin={() => {
+              setRedirectAfterLogin("spot-detail");
               setUser(null);
               setGlobalError(null);
-              setView("home");
             }}
           onOpenReviews={() => setView("reviews")}
           onOpenRoute={() => setView("route")}
@@ -1110,9 +1114,9 @@ export default function App() {
         <GuestRoutePreview
           locations={mergedLocations}
           onShowLogin={() => {
+            setRedirectAfterLogin("route");
             setUser(null);
             setGlobalError(null);
-            setView("home");
           }}
           onBack={() => setView(selectedLocation ? "spot-detail" : "home")}
         />

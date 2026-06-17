@@ -140,7 +140,7 @@ export function LocationDetailView({
           </div>
           <p className="detail-location">
             <MapPin size={14} className="inline" />
-            {location.address || "ハノイ、ベトナム"}
+            {location.address || "Hà Nội, Việt Nam"}
           </p>
         </div>
         <div className="detail-actions">

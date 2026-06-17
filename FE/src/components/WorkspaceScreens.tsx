@@ -505,7 +505,7 @@ export function WorkspaceScreens({
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <div className="line-clamp-1 text-base text-slate-900">{spot.name}</div>
-                      <div className="mt-0.5 line-clamp-2 text-xs leading-5 text-slate-500">{spot.address ?? spot.district ?? "ハノイ"}</div>
+                      <div className="mt-0.5 line-clamp-2 text-xs leading-5 text-slate-500">{spot.address ?? spot.district ?? "Hà Nội"}</div>
                     </div>
                     <div className="flex shrink-0 flex-col items-end gap-1">
                       <span className={`inline-flex items-center rounded-full px-2 py-1 text-[10px] ring-1 ${index % 2 === 0 ? "bg-emerald-50 text-emerald-700 ring-emerald-200" : "bg-sky-50 text-sky-700 ring-sky-200"}`}>

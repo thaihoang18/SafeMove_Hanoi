@@ -57,7 +57,7 @@ export function GuestRoutePreview({ locations, onShowLogin, onBack }: Props) {
             <div className="grp-card-info">
               <div className="grp-card-name">{place.name}</div>
               <div className="grp-card-address">
-                {place.address ?? place.district ?? "ハノイ"}
+                {place.address ?? place.district ?? "Hà Nội"}
               </div>
               <div className="grp-card-meta">
                 {(() => {

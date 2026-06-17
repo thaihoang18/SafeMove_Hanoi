@@ -1,6 +1,7 @@
-import { ChevronLeft, Star, Filter } from "lucide-react";
+import { ChevronLeft, Star, Filter, Languages } from "lucide-react";
 import { useState } from "react";
 import type { LocationReview } from "@/lib/types";
+import { translateReviewContent } from "@/lib/api";
 import { getAvatarPreset, getAvatarSelectionStyle, type AvatarSelection } from "@/lib/avatar-presets";
 import "../styles/demo-reviews.css";
 
@@ -24,6 +25,29 @@ export function ReviewsListView({
   currentUserAvatarSelection,
 }: Props) {
   const [sortBy, setSortBy] = useState<"recent" | "rating-high" | "rating-low">("recent");
+  const [translateMap, setTranslateMap] = useState<Record<string, { text: string; loading: boolean; shown: boolean }>>({});
+
+  async function handleTranslateReview(review: LocationReview) {
+    const existing = translateMap[review.id];
+    if (existing?.shown) {
+      setTranslateMap((prev) => ({ ...prev, [review.id]: { ...existing, shown: false } }));
+      return;
+    }
+    if (existing?.text) {
+      setTranslateMap((prev) => ({ ...prev, [review.id]: { ...existing, shown: true } }));
+      return;
+    }
+    setTranslateMap((prev) => ({ ...prev, [review.id]: { text: "", loading: true, shown: false } }));
+    try {
+      const result = await translateReviewContent(review.content, "JA");
+      setTranslateMap((prev) => ({
+        ...prev,
+        [review.id]: { text: result.translated, loading: false, shown: true },
+      }));
+    } catch {
+      setTranslateMap((prev) => ({ ...prev, [review.id]: { text: "", loading: false, shown: false } }));
+    }
+  }
 
   // Calculate statistics
   const averageRating = reviews.length
@@ -153,6 +177,24 @@ export function ReviewsListView({
                   <span className="review-date">{formatRelativeTime(review.created_at)}</span>
                 </div>
                 <p className="review-body">"{review.content}"</p>
+                <div className="rev-translate-row">
+                  <button
+                    type="button"
+                    className="rev-translate-btn"
+                    onClick={() => handleTranslateReview(review)}
+                    disabled={translateMap[review.id]?.loading}
+                  >
+                    <Languages size={13} />
+                    {translateMap[review.id]?.loading
+                      ? "翻訳中..."
+                      : translateMap[review.id]?.shown
+                      ? "翻訳を非表示"
+                      : "翻訳"}
+                  </button>
+                </div>
+                {translateMap[review.id]?.shown && translateMap[review.id]?.text && (
+                  <p className="rev-translated-text">🌐 {translateMap[review.id].text}</p>
+                )}
                 {review.helpful_count > 0 && (
                   <div className="review-footer">
                   <button className="helpful-btn">👍 役に立った ({review.helpful_count})</button>
