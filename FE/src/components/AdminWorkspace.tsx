@@ -1529,7 +1529,7 @@ export function AdminWorkspace({
                     />
                   </div>
 
-                  <div className="grid gap-3 md:grid-cols-2">
+                  <div className="grid gap-3">
                     <SelectField
                       label="施設種類"
                       value={formState.locationType}
@@ -1539,20 +1539,6 @@ export function AdminWorkspace({
                           ...current,
                           locationType: value,
                         }))
-                      }
-                    />
-                    <Field
-                      label="Lat"
-                      value={formState.lat}
-                      onChange={(value) =>
-                        setFormState((current) => ({ ...current, lat: value }))
-                      }
-                    />
-                    <Field
-                      label="Lng"
-                      value={formState.lng}
-                      onChange={(value) =>
-                        setFormState((current) => ({ ...current, lng: value }))
                       }
                     />
                   </div>
