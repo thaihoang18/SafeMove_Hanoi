@@ -384,7 +384,7 @@ export function AdminWorkspace({
   const [systemAqi, setSystemAqi] = useState<GpsAqiMeasurement | null>(null);
   const [systemAqiLoading, setSystemAqiLoading] = useState(false);
   const [systemAqiError, setSystemAqiError] = useState<string | null>(null);
-  const [demoActiveUsers] = useState(() => 16 + Math.floor(Math.random() * 35));
+  const [demoActiveUsers] = useState(() => 10);
   const [loadingLocations, setLoadingLocations] = useState(false);
   const [locationsError, setLocationsError] = useState<string | null>(null);
   const [savingLocation, setSavingLocation] = useState(false);
@@ -435,11 +435,18 @@ export function AdminWorkspace({
 
   const filteredLocations = useMemo(() => {
     if (!searchQuery.trim()) return locations;
-    const query = searchQuery.toLowerCase();
-    return locations.filter((loc) => 
-      loc.name.toLowerCase().includes(query) || 
-      (loc.address || "").toLowerCase().includes(query)
-    );
+    
+    const removeDiacritics = (str: string) => {
+      return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D");
+    };
+
+    const query = removeDiacritics(searchQuery.toLowerCase().trim());
+    
+    return locations.filter((loc) => {
+      const name = removeDiacritics(loc.name.toLowerCase());
+      const address = removeDiacritics((loc.address || "").toLowerCase());
+      return name.includes(query) || address.includes(query);
+    });
   }, [locations, searchQuery]);
   const [editingAdminField, setEditingAdminField] = useState<string | null>(
     null,
@@ -1501,9 +1508,6 @@ export function AdminWorkspace({
                         <input
                           type="checkbox"
                           checked={isJapanFriendly}
-                          disabled={
-                            editingLocationId !== null && isJapanFriendly
-                          }
                           onChange={(event) =>
                             setIsJapanFriendly(event.target.checked)
                           }

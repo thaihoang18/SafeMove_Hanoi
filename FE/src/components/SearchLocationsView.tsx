@@ -111,8 +111,14 @@ export function SearchLocationsView({
     () => loadCachedSearchPosition() ?? initialPosition ?? null
   );
 
+  const removeDiacritics = (str: string) => {
+    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D");
+  };
+
   const filteredLocations = locations.filter((loc) => {
-    const matchesKeyword = searchKeyword === "" || loc.name.toLowerCase().includes(searchKeyword.toLowerCase());
+    const query = removeDiacritics(searchKeyword.toLowerCase().trim());
+    const name = removeDiacritics(loc.name.toLowerCase());
+    const matchesKeyword = query === "" || name.includes(query);
     
     if (activeFilter === "all") return matchesKeyword;
 

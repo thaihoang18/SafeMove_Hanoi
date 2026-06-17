@@ -127,7 +127,7 @@ export async function updateLocationController(locationId, body) {
       address = ${input.address},
       lat = ${input.lat},
       lng = ${input.lng},
-      is_japan_friendly = is_japan_friendly or ${input.isJapanFriendly},
+      is_japan_friendly = ${input.isJapanFriendly},
       metadata = ${JSON.stringify(input.metadata)}::jsonb
     where id = ${locationId}
     returning *

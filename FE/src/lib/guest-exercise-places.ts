@@ -221,7 +221,7 @@ function pickCity(parts: string[]) {
 }
 
 function createKey(place: PlaceCatalogItem) {
-  return `${normalizeText(place.name)}|${normalizeText(place.address ?? "")}`;
+  return normalizeText(place.name);
 }
 
 function normalizeText(value: string) {

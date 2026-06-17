@@ -44,9 +44,32 @@ export function AqiAlertScreen({ gpsAqi, gpsCoords, locations, onBack, onOpenSug
       ? "空気の質は概ね良好ですが、敏感な方は異常を感じた場合、運動の強度を下げてください。"
       : "空気の質は非常に良好です。屋外での運動やアクティビティを最大限に楽しむことができます。";
 
-  const suggestion = locations
-    .filter((location) => typeof location.aqi_level === "number")
-    .sort((a, b) => (a.aqi_level ?? 999) - (b.aqi_level ?? 999))[0] ?? locations[0];
+  const isIndoor = (loc: PlaceCatalogItem) => 
+    loc.filter_type === "gym" || 
+    loc.location_type === "indoor_place" || 
+    (loc.categories || "").toLowerCase().includes("gym");
+
+  const indoorLocations = locations.filter(isIndoor);
+  const candidateList = indoorLocations.length > 0 ? indoorLocations : locations;
+
+  const suggestion = [...candidateList].sort((a, b) => {
+    // 1. Nearest (bucketed by 0.1km ~ 100m)
+    const distDiff = Math.round((a.distance_km ?? 999) * 10) - Math.round((b.distance_km ?? 999) * 10);
+    if (distDiff !== 0) return distDiff;
+
+    // 2. Cleanest (lowest AQI)
+    const aqiDiff = (a.aqi_level ?? 999) - (b.aqi_level ?? 999);
+    if (aqiDiff !== 0) return aqiDiff;
+
+    // 3. Highest rating
+    const ratingDiff = (b.rating ?? 0) - (a.rating ?? 0);
+    if (ratingDiff !== 0) return ratingDiff;
+
+    // 4. JP friendly
+    const aJp = a.is_japan_friendly ? 1 : 0;
+    const bJp = b.is_japan_friendly ? 1 : 0;
+    return bJp - aJp;
+  })[0] ?? locations[0];
 
   const distanceText = suggestion?.distance_km ? `${suggestion.distance_km.toFixed(1)} km` : "0.8 km";
 

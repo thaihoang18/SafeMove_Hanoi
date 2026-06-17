@@ -164,7 +164,7 @@ export const avatarFrames: AvatarFrame[] = [
 ];
 
 export const defaultAvatarSelection: AvatarSelection = {
-  avatarId: "gym",
+  avatarId: "running",
   frameId: "emerald",
 };
 
