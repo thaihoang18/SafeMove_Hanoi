@@ -20,7 +20,9 @@ const SEARCH_POSITION_CACHE_TTL_MS = 10 * 60 * 1000;
 
 function loadCachedSearchPosition(): Coordinates | null {
   try {
-    const cached = JSON.parse(localStorage.getItem(SEARCH_POSITION_CACHE_KEY) ?? "null") as {
+    const cached = JSON.parse(
+      localStorage.getItem(SEARCH_POSITION_CACHE_KEY) ?? "null",
+    ) as {
       position?: Coordinates;
       cachedAt?: number;
     } | null;
@@ -45,7 +47,7 @@ function storeSearchPosition(position: Coordinates) {
   try {
     localStorage.setItem(
       SEARCH_POSITION_CACHE_KEY,
-      JSON.stringify({ position, cachedAt: Date.now() })
+      JSON.stringify({ position, cachedAt: Date.now() }),
     );
   } catch {
     // Distance display still works when browser storage is unavailable.
@@ -57,9 +59,12 @@ function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number) {
   const earthRadiusKm = 6371;
   const dLat = toRad(lat2 - lat1);
   const dLon = toRad(lon2 - lon1);
-  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) *
+      Math.cos(toRad(lat2)) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return earthRadiusKm * c;
 }
@@ -69,7 +74,12 @@ function getFilterType(location: PlaceCatalogItem): "park" | "gym" | "sports" {
     return location.filter_type;
   }
 
-  const haystack = [location.name, location.location_type, location.categories, location.description]
+  const haystack = [
+    location.name,
+    location.location_type,
+    location.categories,
+    location.description,
+  ]
     .filter(Boolean)
     .join(" ")
     .toLowerCase();
@@ -78,7 +88,11 @@ function getFilterType(location: PlaceCatalogItem): "park" | "gym" | "sports" {
     return "park";
   }
 
-  if (/(stadium|court|track|arena|sports complex|sport|gymnastics|boxing|martial arts|badminton|tennis|basketball|football|futsal|swimming|pool)/.test(haystack)) {
+  if (
+    /(stadium|court|track|arena|sports complex|sport|gymnastics|boxing|martial arts|badminton|tennis|basketball|football|futsal|swimming|pool)/.test(
+      haystack,
+    )
+  ) {
     return "sports";
   }
 
@@ -88,7 +102,8 @@ function getFilterType(location: PlaceCatalogItem): "park" | "gym" | "sports" {
 const CARD_IMAGES: Record<"gym" | "park" | "sports", string> = {
   gym: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=240&q=80",
   park: "https://static.vinwonders.com/production/cong-vien-1.jpg",
-  sports: "https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=240&q=80",
+  sports:
+    "https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=240&q=80",
 };
 
 function getSpotCardImage(location: PlaceCatalogItem) {
@@ -103,23 +118,29 @@ export function SearchLocationsView({
 }: Props) {
   void onRequireLogin;
   const [searchKeyword, setSearchKeyword] = useState("");
-  const [activeFilter, setActiveFilter] = useState<"all" | "park" | "gym" | "sports">("all");
+  const [activeFilter, setActiveFilter] = useState<
+    "all" | "park" | "gym" | "sports"
+  >("all");
   const [pageIndex, setPageIndex] = useState<number>(1);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const [currentPosition, setCurrentPosition] = useState<Coordinates | null>(
-    () => loadCachedSearchPosition() ?? initialPosition ?? null
+    () => loadCachedSearchPosition() ?? initialPosition ?? null,
   );
 
   const removeDiacritics = (str: string) => {
-    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D");
+    return str
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/đ/g, "d")
+      .replace(/Đ/g, "D");
   };
 
   const filteredLocations = locations.filter((loc) => {
     const query = removeDiacritics(searchKeyword.toLowerCase().trim());
     const name = removeDiacritics(loc.name.toLowerCase());
     const matchesKeyword = query === "" || name.includes(query);
-    
+
     if (activeFilter === "all") return matchesKeyword;
 
     const matchesType = getFilterType(loc) === activeFilter;
@@ -128,10 +149,13 @@ export function SearchLocationsView({
   });
 
   const itemsPerPage = 5;
-  const pageCount = filteredLocations.length <= 10 ? 1 : 1 + Math.ceil((filteredLocations.length - 10) / itemsPerPage);
+  const pageCount =
+    filteredLocations.length <= 10
+      ? 1
+      : 1 + Math.ceil((filteredLocations.length - 10) / itemsPerPage);
   const visibleCount = Math.min(
     filteredLocations.length,
-    pageIndex === 1 ? 10 : 10 + (pageIndex - 1) * itemsPerPage
+    pageIndex === 1 ? 10 : 10 + (pageIndex - 1) * itemsPerPage,
   );
 
   // Use the app-level position immediately while a fresher GPS fix is requested.
@@ -170,7 +194,9 @@ export function SearchLocationsView({
       timeout: 5000,
     });
 
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   // Reset pagination when filters/search change
@@ -188,13 +214,16 @@ export function SearchLocationsView({
     const sentinel = sentinelRef.current;
     if (!root || !sentinel) return;
 
-    const obs = new IntersectionObserver((entries) => {
-      for (const entry of entries) {
-        if (entry.isIntersecting) {
-          setPageIndex((current) => Math.min(pageCount, current + 1));
+    const obs = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            setPageIndex((current) => Math.min(pageCount, current + 1));
+          }
         }
-      }
-    }, { root, rootMargin: '200px' });
+      },
+      { root, rootMargin: "200px" },
+    );
 
     obs.observe(sentinel);
     return () => obs.disconnect();
@@ -209,7 +238,7 @@ export function SearchLocationsView({
           <input
             type="text"
             className="search-input"
-          placeholder="スポットを検索..."
+            placeholder="スポットを検索..."
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
           />
@@ -245,9 +274,10 @@ export function SearchLocationsView({
 
       {/* Main Content */}
       <div className="search-scrollable-content" ref={scrollContainerRef}>
-          <h3 className="section-title">
-            検索結果 {filteredLocations.length > 0 && `(${filteredLocations.length})`}
-          </h3>
+        <h3 className="section-title">
+          検索結果{" "}
+          {filteredLocations.length > 0 && `(${filteredLocations.length})`}
+        </h3>
 
         <div className="result-list">
           {filteredLocations.length > 0 ? (
@@ -257,7 +287,12 @@ export function SearchLocationsView({
                 className={`spot-card ${location.is_japan_friendly === true ? "has-japan-friendly" : ""}`}
                 onClick={() => onSelectLocation(location)}
               >
-                <img src={getSpotCardImage(location)} alt={location.name} className="spot-img" loading="lazy" />
+                <img
+                  src={getSpotCardImage(location)}
+                  alt={location.name}
+                  className="spot-img"
+                  loading="lazy"
+                />
                 {location.is_japan_friendly === true && (
                   <span className="japan-badge">日本語対応</span>
                 )}
@@ -266,12 +301,22 @@ export function SearchLocationsView({
                   <h4 className="spot-name">{location.name}</h4>
                   <span className="distance-tag">
                     {(() => {
-                      if (typeof location.distance_km === 'number') return `${location.distance_km.toFixed(1)} km`;
-                      if (currentPosition && typeof location.lat === 'number' && typeof location.lng === 'number') {
-                        const km = haversineKm(currentPosition.lat, currentPosition.lng, location.lat, location.lng);
+                      if (typeof location.distance_km === "number")
+                        return `${location.distance_km.toFixed(1)} km`;
+                      if (
+                        currentPosition &&
+                        typeof location.lat === "number" &&
+                        typeof location.lng === "number"
+                      ) {
+                        const km = haversineKm(
+                          currentPosition.lat,
+                          currentPosition.lng,
+                          location.lat,
+                          location.lng,
+                        );
                         return `${km.toFixed(1)} km`;
                       }
-                      return '距離なし';
+                      return "距離なし";
                     })()}
                   </span>
                 </div>
@@ -287,10 +332,15 @@ export function SearchLocationsView({
           {filteredLocations.length > 0 && (
             <div className="pagination-footer">
               <span className="pagination-summary">
-                {Math.min(visibleCount, filteredLocations.length)} / {filteredLocations.length} 件を表示
+                {Math.min(visibleCount, filteredLocations.length)} /{" "}
+                {filteredLocations.length} 件を表示
               </span>
               {pageIndex < pageCount && (
-                <button className="load-more-btn" type="button" onClick={loadMorePage}>
+                <button
+                  className="load-more-btn"
+                  type="button"
+                  onClick={loadMorePage}
+                >
                   さらに 5 件表示
                 </button>
               )}
