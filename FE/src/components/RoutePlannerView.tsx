@@ -465,7 +465,7 @@ export function RoutePlannerView({ locations, origin, destination, maxRatio, set
           <button
             type="button"
             onClick={centerMapToUserLocation}
-            className="inline-flex items-center gap-2 rounded-3xl bg-white/90 px-4 py-2 text-sm font-semibold text-slate-900 shadow-sm shadow-slate-950/10"
+            className="whitespace-nowrap inline-flex items-center gap-2 rounded-3xl bg-white/90 px-4 py-2 text-sm font-semibold text-slate-900 shadow-sm shadow-slate-950/10"
           >
             <LocateFixed className="h-4 w-4" />
             現在地
