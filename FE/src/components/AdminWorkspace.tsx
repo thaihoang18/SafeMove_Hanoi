@@ -1900,12 +1900,7 @@ export function AdminWorkspace({
                   </div>
                 </div>
 
-                <div className="mt-6 rounded-2xl bg-white/10 p-4 text-sm leading-6 ring-1 ring-white/15">
-                  ログインアカウント: <strong>admin</strong>
-                  <br />
-                  パスワード: <strong>{adminPassword}</strong>
                 </div>
-              </div>
 
               <div className="rounded-[1.8rem] bg-slate-50 p-5 ring-1 ring-slate-200">
                 <h3 className="text-sm font-medium uppercase tracking-[0.16em] text-slate-500">
@@ -1942,6 +1937,7 @@ export function AdminWorkspace({
                     editValue={adminEditValue}
                     savingField={savingAdminField}
                     noBorder
+                    isPassword
                     onEdit={(field, value) => startAdminEdit(field, value)}
                     onChange={setAdminEditValue}
                     onSave={saveAdminEdit}
@@ -2188,6 +2184,7 @@ function AdminProfileRow({
   editValue,
   savingField,
   noBorder = false,
+  isPassword = false,
   onEdit,
   onChange,
   onSave,
@@ -2199,6 +2196,7 @@ function AdminProfileRow({
   editValue: string;
   savingField: string | null;
   noBorder?: boolean;
+  isPassword?: boolean;
   onEdit: (field: string, value: string) => void;
   onChange: (value: string) => void;
   onSave: (field: string) => Promise<void>;
@@ -2215,13 +2213,16 @@ function AdminProfileRow({
         </div>
         {isEditing ? (
           <input
+            type={isPassword ? "password" : "text"}
             value={editValue}
             onChange={(event) => onChange(event.target.value)}
             className="mt-1 w-full rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none ring-1 ring-slate-200"
             autoFocus
           />
         ) : (
-          <div className="mt-1 text-sm text-slate-900">{value || "-"}</div>
+          <div className="mt-1 text-sm text-slate-900">
+            {isPassword && value ? "•".repeat(8) : (value || "-")}
+          </div>
         )}
       </div>
 
