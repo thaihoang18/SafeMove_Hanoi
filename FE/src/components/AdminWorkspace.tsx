@@ -399,6 +399,7 @@ export function AdminWorkspace({
   const [deletingLocationId, setDeletingLocationId] = useState<string | null>(null);
   const [mapInteractive, setMapInteractive] = useState(true);
   const [isJapanFriendly, setIsJapanFriendly] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const facilityPositionRequestId = useRef(0);
   const [formError, setFormError] = useState<string | null>(null);
   const [adminAvatarSelection, setAdminAvatarSelection] =
@@ -431,6 +432,15 @@ export function AdminWorkspace({
         password: "adminsmhn",
       }).password,
   );
+
+  const filteredLocations = useMemo(() => {
+    if (!searchQuery.trim()) return locations;
+    const query = searchQuery.toLowerCase();
+    return locations.filter((loc) => 
+      loc.name.toLowerCase().includes(query) || 
+      (loc.address || "").toLowerCase().includes(query)
+    );
+  }, [locations, searchQuery]);
   const [editingAdminField, setEditingAdminField] = useState<string | null>(
     null,
   );
@@ -1200,34 +1210,37 @@ export function AdminWorkspace({
                   </div>
                 </div>
 
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-2xl bg-white p-4 ring-1 ring-slate-200">
-                    <div className="text-xs uppercase tracking-[0.16em] text-slate-500">
-                      件数
-                    </div>
-                    <div className="mt-2 text-2xl text-slate-900">
-                      {locations.length}
-                    </div>
-                    <div className="mt-1 text-sm text-slate-500">
-                      公開中の施設
-                    </div>
+                <div className="rounded-2xl bg-white p-4 ring-1 ring-slate-200">
+                  <div className="text-xs uppercase tracking-[0.16em] text-slate-500">
+                    件数
                   </div>
-                  <div className="rounded-2xl bg-white p-4 ring-1 ring-slate-200">
-                    <div className="text-xs uppercase tracking-[0.16em] text-slate-500">
-                      状態
-                    </div>
-                    <div className="mt-2 text-2xl text-slate-900">安定</div>
-                    <div className="mt-1 text-sm text-slate-500">
-                      更新・公開を確認
-                    </div>
+                  <div className="mt-2 text-2xl text-slate-900">
+                    {locations.length}
                   </div>
-                </div>
-
-                <div className="rounded-2xl bg-white p-4 text-sm leading-6 text-slate-600 ring-1 ring-slate-200">
-                  施設名、住所、公開設定をひとつの画面で整理できます。編集は一覧から直接行えます。
+                  <div className="mt-1 text-sm text-slate-500">
+                    公開中の施設
+                  </div>
                 </div>
               </div>
               <div className="space-y-3">
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="検索..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full rounded-[1.7rem] bg-white px-5 py-3.5 text-sm text-slate-900 shadow-sm ring-1 ring-slate-200 outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery("")}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+
                 {actionMessage && (
                   <div className={`rounded-[1.7rem] p-4 text-sm ring-1 ${
                     actionMessage.includes("失敗") || actionMessage.includes("でき") 
@@ -1245,8 +1258,8 @@ export function AdminWorkspace({
                   <div className="rounded-[1.7rem] bg-rose-50 p-5 text-sm text-rose-700 ring-1 ring-rose-200">
                     {locationsError}
                   </div>
-                ) : locations.length ? (
-                  locations.map((location) => (
+                ) : filteredLocations.length ? (
+                  filteredLocations.map((location) => (
                     <article
                       key={location.id}
                       className="rounded-[1.7rem] bg-white p-4 ring-1 ring-slate-200"
@@ -1319,7 +1332,7 @@ export function AdminWorkspace({
                   ))
                 ) : (
                   <div className="rounded-[1.7rem] bg-white p-5 text-sm text-slate-500 ring-1 ring-slate-200">
-                    DB に施設がありません。
+                    {searchQuery ? "Không tìm thấy địa điểm nào khớp với tìm kiếm." : "DB に施設がありません。"}
                   </div>
                 )}
               </div>
