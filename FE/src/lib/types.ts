@@ -202,23 +202,7 @@ export type GpsAqiMeasurement = {
   wind_speed?: number | null;
 };
 
-export type ChatSession = {
-  id: string;
-  user_id: string;
-  title: string;
-  created_at: string;
-  updated_at: string;
-  last_message?: string | null;
-};
 
-export type ChatMessage = {
-  id: string;
-  session_id: string;
-  role: "system" | "user" | "assistant" | "tool";
-  content: string;
-  tool_name?: string | null;
-  created_at: string;
-};
 
 export type View = 
   | "home" 
@@ -228,5 +212,4 @@ export type View =
   | "route" 
   | "profile" 
   | "alert" 
-  | "notifications" 
-  | "chat";
+  | "notifications";

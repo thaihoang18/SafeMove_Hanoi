@@ -3,8 +3,6 @@ import type {
   GpsAqiMeasurement,
   LocationReview,
   LookupItem,
-  ChatMessage,
-  ChatSession,
   NotificationItem,
   PlannedRoutesResponse,
   PlaceSuggestion,
@@ -565,40 +563,6 @@ export async function planRoutes(payload: {
   );
 }
 
-export async function fetchChatSessions(userId: string) {
-  const params = new URLSearchParams({ userId });
-  return request<{ ok: true; sessions: ChatSession[] }>(
-    `/api/chat/sessions?${params.toString()}`,
-  );
-}
-
-export async function fetchChatMessages(sessionId: string) {
-  return request<{ ok: true; session: ChatSession; messages: ChatMessage[] }>(
-    `/api/chat/sessions/${sessionId}/messages`,
-  );
-}
-
-export async function sendChatMessage(payload: {
-  userId: string;
-  sessionId?: string | null;
-  message: string;
-}) {
-  return request<{
-    ok: true;
-    session: ChatSession;
-    reply: {
-      role: "assistant";
-      content: string;
-      provider: string;
-      model: string;
-      toolEvents: Array<Record<string, unknown>>;
-    };
-    messages: ChatMessage[];
-  }>("/api/chat/message", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
-}
 
 export async function translateReviewContent(
   text: string,

@@ -1,7 +1,7 @@
 import { handleAdviceRoutes } from "./advice-routes.mjs";
 import { handleAqiRoutes } from "./aqi-routes.mjs";
 import { handleAuthRoutes } from "./auth-routes.mjs";
-import { handleChatRoutes } from "./chat-routes.mjs";
+
 import { handleIndoorPlaceRoutes } from "./indoor-place-routes.mjs";
 import { handleLocationRoutes } from "./location-routes.mjs";
 import { handleMapsRoutes } from "./maps-routes.mjs";
@@ -16,7 +16,6 @@ import { notFound, sendJson } from "../utils/http.mjs";
 const routeHandlers = [
   handleSystemRoutes,
   handleAuthRoutes,
-  handleChatRoutes,
   handleUserRoutes,
   handleNotificationRoutes,
   handleLocationRoutes,
